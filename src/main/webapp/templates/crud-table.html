@@ -1,0 +1,38 @@
+<div id="crud-table-{{vm.crudService.path}}" ng-show="vm.filterResults.length > 0">
+
+    <ul class="pagination pagination-centered" ng-show="vm.pagination.numPages > 1">
+        <li ng-class="{disabled:vm.pagination.currentPage == 0}">
+            <a id="prev" href ng-click="vm.pagination.previous()">«</a>
+        </li>
+        <li ng-repeat="n in vm.pagination.pageRange" ng-class="{active:vm.pagination.currentPage == n}" ng-click="vm.pagination.setPage(n)">
+            <a href ng-bind="n + 1">1</a>
+        </li>
+        <li ng-class="{disabled: vm.pagination.currentPage == (vm.pagination.numPages - 1)}">
+            <a id="next" href ng-click="vm.pagination.next()">»</a>
+        </li>
+    </ul>
+
+    <div class="table-responsive">
+        <table class="table table-responsive table-bordered table-striped clearfix">
+            <thead>
+                <tr>
+                    <th></th>
+               		<th ng-repeat="(fieldName,field) in vm.fields" ng-if="field.hiden != true">{{vm.serverConnection.convertCaseAnyToLabel(field.label)}}</th>
+                </tr>
+            </thead>
+            <tbody id="crud-table-body-{{vm.crudService.path}}">
+                <tr ng-repeat="item in vm.pagination.listPage">
+					<td>
+						<a href ng-if="vm.crudService.params.access.read != false" ng-click="vm.goToView(vm.crudService.getPrimaryKey(item))"><span class="glyphicon glyphicon-eye-open"></span> {{vm.translation.view}}</a> /
+						<a href ng-if="vm.crudService.params.access.update != false" ng-click="vm.goToEdit(vm.crudService.getPrimaryKey(item))"><span class="glyphicon glyphicon-edit"></span> {{vm.translation.edit}}</a> /
+						<a href ng-if="vm.crudService.params.access.delete != false" ng-click="vm.remove(vm.crudService.getPrimaryKey(item))"><span class="glyphicon glyphicon-trash"></span> {{vm.translation.delete}}</a>
+					</td>
+                    <td ng-repeat="(fieldName,field) in vm.fields" ng-if="field.hiden != true">
+                    	<a href="{{vm.goToField(fieldName, 'view', item, false)}}">{{vm.databaseUiAdapter.getUiValue(item, fieldName, true)}}</a>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+</div>

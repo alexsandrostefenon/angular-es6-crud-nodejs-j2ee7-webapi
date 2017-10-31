@@ -1,0 +1,22 @@
+<hr/>
+<h3>{{vm.title}}</h3>
+
+<form id="{{vm.formId}}" name="{{vm.formId}}" class="form-horizontal" role="form" ng-show="edit == true">
+    <div ng-show="displayError" class="alert alert-danger">
+        <strong>Error!</strong> Something broke. Retry, or cancel and start afresh.
+    </div>
+
+	<div ng-repeat="(fieldName,field) in vm.fields" class="form-group" ng-class="{'has-error': {{vm.formId}}.{{fieldName}}.$invalid}">
+	    <label for="{{fieldName}}" class="col-sm-2 control-label">{{field._label}}</label>
+
+	    <div id="{{fieldName}}_controls" class="col-sm-10">
+			<input ng-if="field.options == undefined" class="form-control" id="{{fieldName}}" name="{{fieldName}}" type="text" ng-model="vm.instance[fieldName]" placeholder="{{field.placeholder}}"></input>
+			<input  ng-if="field.options != undefined && field.options.length >  50" class="form-control" id="{{fieldName}}" name="{{fieldName}}" ng-model="vm.instance[fieldName]" uib-typeahead="o for o in field.options | filter:$viewValue | limitTo:100" type="text" autocomplete="off">
+			<select ng-if="field.options != undefined && field.options.length <= 50" class="form-control" id="{{fieldName}}" name="{{fieldName}}" ng-model="vm.instance[fieldName]"    ng-options="o for o in field.options | filter:$viewValue | limitTo:100"></select>
+	    </div>
+	</div>
+
+    <div class="col-sm-offset-2 col-sm-10">
+        <button id="add" name="add" class="btn btn-primary" ng-disabled="{{vm.formId}}.$invalid" ng-click="vm.save()"><span class="glyphicon glyphicon-plus"></span> Set</button>
+    </div>
+</form>
