@@ -8,8 +8,8 @@ const url = require('url');
 var dbName = process.argv[2] || "crud";
 var webapp = process.argv[3] || './src/main/webapp';
 var portListen = process.argv[4] || 9443;
-var fileNamePrivateKey = process.argv[5] || "server.key";
-var fileNameCertificate = process.argv[6] || "server.crt";
+var fileNamePrivateKey = process.argv[5] || "key.pem";
+var fileNameCertificate = process.argv[6] || "cert.pem";
 
 function convertCaseUnderscoreToCamel(str, isFirstUpper) {
 	var ret = "";

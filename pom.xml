@@ -4,7 +4,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.domain</groupId>
   <artifactId>angular-es6-crud-nodejs-j2ee7</artifactId>
-  <version>0.0.1-SNAPSHOT</version>
+  <version>0.0.2-SNAPSHOT</version>
   <packaging>war</packaging>
   <name>WildFly Quickstarts: angular-es6-crud-nodejs-j2ee7</name>
   <description>A starter Java EE 7 webapp project for use on JBoss WildFly / WildFly, generated from the jboss-javaee6-webapp archetype</description>
@@ -17,12 +17,12 @@
     </license>
   </licenses>
   <properties>
-    <version.wildfly>8.2.0.Final</version.wildfly>
+    <version.wildfly>11.0.0.CR1</version.wildfly>
+    <version.wildfly.maven.plugin>1.2.1.Final</version.wildfly.maven.plugin>
     <version.jboss.bom>8.2.1.Final</version.jboss.bom>
     <maven.compiler.source>1.7</maven.compiler.source>
     <maven.compiler.target>1.7</maven.compiler.target>
     <version.war.plugin>2.6</version.war.plugin>
-    <version.wildfly.maven.plugin>1.0.2.Final</version.wildfly.maven.plugin>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <version.compiler.plugin>3.1</version.compiler.plugin>
     <version.org.eclipse.m2e>1.0.0</version.org.eclipse.m2e>
@@ -194,7 +194,8 @@
     <dependency>
     	<groupId>org.postgresql</groupId>
     	<artifactId>postgresql</artifactId>
-    	<version>9.4.1212</version>
+    	<version>42.1.4</version>
+		<scope>provided</scope>
     </dependency>
   </dependencies>
   <build>
