@@ -24,8 +24,6 @@ import java.util.jar.JarFile;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-//import com.google.gson.Gson;
-
 public class Utils {
 	// Message
 	// Copia o valor inteiro para um "char*" e preenche com zeros a esquerda
@@ -1089,7 +1087,6 @@ public class Utils {
 	}
 
 	public static Object loadObjectFromJson(Class<?> objectClass, InputStream inputStream) throws Exception {
-		// Gson gson = new Gson();
 		ObjectMapper mapper = new ObjectMapper();
 		byte[] buffer = new byte[100*1024];
 		int partialRead = 0;
@@ -1111,7 +1108,6 @@ public class Utils {
 		Object obj;
 
 		try {
-			// obj = gson.fromJson(inputStreamReader, objectClass);
 			obj = mapper.readValue(inputStreamReader, objectClass);
 		} catch (Exception e) {
 			String string = new String(buffer, 0, totalRead);
