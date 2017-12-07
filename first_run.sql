@@ -8,7 +8,7 @@ BEGIN
 	  		diff := diff * (-1.0);
 	  ELSEIF request_type = 2 THEN
 	  END IF;
-	  
+
 	  UPDATE request_payment SET balance = balance + diff
 	  	WHERE
 	  		company = _company AND
@@ -39,7 +39,7 @@ BEGIN
 				PERFORM account_balance_after_date(OLD.company, OLD.account, GREATEST(OLD.due_date, OLD.payday), OLD.id, OLD.value * (-1.0), request_rec.type);
 				RETURN OLD;
 		END IF;
-		
+
     RETURN NULL;
 END;
 $request_payment_change$ LANGUAGE plpgsql;
@@ -52,11 +52,11 @@ DECLARE
 		date_new timestamp;
 BEGIN
 		date_new = GREATEST(NEW.payday,NEW.due_date);
-		
+
 		FOR rec_payment IN SELECT id,GREATEST(payday,due_date) as date_ref,balance FROM request_payment WHERE company = NEW.company AND account = NEW.account AND GREATEST(payday,due_date) <= date_new ORDER BY date_ref desc,id desc LIMIT 1 LOOP
 			NEW.balance = rec_payment.balance;
 		END LOOP;
-	
+
 		RETURN NEW;
 END;
 $request_payment_before$ LANGUAGE plpgsql;
@@ -141,13 +141,13 @@ CREATE TABLE person (
     additional_data character varying(255),
     address character varying(100),
     city character varying(64),
-		cnpj_cpf varchar(18) unique,
-		credit numeric(9,3) DEFAULT 0.000,
+	cnpj_cpf varchar(18) unique,
+	credit numeric(9,3) DEFAULT 0.000,
     district character varying(64),
     email character varying(100),
     fax character varying(16),
-		ie_rg varchar(12) unique,
-		name varchar(100) unique not null,
+	ie_rg varchar(12) unique,
+	name varchar(100) unique not null,
     phone character varying(16),
     site character varying(100),
     uf character varying(2),
@@ -187,7 +187,7 @@ CREATE TABLE request (
     state integer,
     sum_value numeric(19,2),
     transport_value numeric(19,2),
-    type int DEFAULT 0 not null,-- compra,venda,conserto,fabricação,desmonte,orçamento,pedido               
+    type int DEFAULT 0 not null,-- compra,venda,conserto,fabricação,desmonte,orçamento,pedido
     PRIMARY KEY(company,id)
 );
 
@@ -241,7 +241,7 @@ CREATE TABLE request_type (
     name character varying(255) NOT NULL
 );
 
-CREATE TABLE IF NOT EXISTS stock (
+CREATE TABLE stock (
     company integer,
     id integer references product,
     count_in numeric(9,3) DEFAULT 0.000,
@@ -299,17 +299,17 @@ INSERT INTO crud_service (id, fields, filter_fields, is_on_line, menu, name, sav
 INSERT INTO crud_service (id, fields, filter_fields, is_on_line, menu, name, save_and_exit, template, title, orderby, order_by) VALUES (7, '{"id":{"type":"i","primaryKey":true,"hiden":true},"name":{},"description":{}}', 'id,name', NULL, 'config', 'requestType', true, NULL, 'Tipo de Requisição', NULL, NULL);
 INSERT INTO crud_service (id, fields, filter_fields, is_on_line, menu, name, save_and_exit, template, title, orderby, order_by) VALUES (8, '{"id":{"type":"i","primaryKey":true,"hiden":true},"type":{"type":"i","service":"requestType","defaultValue":"1"},"name":{},"stockAction":{"service":"stockAction"},"prev":{"type":"i","service":"requestState","defaultValue":"0"},"next":{"type":"i","service":"requestState","defaultValue":"0"},"description":{}}', 'id,type,name,stockAction', NULL, 'config', 'requestState', true, NULL, 'Situação da Requisição', NULL, NULL);
 
-INSERT INTO crud_service (id, fields, filter_fields, is_on_line, menu, name, save_and_exit, template, title, orderby, order_by) VALUES (9, '{"id":{"type":"i","primaryKey":true,"hiden":true},"barcode":{},"category":{"service":"category"},"name":{},"manufacturer":{},"model":{},"description":{},"additionalData":{},"unit":{},"clFiscal":{},"departament":{},"imageUrl":{},"weight":{"type":"n"},"taxIpi":{"type":"n"},"taxIcms":{"type":"n"},"taxIss":{"type":"n"}}', 'id,barcode,name', NULL, 'product', 'product', true, NULL, 'Produtos, Peças e Componentes', NULL, NULL);
+INSERT INTO crud_service (id, fields, filter_fields, is_on_line, menu, name, save_and_exit, template, title, orderby, order_by) VALUES (9, '{"id":{"type":"i","primaryKey":true,"hiden":true},"barcode":{},"category":{"service":"category"},"name":{},"manufacturer":{},"model":{},"description":{},"additionalData":{},"unit":{},"clFiscal":{},"departament":{},"imageUrl":{},"weight":{"type":"n3"},"taxIpi":{"type":"n3"},"taxIcms":{"type":"n3"},"taxIss":{"type":"n3"}}', 'id,barcode,name', NULL, 'product', 'product', true, NULL, 'Produtos, Peças e Componentes', NULL, NULL);
 INSERT INTO crud_service (id, fields, filter_fields, is_on_line, menu, name, save_and_exit, template, title, orderby, order_by) VALUES (13, '{"id":{"type":"i","primaryKey":true,"hiden":true},"name":{}}', 'id,name', NULL, 'config', 'stockAction', true, NULL, 'Ação sobre o Estoque', NULL, NULL);
 
-INSERT INTO crud_service (id, fields, filter_fields, is_on_line, menu, name, save_and_exit, template, title, orderby, order_by) VALUES (14, '{"id":{"type":"i","primaryKey":true,"hiden":true},"name":{},"phone":{},"cnpjCpf":{},"ieRg":{},"zip":{},"uf":{},"city":{},"district":{},"address":{},"fax":{},"email":{},"site":{},"additionalData":{},"credit":{"type":"n"}}', 'id,name,cnpjCpf,ieRg,phone', NULL, 'form', 'person', true, NULL, 'Cadastros de Clientes e Fornecedores', NULL, NULL);
+INSERT INTO crud_service (id, fields, filter_fields, is_on_line, menu, name, save_and_exit, template, title, orderby, order_by) VALUES (14, '{"id":{"type":"i","primaryKey":true,"hiden":true},"name":{},"phone":{},"cnpjCpf":{},"ieRg":{},"zip":{},"uf":{},"city":{},"district":{},"address":{},"fax":{},"email":{},"site":{},"additionalData":{},"credit":{"type":"n3"}}', 'id,name,cnpjCpf,ieRg,phone', NULL, 'form', 'person', true, NULL, 'Cadastros de Clientes e Fornecedores', NULL, NULL);
 INSERT INTO crud_service (id, fields, filter_fields, is_on_line, menu, name, save_and_exit, template, title, orderby, order_by) VALUES (15, '{"id":{"type":"i","primaryKey":true,"hiden":true},"company":{"type":"i","primaryKey":true,"service":"crudCompany"},"description":{},"bank":{},"agency":{},"account":{}}', 'id,description', NULL, 'config', 'account', true, NULL, 'Contas Bancárias', NULL, NULL);
 
 INSERT INTO crud_service (id, fields, filter_fields, is_on_line, menu, name, save_and_exit, template, title, orderby, order_by) VALUES (17, '{"id":{"type":"i","hiden":true,"primaryKey":true},"company":{"type":"i","hiden":true,"primaryKey":true},"type":{"type":"i","hiden":false,"required":true,"readOnly":true,"service":"requestType"},"state":{"type":"i","required":true,"service":"requestState"},"person":{"type":"i","required":true,"service":"person"},"date":{"type":"datetime-local","required":true},"additionalData":{},"productsValue":{"defaultValue":"0.0","readOnly":true},"servicesValue":{"defaultValue":"0.0","readOnly":true},"transportValue":{"defaultValue":"0.0","readOnly":true},"sumValue":{"defaultValue":"0.0","readOnly":true},"paymentsValue":{"defaultValue":"0.0","readOnly":true}}', 'id,person,date', NULL, 'form', 'request', false, NULL, 'Requisições de Entrada e Saída', NULL, 'date desc,id desc');
-INSERT INTO crud_service (id, fields, filter_fields, is_on_line, menu, name, save_and_exit, template, title, orderby, order_by) VALUES (19, '{"id":{"type":"i","hiden":true,"primaryKey":true},"company":{"type":"i","hiden":true,"primaryKey":true},"request":{"type":"i","service":"request"},"product":{"type":"i","required":true,"service":"product"},"quantity":{"type":"n3","defaultValue":"1.000","required":true},"value":{"type":"n3","defaultValue":"0.0","required":true},"valueItem":{"type":"n3","defaultValue":"0.0","required":true,"readOnly":true},"serial":{},"weight":{"type":"n3","hiden":true},"containers":{"type":"i","hiden":true},"weightFinal":{"type":"n3","hiden":true},"space":{"type":"n","hiden":true},"taxIpi":{"type":"n","hiden":true},"taxIcms":{"type":"n","hiden":true},"taxUpperLower":{"type":"n","hiden":true}}', 'id,product,serial,quantity,value', NULL, 'report', 'requestProduct', true, NULL, 'Entrada e Saída de Produtos', NULL, NULL);
+INSERT INTO crud_service (id, fields, filter_fields, is_on_line, menu, name, save_and_exit, template, title, orderby, order_by) VALUES (19, '{"id":{"type":"i","hiden":true,"primaryKey":true},"company":{"type":"i","hiden":true,"primaryKey":true},"request":{"type":"i","service":"request"},"product":{"type":"i","required":true,"service":"product"},"quantity":{"type":"n3","defaultValue":"1.000","required":true},"value":{"type":"n3","defaultValue":"0.0","required":true},"valueItem":{"type":"n3","defaultValue":"0.0","required":true,"readOnly":true},"serial":{},"weight":{"type":"n3","hiden":true},"containers":{"type":"i","hiden":true},"weightFinal":{"type":"n3","hiden":true},"space":{"type":"n3","hiden":true},"taxIpi":{"type":"n3","hiden":true},"taxIcms":{"type":"n3","hiden":true},"taxUpperLower":{"type":"n3","hiden":true}}', 'id,product,serial,quantity,value', NULL, 'report', 'requestProduct', true, NULL, 'Entrada e Saída de Produtos', NULL, NULL);
 INSERT INTO crud_service (id, fields, filter_fields, is_on_line, menu, name, save_and_exit, template, title, orderby, order_by) VALUES (22, '{"id":{"type":"i","hiden":true,"primaryKey":true},"company":{"type":"i","hiden":true,"primaryKey":true},"request":{"type":"i","service":"request"},"type":{"type":"i","required":true,"service":"paymentType"},"account":{"type":"i","required":true,"service":"account"},"number":{},"value":{"type":"n2","required":true},"dueDate":{"type":"datetime-local","required":true},"payday":{"type":"datetime-local"},"balance":{"type":"n2","required":false,"readOnly":true}}', 'id,type,account,number', NULL, 'report', 'requestPayment', true, NULL, 'Pagamentos', NULL, 'due_date,id');
 
-INSERT INTO crud_service (id, fields, filter_fields, is_on_line, menu, name, save_and_exit, template, title, orderby, order_by) VALUES (23, '{"id":{"type":"i","primaryKey":true,"hiden":true,"service":"product"},"company":{"type":"i","primaryKey":true,"hiden":true},"value":{"type":"n"},"stock":{"type":"n"},"stockSerials":{},"stockDefault":{"type":"n"},"stockMinimal":{"type":"n"},"sumValueStock":{"type":"n"},"reservedOut":{"type":"n"},"reservedIn":{"type":"n"},"estimedOut":{"type":"n"},"marginSale":{"type":"n"},"marginWholesale":{"type":"n"},"estimedValue":{"type":"n"},"valueWholesale":{"type":"n"},"countIn":{"type":"n"},"countOut":{"type":"n"},"sumValueIn":{"type":"n"},"sumValueOut":{"type":"n"}}', 'id', NULL, 'stock', 'stock', true, NULL, 'Estoque de Produtos', NULL, NULL);
+INSERT INTO crud_service (id, fields, filter_fields, is_on_line, menu, name, save_and_exit, template, title, orderby, order_by) VALUES (23, '{"id":{"type":"i","primaryKey":true,"hiden":true,"service":"product"},"company":{"type":"i","primaryKey":true,"hiden":true},"value":{"type":"n3"},"stock":{"type":"n3"},"stockSerials":{},"stockDefault":{"type":"n3"},"stockMinimal":{"type":"n3"},"sumValueStock":{"type":"n3"},"reservedOut":{"type":"n3"},"reservedIn":{"type":"n3"},"estimedOut":{"type":"n3"},"marginSale":{"type":"n3"},"marginWholesale":{"type":"n3"},"estimedValue":{"type":"n3"},"valueWholesale":{"type":"n3"},"countIn":{"type":"n3"},"countOut":{"type":"n3"},"sumValueIn":{"type":"n3"},"sumValueOut":{"type":"n3"}}', 'id', NULL, 'stock', 'stock', true, NULL, 'Estoque de Produtos', NULL, NULL);
 INSERT INTO crud_service (id, fields, filter_fields, is_on_line, menu, name, save_and_exit, template, title, orderby, order_by) VALUES (26, '{"id":{"type":"i","primaryKey":true,"hiden":true},"name":{"type":"s","required":true}}', 'id,name', NULL, 'admin', 'category', false, NULL, 'Controle de Categorias de Produtos e Serviços', NULL, NULL);
 INSERT INTO crud_service (id, fields, filter_fields, is_on_line, menu, name, save_and_exit, template, title, orderby, order_by) VALUES (27, '{"id":{"type":"i","primaryKey":true,"hiden":true},"company":{"primaryKey":true,"service":"crudCompany","required":true,"title":"Categorias Vinculadas","isClonable":true},"category":{"service":"category","required":true}}', NULL, NULL, 'admin', 'categoryCompany', true, NULL, 'Categorias de cada Empresa', NULL, NULL);
 
