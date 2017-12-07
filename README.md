@@ -1,14 +1,33 @@
 # angular-es6-crud-nodejs-j2ee7
 
-CRUD Web Application with Angular + ES6 + Bootstrap CSS in browser and Nodejs or J2EE7 server based
+CRUD Web Application with Angular + ES6 + Bootstrap CSS in browser and NodeJs or J2EE7 server based
 
-You need NodeJs or WildFly installed, PostgreSql server with database named `crud` created.
+You need NodeJs or WildFly installed, PostgreSql server.
+
+## First Step
+
+Clone this repository and open terminal, changing path to local repository folder.
+
+## PostgreSql setup
+
+execute psql terminal :
+
+`$sudo su postgres -c psql`
+
+in psql terminal execute configurations commands :
+
+`CREATE USER development LOGIN PASSWORD '123456';`
+`CREATE DATABASE crud WITH OWNER development;`
+
+exit psql terminal and import default configuration data with command :
+
+`psql -U development -h localhost crud < first_run.sql;`
 
 ## NodeJs based server
 
 ### Build
 
-Clone this repository and then `npm install` to download the required dependencies.
+then `npm install` to download the required dependencies.
 
 ### Generate Node HTTPS related private key and self-signed certificate
 
