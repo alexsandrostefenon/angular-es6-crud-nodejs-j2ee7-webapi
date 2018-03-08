@@ -2,18 +2,23 @@ package org.domain.crud.entity;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.SequenceGenerator;
 
 @Entity
 public class Category {
+	@Id
+	@SequenceGenerator(name="category_id_seq", sequenceName="category_id_seq", allocationSize=1)
+	@GeneratedValue(strategy=GenerationType.SEQUENCE, generator="category_id_seq")
+	@Column(columnDefinition="serial")
 	private Integer id;
 	private String name;
 
 	public Category() {
 	}
 
-	@Id
-	@Column(name = "id", unique = true, nullable = false)
 	public Integer getId() {
 		return this.id;
 	}

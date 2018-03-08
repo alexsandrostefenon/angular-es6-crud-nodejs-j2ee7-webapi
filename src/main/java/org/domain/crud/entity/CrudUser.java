@@ -4,8 +4,11 @@ import javax.json.JsonStructure;
 import javax.persistence.Column;
 import javax.persistence.Convert;
 import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.IdClass;
+import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import javax.xml.bind.annotation.XmlRootElement;
 
@@ -19,7 +22,11 @@ public class CrudUser {
 	 *
 	 */
 	@Id private Integer company;
-	@Id private Integer id;
+	@Id
+	@SequenceGenerator(name="crud_user_id_seq", sequenceName="crud_user_id_seq", allocationSize=1)
+	@GeneratedValue(strategy=GenerationType.SEQUENCE, generator="crud_user_id_seq")
+	@Column(columnDefinition="serial")
+	private Integer id;
 	private String name;
 	private String password;
 	private String roles;
@@ -36,10 +43,6 @@ public class CrudUser {
 	private String authctoken;
 
 	public CrudUser() {
-	}
-
-	public CrudUser(int id) {
-		this.id = id;
 	}
 
 	public Integer getId() {

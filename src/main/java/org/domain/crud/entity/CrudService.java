@@ -1,9 +1,16 @@
 package org.domain.crud.entity;
 
+import java.util.ArrayList;
+
+import javax.json.JsonObject;
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
+import javax.persistence.Transient;
 import javax.xml.bind.annotation.XmlRootElement;
 
 import org.domain.crud.admin.Utils;
@@ -21,7 +28,9 @@ public class CrudService implements java.io.Serializable {
 	private static final long serialVersionUID = -1919519756231188092L;
 
 	@Id
-	@Column(name = "id", unique = true, nullable = false)
+	@SequenceGenerator(name="crud_service_id_seq", sequenceName="crud_service_id_seq", allocationSize=1)
+	@GeneratedValue(strategy=GenerationType.SEQUENCE, generator="crud_service_id_seq")
+	@Column(columnDefinition="serial")
 	private Integer id;
 
 	@Column(unique=true)
@@ -47,6 +56,9 @@ public class CrudService implements java.io.Serializable {
 	private Boolean saveAndExit = true;
 
 	private String title;
+
+	@Transient
+	private JsonObject jsonFields;
 
 	private static String generateFieldsStr(String name) {
 		String domain = CrudService.class.getName();
@@ -171,6 +183,24 @@ public class CrudService implements java.io.Serializable {
 
 	public void setOrderBy(String orderBy) {
 		this.orderBy = orderBy;
+	}
+
+	public void setJsonFields(JsonObject jsonFields) {
+		this.jsonFields = jsonFields;
+	}
+
+	public String[] extractPrimaryKeys() {
+		ArrayList<String> primaryKeys = new ArrayList<String>();
+
+		for (String key : this.jsonFields.keySet()) {
+			JsonObject field = this.jsonFields.getJsonObject(key);
+			// verfica a permissao de aviso de alterações via websocket
+			if (field.getBoolean("primaryKey", false) == true) {
+				primaryKeys.add(key);
+			}
+		}
+
+		return primaryKeys.toArray(new String[] {});
 	}
 
 }

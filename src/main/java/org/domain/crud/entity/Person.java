@@ -1,10 +1,14 @@
 package org.domain.crud.entity;
 
 import java.math.BigDecimal;
+
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.IdClass;
+import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 
 @IdClass(CompanyIdPK.class)
@@ -18,7 +22,9 @@ public class Person implements java.io.Serializable {
 	private static final long serialVersionUID = -5971740408816408928L;
 	@Id private Integer company;
 	@Id
-	@Column(columnDefinition = "serial")
+	@SequenceGenerator(name="person_id_seq", sequenceName="person_id_seq", allocationSize=1)
+	@GeneratedValue(strategy=GenerationType.SEQUENCE, generator="person_id_seq")
+	@Column(columnDefinition="serial")
 	private Integer id;
 	@Column(name = "name", unique = true, nullable = false, length = 100)
 	private String name;

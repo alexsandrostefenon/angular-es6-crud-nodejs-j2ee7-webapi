@@ -3,16 +3,18 @@ package org.domain.crud.entity;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.IdClass;
+import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import javax.persistence.UniqueConstraint;
 import javax.xml.bind.annotation.XmlRootElement;
 
 @IdClass(CompanyIdPK.class)
 @Entity
-@Table(name = "account", uniqueConstraints = @UniqueConstraint(columnNames = {
-		"bank", "agency", "account"}))
+@Table(name = "account", uniqueConstraints = @UniqueConstraint(columnNames = {"bank", "agency", "account"}))
 @XmlRootElement
 public class Account implements java.io.Serializable {
 
@@ -25,6 +27,9 @@ public class Account implements java.io.Serializable {
 	private Integer company;
 	
 	@Id
+	@SequenceGenerator(name="account_id_seq", sequenceName="account_id_seq", allocationSize=1)
+	@GeneratedValue(strategy=GenerationType.SEQUENCE, generator="account_id_seq")
+	@Column(columnDefinition="serial")
 	private Integer id;
 	
 	private String bank;

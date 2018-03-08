@@ -1,26 +1,38 @@
 package org.domain.crud.admin;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringReader;
 import java.security.Principal;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
+import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.logging.Logger;
 
+import javax.annotation.Resource;
 import javax.inject.Inject;
 import javax.json.Json;
 import javax.json.JsonObject;
-import javax.json.JsonReader;
+import javax.json.JsonObjectBuilder;
 import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
-import javax.persistence.Query;
-import javax.persistence.TypedQuery;
 import javax.servlet.http.HttpServletRequest;
 import javax.transaction.Transactional;
+import javax.transaction.UserTransaction;
+import javax.websocket.OnClose;
+import javax.websocket.OnError;
+import javax.websocket.OnMessage;
+import javax.websocket.Session;
+import javax.websocket.server.ServerEndpoint;
 import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.container.ContainerRequestFilter;
 import javax.ws.rs.container.ContainerResponseContext;
@@ -34,11 +46,13 @@ import javax.ws.rs.core.SecurityContext;
 import javax.ws.rs.core.UriInfo;
 import javax.ws.rs.ext.Provider;
 
+import org.domain.crud.admin.Utils.QueryMap;
 import org.domain.crud.entity.CategoryCompany;
 import org.domain.crud.entity.CrudCompany;
 import org.domain.crud.entity.CrudService;
 import org.domain.crud.entity.CrudUser;
 
+@ServerEndpoint(value = "/websocket")
 @Provider
 @PreMatching
 @Transactional
@@ -51,83 +65,72 @@ public class RequestFilter implements ContainerRequestFilter, ContainerResponseF
 	@Context
 	HttpServletRequest httpRequest;
 
+	@Resource
+	private UserTransaction userTransaction;
+
 	@PersistenceContext(unitName = "primary")
 	private EntityManager entityManager;
 
 	@Inject
-	private WebSocket webSocket;
-
-	static private CrudCompany getCompany(EntityManager entityManager, Integer companyId) {
-		TypedQuery<CrudCompany> query = entityManager
-				.createQuery("FROM CrudCompany o WHERE o.id = :company", CrudCompany.class);
-		query.setParameter("company", companyId);
-		CrudCompany company = query.getSingleResult();
-		return company;
-	}
-
-	static private CategoryCompany checkCategory(EntityManager entityManager, int company, int category) {
-		TypedQuery<CategoryCompany> query = entityManager
-				.createQuery("FROM CategoryCompany o WHERE o.company = :company and o.category = :category", CategoryCompany.class);
-		query.setParameter("company", company);
-		query.setParameter("category", category);
-		CategoryCompany ret = query.getSingleResult();
-		return ret;
-	}
+	private RequestFilter webSocket;
 
 	public class LoginResponse implements java.security.Principal {
 		private CrudUser user;
 		private String title;
-		private Map<String, CrudService> mapServices = new HashMap<String, CrudService>(100);
 		private List<CrudService> crudServices;
 		private List<String> websocketServices;
+		private List<String> servicesNames;
+		private List<Integer> categories;
+
+		public CompletableFuture<Void> load() {
+			return Utils.findOne(entityManager, CrudCompany.class, Utils.QueryMap.create().add("id", this.user.getCompany()))
+			.exceptionally(error -> {
+				throw new RuntimeException("don't get user company : " + error.getMessage());
+			})
+			.thenCompose(company -> {
+				this.setTitle(company.getName() + " - " + user.getName());
+				// TODO : código temporário para caber o na tela do celular
+				this.setTitle(user.getName());
+				return Utils.find(entityManager, CrudService.class, Utils.QueryMap.create().add("name", this.servicesNames), new String[] {"id"}, null, null)
+				.exceptionally(error -> {
+					throw new RuntimeException("don't get user services : " + error.getMessage());
+				})
+				.thenCompose(services -> {
+					this.crudServices = services;
+					// TODO : temporary code, until hibernate persist postgresql jsonb type
+					for (CrudService service :this.crudServices) {
+						service.setJsonFields(Json.createReader(new StringReader(service.getFields())).readObject());
+					}
+
+					return Utils.find(entityManager, CategoryCompany.class, Utils.QueryMap.create().add("company", this.user.getCompany()), null, null, null)
+					.exceptionally(error -> {
+						throw new RuntimeException("don't match request category for user company : " + error.getMessage());
+					})
+					.thenAccept(categories -> {
+						this.categories = new ArrayList<Integer>(categories.size());
+
+						for (CategoryCompany categoryCompany : categories) {
+							this.categories.add(categoryCompany.getId());
+						}
+					});
+				});
+			});
+		}
 
 		private LoginResponse(CrudUser user) {
-			this.setUser(user);
-			CrudCompany company = RequestFilter.getCompany(entityManager, user.getCompany());
-			this.setTitle(company.getName() + " - " + user.getName());
-			// TODO : código temporário para caber o na tela do celular
-			this.setTitle(user.getName());
-			this.websocketServices = new ArrayList<String>(256);
-			StringBuilder services = new StringBuilder(1024);
-
-			{
-				JsonReader jsonReader = Json.createReader(new StringReader(user.getRoles()));
-				JsonObject json = jsonReader.readObject();
-
-				for (String key : json.keySet()) {
-					services.append('\'');
-					services.append(key);
-					services.append('\'');
-					services.append(',');
-
-					JsonObject jsonAccess = json.getJsonObject(key);
-					String fieldValue = jsonAccess.getString("read", "true");
-					// verfica a permissao de aviso de alterações via websocket
-					if (fieldValue.equals("true")) {
-						this.websocketServices.add(key);
-					}
-				}
-
-				if (services.length() > 0) {
-					services.setLength(services.length() - 1);
-				}
-			}
-
-			String sql = String.format("SELECT o FROM CrudService o WHERE o.name in (%s) ORDER BY o.id", services);
-			TypedQuery<CrudService> query = entityManager.createQuery(sql, CrudService.class);
-			this.crudServices = query.getResultList();
-
-			for (CrudService crudService : this.crudServices) {
-				this.mapServices.put(Utils.convertCaseUnderscoreToCamel(crudService.getName(), true), crudService);
-			}
-		}
-
-		public CrudUser getUser() {
-			return user;
-		}
-
-		public void setUser(CrudUser user) {
 			this.user = user;
+			this.servicesNames = new ArrayList<String>(256);
+			this.websocketServices = new ArrayList<String>(256);
+			JsonObject roles = Json.createReader(new StringReader(user.getRoles())).readObject();
+
+			for (String key : roles.keySet()) {
+				this.servicesNames.add(key);
+				JsonObject jsonAccess = roles.getJsonObject(key);
+				// verfica a permissao de aviso de alterações via websocket
+				if (jsonAccess.getBoolean("read") == true) {
+					this.websocketServices.add(key);
+				}
+			}
 		}
 
 		public List<String> getWebsocketServices() {
@@ -151,176 +154,349 @@ public class RequestFilter implements ContainerRequestFilter, ContainerResponseF
 			return this.user.getName();
 		}
 
-		public Map<String, CrudService> getMapServices() {
-			return mapServices;
+		public CrudUser getUser() {
+			return user;
 		}
 
 		public List<CrudService> getCrudServices() {
-			return crudServices;
+			return this.crudServices;
 		}
-	}
-
-	public class ImplSecurityContext implements SecurityContext {
-
-	    private LoginResponse loginResponse;
-
-	    public ImplSecurityContext(LoginResponse loginResponse) {
-	    	this.loginResponse = loginResponse;
-	    }
-
-	    /**
-	     * User entity implements Principal
-	     * @return user
-	     */
-	    @Override
-	    public Principal getUserPrincipal() {
-	        return this.loginResponse;
-	    }
-
-	    @Override
-	    public boolean isUserInRole(String role) {
-	        return false;
-	    }
-
-	    @Override
-	    public boolean isSecure() {
-	        return false;
-	    }
-
-	    @Override
-	    public String getAuthenticationScheme() {
-	        return SecurityContext.BASIC_AUTH;
-	    }
 
 	}
+	// private to create,update,delete,read
+	static private Response checkObjectAccess(LoginResponse login, EntityManager entityManager, Object obj) {
+		Response response = null;
+		Integer userCompany = login.user.getCompany();
 
-	private Response authenticateByUserAndPassword(ContainerRequestContext requestCtx, String ip) {
-		Response response;
-		JsonReader jsonReader = Json.createReader(requestCtx.getEntityStream());
-		JsonObject json = jsonReader.readObject();
-		String userId = json.getString("userId");
-		String password = json.getString("password");
+		if (userCompany > 1 && Utils.haveField(obj.getClass(), "company")) {
+			Integer objCompany = (Integer) Utils.readField(obj, "company");
 
-		if (userId != null && userId.length() > 0 && password != null && password.length() >= 4) {
-			TypedQuery<CrudUser> query = entityManager.createQuery(
-					"SELECT u FROM CrudUser u WHERE u.name = :name and u.password = :password", CrudUser.class);
-			query.setParameter("name", userId);
-			query.setParameter("password", password);
-			CrudUser user = null;
-
-			try {
-				user = query.getSingleResult();
-			} catch (NoResultException nre) {
-				log.warning("mismatched user and password : " + userId);
-			} catch (Exception e) {
-				log.warning("error in user and password matching : " + e.getMessage());
-				e.printStackTrace();
+			if (objCompany == null) {
+				Utils.writeField(obj, "company", userCompany);
+				objCompany = userCompany;
 			}
 
-			if (user != null) {
-				// console.log("[INFO] Token is :" + response.authctoken);
-				String token = UUID.randomUUID().toString();
-				user.setAuthctoken(token);
-				user.setIp(ip);
-				this.entityManager.merge(user);
-				LoginResponse loginResponse = new LoginResponse(user);
-				RequestFilter.logins.put(token, loginResponse);
-				response = Response.ok(loginResponse, MediaType.APPLICATION_JSON_TYPE).build();
-				String msg = String.format(
-						"[authenticateByUserAndPassword] Sucessful login : user = %s, roles = %s, token = %s",
-						user.getName(), user.getRoles(), user.getAuthctoken());
-				log.info(msg);
+			if (objCompany == userCompany) {
+				if (Utils.haveField(obj.getClass(), "category")) {
+					Integer category = (Integer) Utils.readField(obj, "category");
+
+					if (login.categories.indexOf(category) < 0) {
+						response = Response.status(Response.Status.UNAUTHORIZED).entity("unauthorized object category").build();
+					}
+				}
 			} else {
-				response = Response.status(Response.Status.UNAUTHORIZED).entity("mismatched user and password").build();
+				response = Response.status(Response.Status.UNAUTHORIZED).entity("unauthorized object company").build();
 			}
-		} else {
-			response = Response.status(Response.Status.UNAUTHORIZED).entity("invalid user or password data").build();
-			log.warning("invalid user or password data");
 		}
 
 		return response;
 	}
+	// public
+	static public CompletableFuture<Response> processCreate(Principal login, EntityManager entityManager, RequestFilter webSocket, Object obj) {
+		Response response = checkObjectAccess((LoginResponse) login, entityManager, obj);
 
-	private static String authorization(CrudUser user, String resource, String access) {
-		String msgErr;
-		String roles = user.getRoles();
+		if (response != null) CompletableFuture.completedFuture(response);
 
-		if (roles != null) {
-			JsonReader jsonReader = Json.createReader(new StringReader(user.getRoles()));
-			JsonObject json = jsonReader.readObject();
-			String role = Utils.convertCaseUnderscoreToCamel(resource, false);
+		return Utils.insert(entityManager, obj).thenApply(newObj -> {
+			webSocket.notify(newObj, false);
+			return Response.ok(newObj, MediaType.APPLICATION_JSON).build();
+		});
+	}
+	// public
+	static public <T> CompletableFuture<T> getObject(LoginResponse login, UriInfo uriInfo, EntityManager entityManager, Class<T> entityClass) {
+		MultivaluedMap<String, String> queryParam = uriInfo.getQueryParameters();
+		Utils.QueryMap fields = Utils.QueryMap.create();
 
-			if (Utils.findInSet(json.keySet(), role) == true) {
-				JsonObject jsonAccess = json.getJsonObject(role);
-				String fieldName = access;
-				String fieldValue = jsonAccess.getString(fieldName, "true");
-				// verfica a permissao de acesso
-				if (fieldValue.equals("true")) {
-					msgErr = null;
-					String msg = String.format(
-							"[authorization] Sucessful authorization : path: = %s, user = %s, roles = %s, token = %s",
-							resource, user.getName(), user.getRoles(), user.getAuthctoken());
-					log.info(msg);
-				} else {
-					msgErr = "unauthorized access";
-				}
-			} else {
-				msgErr = "unauthorized resource";
-			}
-		} else {
-			msgErr = "report to admin check";
+		if (Utils.haveField(entityClass, "id")) {
+			Integer id = Utils.parseInt(queryParam.getFirst("id"));
+			fields.add("id", id);
 		}
 
-		return msgErr;
+		Integer company = login.user.getCompany();
+
+		if (Utils.haveField(entityClass, "company")) {
+			if (company == 1) {
+				// se for admin, direciona a busca para a empresa informada
+				company = Utils.parseInt(queryParam.getFirst("company"));
+			}
+
+			fields.add("company", company);
+		} else if (company != 1 && Utils.haveField(entityClass, "category")) {
+			// se não for admin, limita os resultados para as categorias vinculadas a empresa do usuário
+			fields.add("category", login.categories);
+		}
+
+		return Utils.findOne(entityManager, entityClass, fields)
+		.exceptionally(error -> {
+			throw new RuntimeException("fail to find object with company, category and query parameters related : " + error.getMessage());
+		});
+	}
+	// public processRead
+	static public <T> CompletableFuture<Response> processRead(LoginResponse login, UriInfo uriInfo, EntityManager entityManager, Class<T> objectClass) {
+		return RequestFilter.getObject(login, uriInfo, entityManager, objectClass).thenApply(obj -> Response.ok(obj, MediaType.APPLICATION_JSON).build());
+	}
+	// public processUpdate
+	static public CompletableFuture<Response> processUpdate(LoginResponse login, UriInfo uriInfo, EntityManager entityManager, RequestFilter webSocket, Object obj) {
+		return RequestFilter.getObject(login, uriInfo, entityManager, obj.getClass()).thenCompose(oldObj -> {
+			Response response = checkObjectAccess(login, entityManager, obj);
+
+			if (response != null) return CompletableFuture.completedFuture(response);
+
+			if (Utils.haveField(obj.getClass(), "id")) {
+				Integer oldId = (Integer) Utils.readField(oldObj, "id");
+				Integer newId = (Integer) Utils.readField(obj, "id");
+
+				if (newId == null || newId.intValue() != oldId.intValue()) {
+					return CompletableFuture.completedFuture(Response.status(Response.Status.UNAUTHORIZED).entity("changed id").build());
+				}
+			}
+
+			return Utils.update(null, entityManager, obj).thenApply(newObj -> {
+				webSocket.notify(newObj, false);
+				return Response.ok(newObj, MediaType.APPLICATION_JSON).build();
+			});
+		});
+	}
+	// public processDelete
+	static public CompletableFuture<Response> processDelete(LoginResponse login, UriInfo uriInfo, EntityManager entityManager, RequestFilter webSocket, Class<?> objectClass) {
+		return RequestFilter.getObject(login, uriInfo, entityManager, objectClass).thenCompose(obj -> {
+			return Utils.deleteOne(entityManager, obj).thenApply((arg) -> {
+				webSocket.notify(obj, true);
+				return Response.ok().build();
+			});
+		});
+	}
+	// public
+	static public <T> CompletableFuture<Response> processQuery(LoginResponse login, UriInfo uriInfo, EntityManager entityManager, Class<T> entityClass) {
+		MultivaluedMap<String, String> queryParam = uriInfo.getQueryParameters();
+		Utils.QueryMap fields = Utils.QueryMap.create();
+		Integer company = login.user.getCompany();
+
+		if (company != 1) {
+			if (Utils.haveField(entityClass, "company")) {
+				fields.add("company", company);
+			} else if (Utils.haveField(entityClass, "category")) {
+				// se não for admin, limita os resultados para as categorias vinculadas a empresa do usuário
+				fields.add("category", login.categories);
+			}
+		}
+
+		String serviceName = Utils.convertCaseUnderscoreToCamel(entityClass.getSimpleName(), false);
+		CrudService service = login.getCrudServices().stream().filter(item -> item.getName().equals(serviceName)).findFirst().get();
+		String[] orderBy;
+
+		if (service.getOrderBy() != null) {
+			orderBy = service.getOrderBy().split(",");
+		} else {
+			orderBy = service.extractPrimaryKeys();
+		}
+
+		Integer startPosition = Utils.parseInt(queryParam.getFirst("start"));
+		Integer maxResult = Utils.parseInt(queryParam.getFirst("max"));
+		return Utils.find(entityManager, entityClass, fields, orderBy, startPosition, maxResult).thenApply(results -> Response.ok(results, MediaType.APPLICATION_JSON).build());
 	}
 
-	private Response processRequest(ContainerRequestContext requestContext, String ip, String authorization, String resource, String access) {
-		Response response;
+	private void processRequest(ContainerRequestContext requestContext, String ip, String resource, final String access) {
+		Supplier<Response> crudProcess = () -> {
+				String className = Utils.convertCaseUnderscoreToCamel(resource, true);
+				Class<?> restClass;
+				String domain = this.getClass().getName();
+				domain = domain.substring(0, domain.lastIndexOf(".admin"));
 
-		if (authorization != null && authorization.startsWith("Token ")) {
-			String token = authorization.substring(6);
-			LoginResponse login = RequestFilter.getLogin(token);
+				try {
+					restClass = Class.forName(domain + ".rest." + className + "Endpoint");
+				} catch (ClassNotFoundException e) {
+					restClass = null;
+				}
 
-			if (login != null) {
-				String msgErr = RequestFilter.authorization(login.getUser(), resource, access);
+				if (access.equals("create") && Utils.haveMethodName(restClass, "create")) {
+					return null;
+				} else if (access.equals("read") && Utils.haveMethodName(restClass, "read")) {
+					return null;
+				} else if (access.equals("query") && Utils.haveMethodName(restClass, "query")) {
+					return null;
+				} else if (access.equals("delete") && Utils.haveMethodName(restClass, "remove")) {
+					return null;
+				} else if (access.equals("update") && Utils.haveMethodName(restClass, "update")) {
+					return null;
+				}
 
-				if (msgErr == null) {
+				Class<?> objectClass;
+
+				try {
+					objectClass = Class.forName(domain + ".entity." + className);
+				} catch (ClassNotFoundException e) {
+					return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(e.getMessage()).build();
+				}
+
+				SecurityContext securiryContext = requestContext.getSecurityContext();
+				LoginResponse login = (LoginResponse) securiryContext.getUserPrincipal();
+				UriInfo uriInfo = requestContext.getUriInfo();
+				Object obj = null;
+
+				if (access.equals("create") || access.equals("update")) {
 					try {
-						SecurityContext securityContextOld = requestContext.getSecurityContext();
-
-						if (securityContextOld == null || securityContextOld.getUserPrincipal() == null) {
-							ImplSecurityContext securityContext = new ImplSecurityContext(login);
-							requestContext.setSecurityContext(securityContext);
-							response = crudProcess(requestContext, resource, access);
-						} else {
-							response = Response.status(Response.Status.BAD_REQUEST).entity("SecurityContext").build();
-						}
+						InputStream inputStream = requestContext.getEntityStream();
+						obj = Utils.loadObjectFromJson(objectClass, inputStream);
 					} catch (Exception e) {
-						System.err.println(e.getMessage());
-						e.printStackTrace();
-						response = Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
+						return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(e.getMessage()).build();
+					}
+				}
+
+				CompletableFuture<Response> cf;
+
+				if (access.equals("create")) {
+					cf = RequestFilter.processCreate(login, RequestFilter.this.entityManager, RequestFilter.this.webSocket, obj);
+				} else if (access.equals("update")) {
+					cf = RequestFilter.processUpdate(login, uriInfo, RequestFilter.this.entityManager, RequestFilter.this.webSocket, obj);
+				} else if (access.equals("delete")) {
+					cf = RequestFilter.processDelete(login, uriInfo, RequestFilter.this.entityManager, RequestFilter.this.webSocket, objectClass);
+				} else if (access.equals("read")) {
+					cf = RequestFilter.processRead(login, uriInfo, RequestFilter.this.entityManager, objectClass);
+				} else if (access.equals("query")) {
+					cf = RequestFilter.processQuery(login, uriInfo, RequestFilter.this.entityManager, objectClass);
+				} else {
+					return null;
+				}
+
+				return cf.exceptionally(error -> Response.status(Response.Status.BAD_REQUEST).entity(error.getMessage()).build()).join();
+		};
+
+		Function<CrudUser, String> authorization = user -> {
+				String msgErr;
+				String roles = user.getRoles();
+
+				if (roles != null) {
+					JsonObject json = Json.createReader(new StringReader(roles)).readObject();
+					String serviceName = Utils.convertCaseUnderscoreToCamel(resource, false);
+
+					if (Utils.findInSet(json.keySet(), serviceName) == true) {
+						JsonObject serviceAuth = json.getJsonObject(serviceName);
+						// verfica a permissao de acesso
+						if (serviceAuth.getString(access, "true").equals("true")) {
+							msgErr = null;
+							log.info(String.format("[authorization] Sucessful authorization : path: = %s, user = %s, roles = %s, token = %s", resource, user.getName(), roles, user.getAuthctoken()));
+						} else {
+							msgErr = "unauthorized access";
+						}
+					} else {
+						msgErr = "unauthorized resource";
 					}
 				} else {
-					response = Response.status(Response.Status.UNAUTHORIZED).entity(msgErr).build();
-					log.warning(String.format("user : %s - path : %s - msgErr : %s", login.getUser().getName(), resource, msgErr));
+					msgErr = "report to admin check";
+				}
+
+				return msgErr;
+		};
+
+		Supplier<Response> authWithToken = () -> {
+			Response response;
+			// headers['Authorization'] = 'Token ' + token;
+			String authorizationHeader = requestContext.getHeaderString("Authorization");
+			log.info("authorization header : " + authorizationHeader);
+
+			if (authorizationHeader != null && authorizationHeader.startsWith("Token ")) {
+				String token = authorizationHeader.substring(6);
+				LoginResponse login = RequestFilter.getLogin(token);
+
+				if (login != null) {
+					String msgErr = authorization.apply(login.user);
+
+					if (msgErr == null) {
+						try {
+							SecurityContext securityContextOld = requestContext.getSecurityContext();
+
+							if (securityContextOld == null || securityContextOld.getUserPrincipal() == null) {
+								class ImplSecurityContext implements SecurityContext {
+
+								    private LoginResponse loginResponse;
+
+								    public ImplSecurityContext(LoginResponse loginResponse) {
+								    	this.loginResponse = loginResponse;
+								    }
+
+								    @Override
+								    public Principal getUserPrincipal() {
+								        return this.loginResponse;
+								    }
+
+								    @Override
+								    public boolean isUserInRole(String role) {
+								        return false;
+								    }
+
+								    @Override
+								    public boolean isSecure() {
+								        return false;
+								    }
+
+								    @Override
+								    public String getAuthenticationScheme() {
+								        return SecurityContext.BASIC_AUTH;
+								    }
+
+								}
+
+								ImplSecurityContext securityContext = new ImplSecurityContext(login);
+								requestContext.setSecurityContext(securityContext);
+								response = crudProcess.get();
+							} else {
+								response = Response.status(Response.Status.BAD_REQUEST).entity("SecurityContext").build();
+							}
+						} catch (Exception e) {
+							System.err.println(e.getMessage());
+							e.printStackTrace();
+							response = Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
+						}
+					} else {
+						response = Response.status(Response.Status.UNAUTHORIZED).entity(msgErr).build();
+						log.warning(String.format("user : %s - path : %s - msgErr : %s", login.user.getName(), resource, msgErr));
+					}
+				} else {
+					response = Response.status(Response.Status.UNAUTHORIZED).entity("Authorization replaced by new login in another session").build();
+					log.warning("Authorization replaced by new login in another session");
 				}
 			} else {
-				response = Response.status(Response.Status.UNAUTHORIZED).entity("Authorization replaced by new login in another session").build();
-				log.warning("Authorization replaced by new login in another session");
+				response = Response.status(Response.Status.UNAUTHORIZED).entity("Authorization token header invalid").build();
+				log.warning("Authorization token header invalid : " + authorization);
 			}
-		} else {
-			response = Response.status(Response.Status.UNAUTHORIZED).entity("Authorization token header invalid").build();
-			log.warning("Authorization token header invalid : " + authorization);
-		}
 
-		return response;
+			if (response != null) {
+				requestContext.abortWith(response);
+			}
+
+			return response;
+		};
+
+		authWithToken.get();
+	}
+
+	private CompletableFuture<Response> authenticateByUserAndPassword(ContainerRequestContext requestContext, String ip) {
+		JsonObject json = Json.createReader(requestContext.getEntityStream()).readObject();
+		String userId = json.getString("userId");
+		QueryMap userQuery = QueryMap.create().add("name", userId).add("password", json.getString("password"));
+
+		return Utils.findOne(entityManager, CrudUser.class, userQuery)
+		.thenCompose(user -> {
+			String token = UUID.randomUUID().toString();
+			user.setAuthctoken(token);
+			user.setIp(ip);
+			return Utils.update(userTransaction, entityManager, user).thenCompose(userAfterUpdate -> {
+				LoginResponse loginResponse = new LoginResponse(userAfterUpdate);
+				return loginResponse.load().thenApply((arg) -> {
+					log.info(String.format("[authenticateByUserAndPassword] Sucessful login : user = %s, roles = %s, token = %s", userAfterUpdate.getName(), userAfterUpdate.getRoles(), userAfterUpdate.getAuthctoken()));
+					RequestFilter.logins.put(token, loginResponse);
+					return Response.ok(loginResponse, MediaType.APPLICATION_JSON).build();
+				});
+			});
+		});
 	}
 
 	@Override
 	public void filter(ContainerRequestContext requestContext, ContainerResponseContext responseContext) {
 		log.info("Filtering REST Response");
 		// TODO : habilitar somente os IPs dos servidores instalados nas empresas
-		responseContext.getHeaders().add("Access-Control-Allow-Origin", "https://localhost:9443"); // USE * for all
+		responseContext.getHeaders().add("Access-Control-Allow-Origin", "*"); // USE * for all, https://localhost:9443
 		responseContext.getHeaders().add("Access-Control-Allow-Methods", "PUT,DELETE"); // GET, POST, HEAD, OPTIONS
 		responseContext.getHeaders().add("Access-Control-Allow-Headers", "Authorization, Origin, X-Requested-With, Content-Type");
 		// responseContext.getHeaders().add("Access-Control-Expose-Headers",
@@ -351,345 +527,111 @@ public class RequestFilter implements ContainerRequestFilter, ContainerResponseF
 
 		// no login pede usuário e senha
 		if (resource.equals("authc")) {
-			requestContext.abortWith(authenticateByUserAndPassword(requestContext, ip));
-			// em qualquer outro método pede o token
-		} else {
-			// headers['Authorization'] = 'Token ' + token;
-			String authorization = requestContext.getHeaderString("Authorization");
-			log.info("authorization header : " + authorization);
-			String access = path.substring(path.indexOf(resource)+resource.length()+1);
-			Response response = processRequest(requestContext, ip, authorization, resource, access);
-
-			if (response != null) {
-				requestContext.abortWith(response);
-			}
-		}
-	}
-
-	static private Response checkObjectAccess(Principal userPrincipal, EntityManager entityManager, Object obj) {
-		Response response = null;
-		LoginResponse login = (LoginResponse) userPrincipal;
-		Integer userCompany = login.getUser().getCompany();
-
-		if (userCompany > 1 && Utils.haveField(obj.getClass(), "company")) {
-			Integer company = (Integer) Utils.readField(obj, "company");
-
-			if (company == null) {
-				Utils.writeField(obj, "company", userCompany);
-				company = userCompany;
-			}
-
-			if (userCompany == company) {
-				if (Utils.haveField(obj.getClass(), "category") && obj.getClass().getSimpleName().equals("CategoryCompany") == false) {
-					Integer category = (Integer) Utils.readField(obj, "category");
-
-					if (RequestFilter.checkCategory(entityManager, company, category) == null) {
-						return Response.status(Response.Status.UNAUTHORIZED).entity("unauthorized object category").build();
-					}
-				}
-			} else {
-				return Response.status(Response.Status.UNAUTHORIZED).entity("unauthorized object company").build();
-			}
-		}
-
-		return response;
-	}
-
-	static public Response processCreate(Principal user, EntityManager entityManager, WebSocket webSocket, Object obj) {
-		Response response = null;
-		response = checkObjectAccess(user, entityManager, obj);
-
-		if (response == null) {
-			Integer id = null;
-
-			synchronized (obj.getClass()) {
-				if (Utils.haveField(obj.getClass(), "id")) {
-					Integer company = null;
-
-					if (Utils.haveField(obj.getClass(), "company")) {
-						company = (Integer) Utils.readField(obj, "company");
-					}
-
-					String className = obj.getClass().getSimpleName();
-					String tableName = className.substring(className.lastIndexOf('.') + 1);
-					Query query;
-
-					if (company != null) {
-						query = entityManager.createQuery("SELECT max(id) FROM " + tableName + " WHERE company = " + company);
-					} else {
-						query = entityManager.createQuery("SELECT max(id) FROM " + tableName);
-					}
-
-					try {
-						id = (Integer) query.getSingleResult();
-
-						if (id == null) {
-							id = 0;
-						}
-					} catch (NoResultException nre) {
-						id = 0;
-					}
-
-					Utils.writeField(obj, "id", ++id);
-				}
-
-				entityManager.persist(obj);
-			}
-
-			response = Response.ok(obj, MediaType.APPLICATION_JSON).build();
-			webSocket.notify(obj, id, false);
-		}
-
-		return response;
-	}
-
-	static private TypedQuery<?> buildQuery(Principal userPrincipal, UriInfo uriInfo, EntityManager entityManager, Class<?> entityClass) {
-		MultivaluedMap<String, String> queryParam = uriInfo.getQueryParameters();
-		Integer company = null;
-		Integer id = null;
-
-		if (Utils.haveField(entityClass, "company")) {
-			LoginResponse login = (LoginResponse) userPrincipal;
-			company = login.getUser().getCompany();
-
-			if (company == 1) {
-				company = Utils.parseInt(queryParam.getFirst("company"));
-			}
-		}
-
-		if (Utils.haveField(entityClass, "id")) {
-			id = Utils.parseInt(queryParam.getFirst("id"));
-		}
-
-		String sql = "from " + entityClass.getName() + " o where ";
-		// company
-		boolean haveCompany = Utils.haveField(entityClass, "company") == true && company != null;
-		if (haveCompany) {
-			sql = sql + "o.company = :company and ";
-		}
-/*
-		// category
-		Integer category = (Integer) Utils.readField(obj, "category");
-
-		if (category != null) {
-			sql = sql + "o.category = :category and ";
-		}
-*/
-		// id
-		if (id != null) {
-			sql = sql + "o.id = :id and ";
-		}
-
-		if (sql.endsWith(" and ")) {
-			sql = sql.substring(0, sql.length() - 5);
-		}
-
-		if (haveCompany && id != null) {
-			sql = sql + " order by o.company,o.id";
-		} else if (id != null) {
-			sql = sql + " order by o.id";
-		}
-
-		TypedQuery<?> query = entityManager.createQuery(sql, entityClass);
-
-		if (haveCompany) {
-			query.setParameter("company", company);
-		}
-/*
-		if (category != null) {
-			query.setParameter("category", category);
-		}
-*/
-		if (id != null) {
-			query.setParameter("id", id);
-		}
-
-		return query;
-	}
-
-	static public Object getObject(Principal user, UriInfo uriInfo, EntityManager entityManager, Class<?> objectClass) {
-		TypedQuery<?> query = RequestFilter.buildQuery(user, uriInfo, entityManager, objectClass);
-		Object obj = query.getSingleResult();
-		return obj;
-	}
-
-	static public Response processUpdate(Principal user, UriInfo uriInfo, EntityManager entityManager, WebSocket webSocket, Object obj) {
-		Object oldObj = RequestFilter.getObject(user, uriInfo, entityManager, obj.getClass());
-		Response response = checkObjectAccess(user, entityManager, oldObj);
-
-		if (response == null) {
-			response = checkObjectAccess(user, entityManager, obj);
-
-			if (response == null) {
-				Integer oldId = (Integer) Utils.readField(oldObj, "id");
-				Integer newId = (Integer) Utils.readField(obj, "id");
-
-				if (newId.intValue() == oldId.intValue()) {
-					entityManager.merge(obj);
-					response = Response.ok(obj, MediaType.APPLICATION_JSON).build();
-					webSocket.notify(obj, oldId, false);
+			Response response = authenticateByUserAndPassword(requestContext, ip)
+			.exceptionally(error -> {
+				if (error.getCause() instanceof NoResultException) {
+					log.warning("mismatched user and password");
+					return Response.status(Response.Status.UNAUTHORIZED).entity("mismatched user and password").build();
 				} else {
-					response = Response.status(Response.Status.UNAUTHORIZED).entity("changed id").build();
+					log.severe(error.getMessage());
+					return Response.status(Response.Status.BAD_REQUEST).entity(error.getMessage()).build();
 				}
-			}
-		}
-
-		return response;
-	}
-
-	static public Response processRead(Principal user, UriInfo uriInfo, EntityManager entityManager, Class<?> objectClass) {
-		Object obj = RequestFilter.getObject(user, uriInfo, entityManager, objectClass);
-		Response response = checkObjectAccess(user, entityManager, obj);
-
-		if (response == null) {
-			response = Response.ok(obj, MediaType.APPLICATION_JSON).build();
-		}
-
-		return response;
-	}
-
-	static public Response processDelete(Principal user, UriInfo uriInfo, EntityManager entityManager, WebSocket webSocket, Class<?> objectClass) {
-		Object obj = RequestFilter.getObject(user, uriInfo, entityManager, objectClass);
-		Response response = checkObjectAccess(user, entityManager, obj);
-
-		if (response == null) {
-			entityManager.remove(obj);
-			response = Response.ok().build();
-			Integer id = (Integer) Utils.readField(obj, "id");
-			webSocket.notify(obj, id, true);
-		}
-
-		return response;
-	}
-
-	static public Response processQuery(SecurityContext context, EntityManager entityManager, Class<?> entityClass, String fieldQuery, Integer valueQuery, Integer startPosition, Integer maxResult) {
-		String serviceName = entityClass.getSimpleName();
-		String sql = String.format("from %s o", serviceName);
-		boolean haveWhere = false;
-
-		LoginResponse login = (LoginResponse) context.getUserPrincipal();
-		CrudService service = login.getMapServices().get(serviceName);
-
-		if (login.getUser().getCompany() > 1 && Utils.haveField(entityClass, "company")) {
-			sql = sql + String.format(" where o.company = %s", login.getUser().getCompany());
-			haveWhere = true;
-		}
-
-		if (Utils.haveField(entityClass, "category")) {
-			if (haveWhere) {
-				sql = sql + " and ";
-			} else {
-				sql = sql + " where ";
-			}
-
-			haveWhere = true;
-			sql = sql + String.format("o.category in (select p.category from CategoryCompany p where p.company = %s)", login.getUser().getCompany());
-		}
-
-		if (fieldQuery != null && valueQuery != null) {
-			if (haveWhere) {
-				sql = sql + " and ";
-			} else {
-				sql = sql + " where ";
-			}
-
-			haveWhere = true;
-			sql = sql + String.format("o.%s = %s", fieldQuery, valueQuery);
-		}
-
-		if (service.getOrderBy() != null) {
-			sql = sql + " ORDER BY " + service.getOrderBy();
+			}).join();
+			requestContext.abortWith(response);
+		// em qualquer outro método pede o token
 		} else {
-			sql = sql + " ORDER BY o.id";
+			String access = path.substring(path.indexOf(resource)+resource.length()+1);
+			processRequest(requestContext, ip, resource, access);
 		}
-
-		TypedQuery<?> findAllQuery = entityManager.createQuery(sql, entityClass);
-
-		if (startPosition != null) {
-			findAllQuery.setFirstResult(startPosition);
-		}
-
-		if (maxResult != null) {
-			findAllQuery.setMaxResults(maxResult);
-		}
-
-		Response response;
-
-		if (fieldQuery != null && fieldQuery == "id") {
-			final Object result = findAllQuery.getSingleResult();
-			response = Response.ok(result, MediaType.APPLICATION_JSON).build();
-		} else {
-			final List<?> results = findAllQuery.getResultList();
-			response = Response.ok(results, MediaType.APPLICATION_JSON).build();
-		}
-
-		return response;
-	}
-
-	private Response crudProcess(ContainerRequestContext requestContext, String resource, String acess) throws Exception {
-		String className = Utils.convertCaseUnderscoreToCamel(resource, true);
-		Class<?> restClass;
-		String domain = this.getClass().getName();
-		domain = domain.substring(0, domain.lastIndexOf(".admin"));
-
-		try {
-			restClass = Class.forName(domain + ".rest." + className + "Endpoint");
-		} catch (ClassNotFoundException e) {
-			restClass = null;
-		}
-
-		if (acess.equals("create") && Utils.haveMethodName(restClass, "create")) {
-			return null;
-		} else if (acess.equals("read") && Utils.haveMethodName(restClass, "read")) {
-			return null;
-		} else if (acess.equals("query") && Utils.haveMethodName(restClass, "query")) {
-			return null;
-		} else if (acess.equals("delete") && Utils.haveMethodName(restClass, "remove")) {
-			return null;
-		} else if (acess.equals("update") && Utils.haveMethodName(restClass, "update")) {
-			return null;
-		}
-
-		Class<?> objectClass;
-
-		try {
-			objectClass = Class.forName(domain + ".entity." + className);
-		} catch (ClassNotFoundException e) {
-			return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(e.getMessage()).build();
-		}
-
-		Response response = null;
-		SecurityContext securiryContext = requestContext.getSecurityContext();
-		Principal user = securiryContext.getUserPrincipal();
-		UriInfo uriInfo = requestContext.getUriInfo();
-
-		if (acess.equals("create")) {
-			InputStream inputStream = requestContext.getEntityStream();
-			Object obj = Utils.loadObjectFromJson(objectClass, inputStream);
-			response = processCreate(user, this.entityManager, this.webSocket, obj);
-		} else if (acess.equals("update")) {
-			InputStream inputStream = requestContext.getEntityStream();
-			Object obj = Utils.loadObjectFromJson(objectClass, inputStream);
-			response = processUpdate(user, uriInfo, this.entityManager, this.webSocket, obj);
-		} else if (acess.equals("delete")) {
-			response = processDelete(user, uriInfo, this.entityManager, this.webSocket, objectClass);
-		} else if (acess.equals("read")) {
-			response = processRead(user, uriInfo, this.entityManager, objectClass);
-		} else if (acess.equals("query")) {
-			MultivaluedMap<String, String> queryParam = requestContext.getUriInfo().getQueryParameters();
-			String fieldQuery = queryParam.getFirst("fieldQuery");
-			Integer valueQuery = Utils.parseInt(queryParam.getFirst("valueQuery"));
-			Integer startPosition = Utils.parseInt(queryParam.getFirst("start"));
-			Integer maxResult = Utils.parseInt(queryParam.getFirst("max"));
-			response = processQuery(securiryContext, this.entityManager, objectClass, fieldQuery, valueQuery, startPosition, maxResult);
-		}
-
-		return response;
 	}
 
 	public static LoginResponse getLogin(String token) {
-		// TODO Auto-generated method stub
 		return RequestFilter.logins.get(token);
 	}
 
+    private Logger logger = Logger.getLogger(getClass().getName());
+
+    private static Set<Session> clients = Collections.synchronizedSet(new HashSet<Session>());
+
+    @OnMessage
+    public void onMessage(Session session, String token) {
+    	RequestFilter.LoginResponse login = RequestFilter.getLogin(token);
+
+		if (login != null) {
+			session.getUserProperties().put("login", login);
+		    logger.info("New websocket session opened: token : " + token + ", id : " + session.getId());
+		    clients.add(session);
+		}
+    }
+    // remove the session after it's closed
+    @OnClose
+    public void onClose(Session session) {
+    	LoginResponse login = (LoginResponse) session.getUserProperties().get("login");
+        logger.info("Websoket session closed: " + login.getUser().getAuthctoken());
+        clients.remove(session);
+    }
+    // Exception handling
+    @OnError
+    public void error(Session session, Throwable t) {
+        t.printStackTrace();
+    }
+
+    private JsonObject getPrimaryKey(Object obj) {
+		JsonObjectBuilder primaryKey = Json.createObjectBuilder();
+
+		if (Utils.haveField(obj.getClass(), "company")) {
+			primaryKey.add("company", (Integer) Utils.readField(obj, "company"));
+		}
+
+		if (Utils.haveField(obj.getClass(), "id")) {
+			primaryKey.add("id", (Integer) Utils.readField(obj, "id"));
+		}
+
+		return primaryKey.build();
+    }
+    // This method sends the same Bidding object to all opened sessions
+    public void notify(Object obj, boolean isRemove) {
+    	JsonObject primaryKey = getPrimaryKey(obj);
+		String serviceName = Utils.convertCaseUnderscoreToCamel(obj.getClass().getSimpleName(), false);
+		JsonObjectBuilder msg = Json.createObjectBuilder();
+		msg.add("service", serviceName);
+		msg.add("primaryKey", primaryKey);
+
+		if (isRemove == false) {
+			msg.add("action", "notify");
+		} else {
+			msg.add("action", "delete");
+		}
+
+    	String str = msg.build().toString();
+    	Integer objCompany = primaryKey.containsKey("company") ? primaryKey.getInt("company") : null;
+    	Integer category = null;
+
+		if (Utils.haveField(obj.getClass(), "category")) {
+			category = (Integer) Utils.readField(obj, "company");
+		}
+
+		for (Session session : clients) {
+			RequestFilter.LoginResponse login = (LoginResponse) session.getUserProperties().get("login");
+			Integer userCompany = login.getUser().getCompany();
+			// enviar somente para os clients de "company"
+			if (objCompany == null || userCompany == 1 || objCompany == userCompany) {
+				// restrição de categoria
+				if (category == null || login.categories.indexOf(category) >= 0) {
+					// envia somente para os usuários com acesso ao serviço alterado
+					if (login.getWebsocketServices().contains(serviceName)) {
+						System.out.format("notify, user %s : %s\n", login.getUser().getName(), msg);
+						CompletableFuture.runAsync(() -> {
+							try {
+								session.getBasicRemote().sendText(str);
+							} catch (IOException e) {
+								// TODO Auto-generated catch block
+								e.printStackTrace();
+							}
+						});
+					}
+				}
+			}
+		}
+    }
 }

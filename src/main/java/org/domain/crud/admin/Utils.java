@@ -18,9 +18,16 @@ import java.security.InvalidParameterException;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
+
+import javax.persistence.EntityManager;
+import javax.persistence.TypedQuery;
+import javax.transaction.UserTransaction;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -1214,6 +1221,102 @@ public class Utils {
 		}
 
 		return found;
+	}
+
+	public static class QueryMap extends HashMap<String, Object> {
+		/**
+		 *
+		 */
+		private static final long serialVersionUID = 9045195406428349166L;
+
+		public static QueryMap create() {
+			return new QueryMap();
+		}
+
+		public QueryMap add(String name, Object value) {
+			this.put(name, value);
+			return this;
+		}
+	}
+
+	// Utils
+	public static <T> TypedQuery<T> buildQuery(EntityManager entityManager, Class<T> resultClass, QueryMap fields, String[] orderBy) {
+		StringBuilder sql = new StringBuilder(1024);
+		sql.append("from " + resultClass.getName() + " o");
+
+		if (fields.isEmpty() == false) {
+			sql.append(" where ");
+
+			fields.forEach((name, value) -> {
+				if (value instanceof List) {
+					sql.append(String.format("o.%s IN (:%s) and ", name, name));
+				} else {
+					sql.append(String.format("o.%s = :%s and ", name, name));
+				}
+			});
+
+			sql.setLength(sql.length()-5);
+		}
+
+		if (orderBy != null && orderBy.length > 0) {
+			sql.append(" order by ");
+
+			for (String field : orderBy) {
+				sql.append("o." + Utils.convertCaseUnderscoreToCamel(field, false) + ",");
+			}
+
+			sql.setLength(sql.length()-1);
+		}
+
+		TypedQuery<T> query = entityManager.createQuery(sql.toString(), resultClass);
+		fields.forEach((name, value) -> query.setParameter(name, value));
+		return query;
+	}
+	// Utils
+	public static <T> CompletableFuture<List<T>> find(EntityManager entityManager, Class<T> resultClass, QueryMap fields, String[] orderBy, Integer startPosition, Integer maxResult) {
+		return CompletableFuture.supplyAsync(() -> {
+			TypedQuery<T> query = buildQuery(entityManager, resultClass, fields, orderBy);
+
+			if (startPosition != null) {
+				query.setFirstResult(startPosition);
+			}
+
+			if (maxResult != null) {
+				query.setMaxResults(maxResult);
+			}
+
+			return query.getResultList();
+		});
+	}
+	// Utils
+	public static <T> CompletableFuture<T> findOne(EntityManager entityManager, Class<T> resultClass, QueryMap fields) {
+		return CompletableFuture.supplyAsync(() -> buildQuery(entityManager, resultClass, fields, null).getSingleResult());
+	}
+
+	public static <T> CompletableFuture<T> insert(EntityManager entityManager, T obj) {
+		return CompletableFuture.supplyAsync(() -> {
+			entityManager.persist(obj);
+			return obj;
+		});
+	}
+
+	public static <T> CompletableFuture<T> update(UserTransaction userTransaction, EntityManager entityManager, T obj) {
+		return CompletableFuture.supplyAsync(() -> {
+			try {
+				if (userTransaction != null) userTransaction.begin();
+				entityManager.merge(obj);
+				if (userTransaction != null) userTransaction.commit();
+				return obj;
+			} catch (Exception e) {
+				throw new RuntimeException(e);
+			}
+		});
+	}
+
+	public static <T> CompletableFuture<Void> deleteOne(EntityManager entityManager, T obj) {
+		return CompletableFuture.runAsync(() -> {
+			entityManager.remove(obj);
+		});
 	}
 
 }

@@ -2,7 +2,10 @@ package org.domain.crud.entity;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import javax.xml.bind.annotation.XmlRootElement;
 
@@ -15,6 +18,10 @@ public class CrudTranslation implements java.io.Serializable {
 	 * 
 	 */
 	private static final long serialVersionUID = -1919519756231188092L;
+	@Id
+	@SequenceGenerator(name="crud_translation_id_seq", sequenceName="crud_translation_id_seq", allocationSize=1)
+	@GeneratedValue(strategy=GenerationType.SEQUENCE, generator="crud_translation_id_seq")
+	@Column(columnDefinition="serial")
 	private Integer id;
 	private String name;
 	private String locale;
@@ -53,8 +60,6 @@ public class CrudTranslation implements java.io.Serializable {
 		this.name = name;
 	}
 
-	@Id
-	@Column(name = "id", unique = true, nullable = false)
 	public Integer getId() {
 		return this.id;
 	}

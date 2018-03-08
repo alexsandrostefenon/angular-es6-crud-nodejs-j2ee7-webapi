@@ -3,8 +3,11 @@ package org.domain.crud.entity;
 import java.math.BigDecimal;
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.IdClass;
+import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import javax.persistence.UniqueConstraint;
 import javax.validation.constraints.NotNull;
@@ -20,7 +23,11 @@ public class RequestProduct implements java.io.Serializable {
 	 */
 	private static final long serialVersionUID = 5749645992706339825L;
 	@Id private Integer company;
-	@Id private Integer id;
+	@Id
+	@SequenceGenerator(name="request_product_id_seq", sequenceName="request_product_id_seq", allocationSize=1)
+	@GeneratedValue(strategy=GenerationType.SEQUENCE, generator="request_product_id_seq")
+	@Column(columnDefinition="serial")
+	private Integer id;
 	@NotNull
 	private Integer product;
 	private Integer request;

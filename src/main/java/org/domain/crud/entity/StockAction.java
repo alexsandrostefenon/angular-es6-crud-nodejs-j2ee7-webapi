@@ -3,7 +3,10 @@ package org.domain.crud.entity;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import javax.persistence.UniqueConstraint;
 import javax.validation.constraints.NotNull;
@@ -21,6 +24,10 @@ public class StockAction implements java.io.Serializable {
 	 * 
 	 */
 	private static final long serialVersionUID = 1864551567293374642L;
+	@Id
+	@SequenceGenerator(name="stock_action_id_seq", sequenceName="stock_action_id_seq", allocationSize=1)
+	@GeneratedValue(strategy=GenerationType.SEQUENCE, generator="stock_action_id_seq")
+	@Column(columnDefinition="serial")
 	private Integer id;
 	@NotNull
 	private String name;
@@ -28,8 +35,6 @@ public class StockAction implements java.io.Serializable {
 	public StockAction() {
 	}
 
-	@Id
-	@Column(name = "id", unique = true, nullable = false)
 	public Integer getId() {
 		return this.id;
 	}

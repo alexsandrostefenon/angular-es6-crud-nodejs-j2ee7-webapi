@@ -3,7 +3,10 @@ package org.domain.crud.entity;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
 import javax.persistence.Id;
+import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import javax.xml.bind.annotation.XmlRootElement;
 
@@ -19,6 +22,10 @@ public class RequestState implements java.io.Serializable {
 	 * 
 	 */
 	private static final long serialVersionUID = 1864551567293374642L;
+	@Id
+	@SequenceGenerator(name="request_state_id_seq", sequenceName="request_state_id_seq", allocationSize=1)
+	@GeneratedValue(strategy=GenerationType.SEQUENCE, generator="request_state_id_seq")
+	@Column(columnDefinition="serial")
 	private Integer id;
 	private Integer stockAction;
 	private Integer type;
@@ -35,8 +42,6 @@ public class RequestState implements java.io.Serializable {
 		this.name = name;
 	}
 
-	@Id
-	@Column(name = "id", unique = true, nullable = false)
 	public Integer getId() {
 		return this.id;
 	}

@@ -4,8 +4,11 @@ import java.math.BigDecimal;
 import java.util.Date;
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.IdClass;
+import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
@@ -20,7 +23,11 @@ public class RequestPayment implements java.io.Serializable {
 	 *
 	 */
 	private static final long serialVersionUID = -8921880901269127764L;
-	@Id private Integer id;
+	@Id
+	@SequenceGenerator(name="request_payment_id_seq", sequenceName="request_payment_id_seq", allocationSize=1)
+	@GeneratedValue(strategy=GenerationType.SEQUENCE, generator="request_payment_id_seq")
+	@Column(columnDefinition="serial")
+	private Integer id;
 	@Id private Integer company;
 	private Integer account;
 	private Integer request;
