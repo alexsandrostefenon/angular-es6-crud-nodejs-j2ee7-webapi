@@ -1,68 +1,3 @@
-
---select rp.id,rp.account,rp.payday,rp.due_date,GREATEST(rp.payday,rp.due_date) as rp_date,rp.type as rp_type,rp.value,r.type as r_type,rp.balance from request_payment rp,request r where r.id = rp.request order by rp.type,rp_date desc,rp.id desc;
-
-CREATE OR REPLACE FUNCTION account_balance_after_date(_company integer, _account integer, date_ref timestamp, ref_id integer, diff numeric(9,2), request_type integer) RETURNS integer AS $account_balance_after_date$
-DECLARE
-BEGIN
-  	IF request_type = 1 THEN
-	  		diff := diff * (-1.0);
-	  ELSEIF request_type = 2 THEN
-	  END IF;
-
-	  UPDATE request_payment SET balance = balance + diff
-	  	WHERE
-	  		company = _company AND
-	  		account = _account AND
-	  			(
-	  			GREATEST(payday,due_date) > date_ref OR
-	  			(GREATEST(payday,due_date) = date_ref AND id >= ref_id)
-	  			);
-    RETURN 1;
-END;
-$account_balance_after_date$ LANGUAGE plpgsql;
-
-CREATE OR REPLACE FUNCTION request_payment_change() RETURNS TRIGGER AS $request_payment_change$
-DECLARE
-		request_rec RECORD;
-BEGIN
-		IF (TG_OP = 'INSERT') THEN
-			  SELECT INTO request_rec * FROM request WHERE request.id = NEW.request;
-				PERFORM account_balance_after_date(NEW.company, NEW.account, GREATEST(NEW.due_date, NEW.payday), NEW.id, NEW.value, request_rec.type);
-				RETURN NEW;
-		ELSEIF (TG_OP = 'UPDATE') THEN
-			  SELECT INTO request_rec * FROM request WHERE request.id = OLD.request;
-				PERFORM account_balance_after_date(OLD.company, OLD.account, GREATEST(OLD.due_date, OLD.payday), OLD.id, OLD.value * (-1.0), request_rec.type);
-				PERFORM account_balance_after_date(NEW.company, NEW.account, GREATEST(NEW.due_date, NEW.payday), NEW.id, NEW.value, request_rec.type);
-				RETURN NEW;
-		ELSEIF (TG_OP = 'DELETE') THEN
-			  SELECT INTO request_rec * FROM request WHERE request.id = OLD.request;
-				PERFORM account_balance_after_date(OLD.company, OLD.account, GREATEST(OLD.due_date, OLD.payday), OLD.id, OLD.value * (-1.0), request_rec.type);
-				RETURN OLD;
-		END IF;
-
-    RETURN NULL;
-END;
-$request_payment_change$ LANGUAGE plpgsql;
-
-CREATE TRIGGER request_payment_trigger AFTER INSERT OR UPDATE OR DELETE ON request_payment FOR EACH ROW WHEN (pg_trigger_depth() = 0) EXECUTE PROCEDURE request_payment_change();
-
-CREATE OR REPLACE FUNCTION request_payment_before() RETURNS TRIGGER AS $request_payment_before$
-DECLARE
-		rec_payment RECORD;
-		date_new timestamp;
-BEGIN
-		date_new = GREATEST(NEW.payday,NEW.due_date);
-
-		FOR rec_payment IN SELECT id,GREATEST(payday,due_date) as date_ref,balance FROM request_payment WHERE company = NEW.company AND account = NEW.account AND GREATEST(payday,due_date) <= date_new ORDER BY date_ref desc,id desc LIMIT 1 LOOP
-			NEW.balance = rec_payment.balance;
-		END LOOP;
-
-		RETURN NEW;
-END;
-$request_payment_before$ LANGUAGE plpgsql;
-
-CREATE TRIGGER request_payment_trigger_before BEFORE INSERT OR UPDATE ON request_payment FOR EACH ROW WHEN (pg_trigger_depth() = 0) EXECUTE PROCEDURE request_payment_before();
-
 CREATE TABLE IF NOT EXISTS account (
     company integer,
     id integer,
@@ -181,28 +116,31 @@ CREATE TABLE request (
     additional_data character varying(255),
     date timestamp without time zone,
     payments_value numeric(19,2),
-    person integer references person,
+    person integer,
     products_value numeric(19,2),
     services_value numeric(19,2),
     state integer,
     sum_value numeric(19,2),
     transport_value numeric(19,2),
     type int DEFAULT 0 not null,-- compra,venda,conserto,fabricação,desmonte,orçamento,pedido
-    PRIMARY KEY(company,id)
+    PRIMARY KEY(company,id),
+    FOREIGN KEY(company, person) REFERENCES person(company, id)
 );
 
 CREATE TABLE request_payment (
     company integer NOT NULL,
     id integer NOT NULL,
-    account integer references account,
+    account integer,
     number character varying(16),
     payday timestamp without time zone,
-    request integer references request,
+    request integer,
     type integer,
     value numeric(9,3) NOT NULL,
     balance numeric(9,3) DEFAULT 0.000 NOT NULL,
     due_date timestamp without time zone,
-    PRIMARY KEY(company,id)
+    PRIMARY KEY(company,id),
+    FOREIGN KEY(company,request) REFERENCES request(company, id),
+    FOREIGN KEY(company,account) REFERENCES account(company, id)
 );
 
 CREATE TABLE request_product (
@@ -211,7 +149,7 @@ CREATE TABLE request_product (
     containers int DEFAULT 1, -- quantidade de embalagens
     product integer references product,
     quantity numeric(9,3) DEFAULT 1.000 not null,
-    request integer references request,
+    request integer,
     serial character varying(64),
     space numeric(9,3) DEFAULT 1.000, -- volume
     tax_icms numeric(9,3) DEFAULT 0.000 not null,
@@ -222,6 +160,7 @@ CREATE TABLE request_product (
     weight numeric(9,3) DEFAULT 0.000, -- peso líquido
     weight_final numeric(9,3) DEFAULT 0.000, -- peso bruto
     PRIMARY KEY(company,id),
+    FOREIGN KEY(company,request) REFERENCES request(company, id),
     unique(request,product,serial)
 );
 
@@ -270,6 +209,71 @@ CREATE TABLE stock_action (
     name character varying(255) UNIQUE NOT NULL
 );
 
+
+-- select rp.id,rp.account,rp.payday,rp.due_date,GREATEST(rp.payday,rp.due_date) as rp_date,rp.type as rp_type,rp.value,r.type as r_type,rp.balance from request_payment rp,request r where r.id = rp.request order by rp.type,rp_date desc,rp.id desc;
+
+CREATE OR REPLACE FUNCTION account_balance_after_date(_company integer, _account integer, date_ref timestamp, ref_id integer, diff numeric(9,2), request_type integer) RETURNS integer AS $account_balance_after_date$
+DECLARE
+BEGIN
+  	IF request_type = 1 THEN
+	  		diff := diff * (-1.0);
+	  ELSEIF request_type = 2 THEN
+	  END IF;
+
+	  UPDATE request_payment SET balance = balance + diff
+	  	WHERE
+	  		company = _company AND
+	  		account = _account AND
+	  			(
+	  			GREATEST(payday,due_date) > date_ref OR
+	  			(GREATEST(payday,due_date) = date_ref AND id >= ref_id)
+	  			);
+    RETURN 1;
+END;
+$account_balance_after_date$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION request_payment_change() RETURNS TRIGGER AS $request_payment_change$
+DECLARE
+		request_rec RECORD;
+BEGIN
+		IF (TG_OP = 'INSERT') THEN
+			  SELECT INTO request_rec * FROM request WHERE request.id = NEW.request;
+				PERFORM account_balance_after_date(NEW.company, NEW.account, GREATEST(NEW.due_date, NEW.payday), NEW.id, NEW.value, request_rec.type);
+				RETURN NEW;
+		ELSEIF (TG_OP = 'UPDATE') THEN
+			  SELECT INTO request_rec * FROM request WHERE request.id = OLD.request;
+				PERFORM account_balance_after_date(OLD.company, OLD.account, GREATEST(OLD.due_date, OLD.payday), OLD.id, OLD.value * (-1.0), request_rec.type);
+				PERFORM account_balance_after_date(NEW.company, NEW.account, GREATEST(NEW.due_date, NEW.payday), NEW.id, NEW.value, request_rec.type);
+				RETURN NEW;
+		ELSEIF (TG_OP = 'DELETE') THEN
+			  SELECT INTO request_rec * FROM request WHERE request.id = OLD.request;
+				PERFORM account_balance_after_date(OLD.company, OLD.account, GREATEST(OLD.due_date, OLD.payday), OLD.id, OLD.value * (-1.0), request_rec.type);
+				RETURN OLD;
+		END IF;
+
+    RETURN NULL;
+END;
+$request_payment_change$ LANGUAGE plpgsql;
+
+CREATE TRIGGER request_payment_trigger AFTER INSERT OR UPDATE OR DELETE ON request_payment FOR EACH ROW WHEN (pg_trigger_depth() = 0) EXECUTE PROCEDURE request_payment_change();
+
+CREATE OR REPLACE FUNCTION request_payment_before() RETURNS TRIGGER AS $request_payment_before$
+DECLARE
+		rec_payment RECORD;
+		date_new timestamp;
+BEGIN
+		date_new = GREATEST(NEW.payday,NEW.due_date);
+
+		FOR rec_payment IN SELECT id,GREATEST(payday,due_date) as date_ref,balance FROM request_payment WHERE company = NEW.company AND account = NEW.account AND GREATEST(payday,due_date) <= date_new ORDER BY date_ref desc,id desc LIMIT 1 LOOP
+			NEW.balance = rec_payment.balance;
+		END LOOP;
+
+		RETURN NEW;
+END;
+$request_payment_before$ LANGUAGE plpgsql;
+
+CREATE TRIGGER request_payment_trigger_before BEFORE INSERT OR UPDATE ON request_payment FOR EACH ROW WHEN (pg_trigger_depth() = 0) EXECUTE PROCEDURE request_payment_before();
+
 INSERT INTO account (company, id, account, agency, bank, description) VALUES (4, 1, NULL, NULL, NULL, 'Caixa');
 INSERT INTO account (company, id, account, agency, bank, description) VALUES (4, 2, NULL, NULL, NULL, 'Conta Bancária Principal');
 
@@ -299,17 +303,17 @@ INSERT INTO crud_service (id, fields, filter_fields, is_on_line, menu, name, sav
 INSERT INTO crud_service (id, fields, filter_fields, is_on_line, menu, name, save_and_exit, template, title, orderby, order_by) VALUES (7, '{"id":{"type":"i","primaryKey":true,"hiden":true},"name":{},"description":{}}', 'id,name', NULL, 'config', 'requestType', true, NULL, 'Tipo de Requisição', NULL, NULL);
 INSERT INTO crud_service (id, fields, filter_fields, is_on_line, menu, name, save_and_exit, template, title, orderby, order_by) VALUES (8, '{"id":{"type":"i","primaryKey":true,"hiden":true},"type":{"type":"i","service":"requestType","defaultValue":"1"},"name":{},"stockAction":{"service":"stockAction"},"prev":{"type":"i","service":"requestState","defaultValue":"0"},"next":{"type":"i","service":"requestState","defaultValue":"0"},"description":{}}', 'id,type,name,stockAction', NULL, 'config', 'requestState', true, NULL, 'Situação da Requisição', NULL, NULL);
 
-INSERT INTO crud_service (id, fields, filter_fields, is_on_line, menu, name, save_and_exit, template, title, orderby, order_by) VALUES (9, '{"id":{"type":"i","primaryKey":true,"hiden":true},"barcode":{},"category":{"service":"category"},"name":{},"manufacturer":{},"model":{},"description":{},"additionalData":{},"unit":{},"clFiscal":{},"departament":{},"imageUrl":{},"weight":{"type":"n3"},"taxIpi":{"type":"n3"},"taxIcms":{"type":"n3"},"taxIss":{"type":"n3"}}', 'id,barcode,name', NULL, 'product', 'product', true, NULL, 'Produtos, Peças e Componentes', NULL, NULL);
+INSERT INTO crud_service (id, fields, filter_fields, is_on_line, menu, name, save_and_exit, template, title, orderby, order_by) VALUES (9, '{"id":{"type":"i","hiden":true,"primaryKey":true},"barcode":{},"category":{"service":"category"},"name":{},"manufacturer":{},"model":{},"description":{},"additionalData":{},"unit":{},"clFiscal":{},"departament":{},"imageUrl":{},"weight":{"type":"n3"},"taxIpi":{"type":"n3"},"taxIcms":{"type":"n3"},"taxIss":{"type":"n3"}}', 'id,barcode,name', NULL, 'product', 'product', true, NULL, 'Produtos, Peças e Componentes', NULL, NULL);
 INSERT INTO crud_service (id, fields, filter_fields, is_on_line, menu, name, save_and_exit, template, title, orderby, order_by) VALUES (13, '{"id":{"type":"i","primaryKey":true,"hiden":true},"name":{}}', 'id,name', NULL, 'config', 'stockAction', true, NULL, 'Ação sobre o Estoque', NULL, NULL);
 
-INSERT INTO crud_service (id, fields, filter_fields, is_on_line, menu, name, save_and_exit, template, title, orderby, order_by) VALUES (14, '{"id":{"type":"i","primaryKey":true,"hiden":true},"name":{},"phone":{},"cnpjCpf":{},"ieRg":{},"zip":{},"uf":{},"city":{},"district":{},"address":{},"fax":{},"email":{},"site":{},"additionalData":{},"credit":{"type":"n3"}}', 'id,name,cnpjCpf,ieRg,phone', NULL, 'form', 'person', true, NULL, 'Cadastros de Clientes e Fornecedores', NULL, NULL);
+INSERT INTO crud_service (id, fields, filter_fields, is_on_line, menu, name, save_and_exit, template, title, orderby, order_by) VALUES (14, '{"id":{"type":"i","hiden":true,"primaryKey":true},"company":{"type":"i","hiden":true,"primaryKey":true},"name":{},"phone":{},"cnpjCpf":{},"ieRg":{},"zip":{},"uf":{},"city":{},"district":{},"address":{},"fax":{},"email":{},"site":{},"additionalData":{},"credit":{"type":"n3","defaultValue":"0"}}', 'id,name,cnpjCpf,ieRg,phone', NULL, 'form', 'person', true, NULL, 'Cadastros de Clientes e Fornecedores', NULL, NULL);
 INSERT INTO crud_service (id, fields, filter_fields, is_on_line, menu, name, save_and_exit, template, title, orderby, order_by) VALUES (15, '{"id":{"type":"i","primaryKey":true,"hiden":true},"company":{"type":"i","primaryKey":true,"service":"crudCompany"},"description":{},"bank":{},"agency":{},"account":{}}', 'id,description', NULL, 'config', 'account', true, NULL, 'Contas Bancárias', NULL, NULL);
 
 INSERT INTO crud_service (id, fields, filter_fields, is_on_line, menu, name, save_and_exit, template, title, orderby, order_by) VALUES (17, '{"id":{"type":"i","hiden":true,"primaryKey":true},"company":{"type":"i","hiden":true,"primaryKey":true},"type":{"type":"i","hiden":false,"required":true,"readOnly":true,"service":"requestType"},"state":{"type":"i","required":true,"service":"requestState"},"person":{"type":"i","required":true,"service":"person"},"date":{"type":"datetime-local","required":true},"additionalData":{},"productsValue":{"defaultValue":"0.0","readOnly":true},"servicesValue":{"defaultValue":"0.0","readOnly":true},"transportValue":{"defaultValue":"0.0","readOnly":true},"sumValue":{"defaultValue":"0.0","readOnly":true},"paymentsValue":{"defaultValue":"0.0","readOnly":true}}', 'id,person,date', NULL, 'form', 'request', false, NULL, 'Requisições de Entrada e Saída', NULL, 'date desc,id desc');
 INSERT INTO crud_service (id, fields, filter_fields, is_on_line, menu, name, save_and_exit, template, title, orderby, order_by) VALUES (19, '{"id":{"type":"i","hiden":true,"primaryKey":true},"company":{"type":"i","hiden":true,"primaryKey":true},"request":{"type":"i","service":"request"},"product":{"type":"i","required":true,"service":"product"},"quantity":{"type":"n3","defaultValue":"1.000","required":true},"value":{"type":"n3","defaultValue":"0.0","required":true},"valueItem":{"type":"n3","defaultValue":"0.0","required":true,"readOnly":true},"serial":{},"weight":{"type":"n3","hiden":true},"containers":{"type":"i","hiden":true},"weightFinal":{"type":"n3","hiden":true},"space":{"type":"n3","hiden":true},"taxIpi":{"type":"n3","hiden":true},"taxIcms":{"type":"n3","hiden":true},"taxUpperLower":{"type":"n3","hiden":true}}', 'id,product,serial,quantity,value', NULL, 'report', 'requestProduct', true, NULL, 'Entrada e Saída de Produtos', NULL, NULL);
-INSERT INTO crud_service (id, fields, filter_fields, is_on_line, menu, name, save_and_exit, template, title, orderby, order_by) VALUES (22, '{"id":{"type":"i","hiden":true,"primaryKey":true},"company":{"type":"i","hiden":true,"primaryKey":true},"request":{"type":"i","service":"request"},"type":{"type":"i","required":true,"service":"paymentType"},"account":{"type":"i","required":true,"service":"account"},"number":{},"value":{"type":"n2","required":true},"dueDate":{"type":"datetime-local","required":true},"payday":{"type":"datetime-local"},"balance":{"type":"n2","required":false,"readOnly":true}}', 'id,type,account,number', NULL, 'report', 'requestPayment', true, NULL, 'Pagamentos', NULL, 'due_date,id');
+INSERT INTO crud_service (id, fields, filter_fields, is_on_line, menu, name, save_and_exit, template, title, orderby, order_by) VALUES (22, '{"id":{"type":"i","hiden":true,"primaryKey":true},"company":{"type":"i","hiden":true,"primaryKey":true},"request":{"type":"i","service":"request"},"type":{"type":"i","required":true,"service":"paymentType"},"account":{"type":"i","required":true,"service":"account"},"number":{},"value":{"type":"n2","required":true},"dueDate":{"type":"datetime-local","defaultValue":"now","required":true},"payday":{"type":"datetime-local"},"balance":{"type":"n2","required":false,"readOnly":true}}', 'id,type,account,number', NULL, 'report', 'requestPayment', true, NULL, 'Pagamentos', NULL, 'due_date,id');
 
-INSERT INTO crud_service (id, fields, filter_fields, is_on_line, menu, name, save_and_exit, template, title, orderby, order_by) VALUES (23, '{"id":{"type":"i","primaryKey":true,"hiden":true,"service":"product"},"company":{"type":"i","primaryKey":true,"hiden":true},"value":{"type":"n3"},"stock":{"type":"n3"},"stockSerials":{},"stockDefault":{"type":"n3"},"stockMinimal":{"type":"n3"},"sumValueStock":{"type":"n3"},"reservedOut":{"type":"n3"},"reservedIn":{"type":"n3"},"estimedOut":{"type":"n3"},"marginSale":{"type":"n3"},"marginWholesale":{"type":"n3"},"estimedValue":{"type":"n3"},"valueWholesale":{"type":"n3"},"countIn":{"type":"n3"},"countOut":{"type":"n3"},"sumValueIn":{"type":"n3"},"sumValueOut":{"type":"n3"}}', 'id', NULL, 'stock', 'stock', true, NULL, 'Estoque de Produtos', NULL, NULL);
+INSERT INTO crud_service (id, fields, filter_fields, is_on_line, menu, name, save_and_exit, template, title, orderby, order_by) VALUES (23, '{"id":{"type":"i","primaryKey":true,"hiden":true,"service":"product"},"company":{"type":"i","primaryKey":true,"hiden":true},"value":{"type":"n"},"stock":{"type":"n"},"stockSerials":{},"stockDefault":{"type":"n"},"stockMinimal":{"type":"n"},"sumValueStock":{"type":"n"},"reservedOut":{"type":"n"},"reservedIn":{"type":"n"},"estimedOut":{"type":"n"},"marginSale":{"type":"n"},"marginWholesale":{"type":"n"},"estimedValue":{"type":"n"},"valueWholesale":{"type":"n"},"countIn":{"type":"n"},"countOut":{"type":"n"},"sumValueIn":{"type":"n"},"sumValueOut":{"type":"n"}}', 'id', NULL, 'stock', 'stock', true, NULL, 'Estoque de Produtos', NULL, NULL);
 INSERT INTO crud_service (id, fields, filter_fields, is_on_line, menu, name, save_and_exit, template, title, orderby, order_by) VALUES (26, '{"id":{"type":"i","primaryKey":true,"hiden":true},"name":{"type":"s","required":true}}', 'id,name', NULL, 'admin', 'category', false, NULL, 'Controle de Categorias de Produtos e Serviços', NULL, NULL);
 INSERT INTO crud_service (id, fields, filter_fields, is_on_line, menu, name, save_and_exit, template, title, orderby, order_by) VALUES (27, '{"id":{"type":"i","primaryKey":true,"hiden":true},"company":{"primaryKey":true,"service":"crudCompany","required":true,"title":"Categorias Vinculadas","isClonable":true},"category":{"service":"category","required":true}}', NULL, NULL, 'admin', 'categoryCompany', true, NULL, 'Categorias de cada Empresa', NULL, NULL);
 

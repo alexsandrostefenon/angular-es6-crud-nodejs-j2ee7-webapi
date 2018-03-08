@@ -4,6 +4,8 @@ CRUD Web Application with Angular + ES6 + Bootstrap CSS in browser and NodeJs or
 
 You need NodeJs or WildFly installed, PostgreSql server.
 
+Requires browser with support to dynamic ES6 modules (tested with Chrome version >= 64)
+
 ## First Step
 
 Clone this repository and open terminal, changing path to local repository folder.
@@ -25,6 +27,8 @@ exit psql terminal and import default configuration data with command :
 
 ## NodeJs based server
 
+Requires NodeJs version >= 9.1
+
 ### Build
 
 then `npm install` to download the required dependencies.
@@ -37,7 +41,7 @@ openssl req -newkey rsa:2048 -new -nodes -x509 -days 3650 -keyout key.pem -out c
 
 execute :
 
-`nodejs app.js`
+`nodejs --inspect --experimental-modules --loader ./custom-loader.mjs app.js`
 
 ## J2EE7 based server
 
@@ -45,9 +49,9 @@ execute :
 
 download or install PostgreSql JDBC driver.
 
-set JBOSS_HOME with your WildFly installation, example :
+with started WildFly server, set JBOSS_HOME with your WildFly installation, example :
 
-`export JBOSS_HOME=~/wildfly-11.0.0.Final`
+`export JBOSS_HOME=~/wildfly-12.0.0.Final`
 
 execute WildFly terminal :
 
@@ -62,6 +66,8 @@ in WildFly terminal execute configurations commands :
 `/subsystem=ee:list-add(name=global-modules,value={name=org.postgresql,slot=main})`
 
 `data-source add --jndi-name=java:/datasources/crud --name=crud --connection-url=jdbc:postgresql://127.0.0.1:5432/crud --driver-name=postgresql --user-name=development --password=123456`
+
+close WildFly terminal.
 
 ### WildFly build and deploy
 
