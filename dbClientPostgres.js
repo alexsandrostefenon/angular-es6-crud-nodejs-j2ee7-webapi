@@ -1,39 +1,17 @@
-var pg = require('pg');
-var pgCamelCase = require('pg-camelcase');
+import pg from "pg";
+import pgCamelCase from "pg-camelcase";
+import {CaseConvert} from "./src/main/webapp/es6/CaseConvert.js";
+
 var revertCamelCase = pgCamelCase.inject(pg);
 
 // Fix for parsing of numeric fields
-var types = require('pg').types
+var types = pg.types
 types.setTypeParser(1700, 'text', parseFloat);
 
-function convertCaseCamelToUnderscore(str) {
-	var ret = "";
-
-	for (var i = 0; i < str.length; i++) {
-		var ch = str[i];
-
-		if (ch >= 'A' && ch <= 'Z') {
-			ch = ch.toLowerCase();
-			ret = ret + '_' + ch;
-		} else {
-			ret = ret + ch;
-		}
-	}
-
-	if (ret.length > 0 && ret[0] == '_') {
-		ret = ret.substring(1);
-	}
-
-	return ret;
-}
-
-module.exports =
-
-class DbClientPostgres {
+export class DbClientPostgres {
 
 	constructor(dbName) {
-//		super(dbName);
-		var dbConfig = {
+		this.dbConfig = {
 				  user: "development", //env var: PGUSER
 				  database: dbName, //env var: PGDATABASE
 				  password: "123456", //env var: PGPASSWORD
@@ -43,40 +21,31 @@ class DbClientPostgres {
 				  idleTimeoutMillis: 30000, // how long a client is allowed to remain idle before being closed
 				};
 
-		this.client = new pg.Client(dbConfig);
+		this.client = new pg.Client(this.dbConfig);
 
 		//connect to our database
 		//env var: PGHOST,PGPORT,PGDATABASE,PGUSER,PGPASSWORD
-		this.client.connect(function (err) {
-			if (err) throw err;
-		});
 	}
 
-	static buildQuery(matchExact, matchIn, params, orderBy) {
+	connect() {
+		return this.client.connect();
+	}
+
+	static buildQuery(fields, params, orderBy) {
 		var i = params.length + 1;
 		var str = "";
 
-		for (var fieldName in matchExact) {
-			str = str + fieldName + "=$" + i + " AND ";
-			params.push(matchExact[fieldName]);
+		for (let fieldName in fields) {
+			let field = fields[fieldName];
+
+			if (Array.isArray(field)) {
+				str = str + fieldName + " = ANY ($" + i + ") AND ";
+			} else {
+				str = str + fieldName + "=$" + i + " AND ";
+			}
+
+			params.push(field);
 			i++;
-		}
-
-		for (var fieldName in matchIn) {
-			str = str + fieldName + " IN (";
-			var array = matchIn[fieldName];
-
-			for (var item of array) {
-				str = str + "$" + i + ",";
-				params.push(item);
-				i++;
-			}
-
-			if (str.endsWith(",") > 0) {
-				str = str.substring(0, str.length - 1);
-			}
-
-			str = str + ") AND ";
 		}
 
 		if (str.endsWith(" AND ") > 0) {
@@ -88,27 +57,28 @@ class DbClientPostgres {
 		}
 
 		if (orderBy != undefined && orderBy != null) {
-			str = str + " ORDER BY ";
-
 			if (Array.isArray(orderBy)) {
-				for (fieldName of orderBy) {
-					str = str + fieldName + ",";
-				}
+				if (orderBy.length > 0) {
+					str = str + " ORDER BY ";
 
-				if (str.endsWith(",") > 0) {
-					str = str.substring(0, str.length - 1);
+					for (let fieldName of orderBy) {
+						str = str + CaseConvert.camelToUnderscore(fieldName) + ",";
+					}
+
+					if (str.endsWith(",") > 0) {
+						str = str.substring(0, str.length - 1);
+					}
 				}
 			} else {
-				str = str + orderBy;
+				str = str + " ORDER BY " + orderBy;
 			}
-
 		}
 
 		return str;
 	}
 
-	insert(tableName, createObj, callback) {
-		tableName = convertCaseCamelToUnderscore(tableName);
+	insert(tableName, createObj) {
+		tableName = CaseConvert.camelToUnderscore(tableName);
 		var params = [];
 		var i = 1;
 		var strFields = "";
@@ -116,7 +86,7 @@ class DbClientPostgres {
 
 		for (var fieldName in createObj) {
 			var obj = createObj[fieldName];
-			strFields = strFields + convertCaseCamelToUnderscore(fieldName) + ",";
+			strFields = strFields + CaseConvert.camelToUnderscore(fieldName) + ",";
 			strValues = strValues + "$" + i + ",";
 
 			if (Array.isArray(obj) == true) {
@@ -134,33 +104,46 @@ class DbClientPostgres {
 			strValues = strValues.substring(0, strValues.length - 1);
 		}
 
-		var sql = "INSERT INTO " + tableName + " (" + strFields + ") VALUES (" + strValues + ")";
-		this.client.query(sql, params, callback);
+		var sql = "INSERT INTO " + tableName + " (" + strFields + ") VALUES (" + strValues + ") RETURNING *";
+		return this.client.query(sql, params).then(result => result.rows[0]);
 	}
 
-	find(tableName, matchExact, matchIn, orderBy, callback) {
-		tableName = convertCaseCamelToUnderscore(tableName);
+	find(tableName, fields, orderBy) {
+		tableName = CaseConvert.camelToUnderscore(tableName);
 		var params = [];
-		var sql = "SELECT * FROM " + tableName + DbClientPostgres.buildQuery(matchExact, matchIn, params, orderBy);
-		this.client.query(sql, params, callback);
+		var sql = "SELECT * FROM " + tableName + DbClientPostgres.buildQuery(fields, params, orderBy);
+		return this.client.query(sql, params).then(result => result.rows);
 	}
 
-	findMax(tableName, fieldName, matchExact, matchIn, callback) {
-		tableName = convertCaseCamelToUnderscore(tableName);
+	findOne(tableName, fields) {
+		tableName = CaseConvert.camelToUnderscore(tableName);
 		var params = [];
-		var sql = "SELECT MAX(" + fieldName + ") FROM " + tableName + DbClientPostgres.buildQuery(matchExact, matchIn, params);
-		this.client.query(sql, params, callback);
+		var sql = "SELECT * FROM " + tableName + DbClientPostgres.buildQuery(fields, params);
+		return this.client.query(sql, params).then(result => {
+			if (result.rowCount == 0) {
+				throw new Error("NoResultException");
+			}
+
+			return result.rows[0]
+		});
 	}
 
-	update(tableName, matchExact, matchIn, updateObj, callback) {
-		tableName = convertCaseCamelToUnderscore(tableName);
+	findMax(tableName, fieldName, fields) {
+		tableName = CaseConvert.camelToUnderscore(tableName);
+		var params = [];
+		var sql = "SELECT MAX(" + fieldName + ") FROM " + tableName + DbClientPostgres.buildQuery(fields, params);
+		return this.client.query(sql, params).then(result => result.rows[0]);;
+	}
+
+	update(tableName, fields, updateObj) {
+		tableName = CaseConvert.camelToUnderscore(tableName);
 		var sql = "UPDATE " + tableName;
 		var params = [];
 		var i = 1;
 		var str = "";
 
 		for (var fieldName in updateObj) {
-			str = str + convertCaseCamelToUnderscore(fieldName) + "=$" + i + ",";
+			str = str + CaseConvert.camelToUnderscore(fieldName) + "=$" + i + ",";
 			var obj = updateObj[fieldName];
 
 			if (Array.isArray(obj) == true) {
@@ -178,14 +161,14 @@ class DbClientPostgres {
 			sql = sql + " SET " + str;
 		}
 
-		sql = sql + DbClientPostgres.buildQuery(matchExact, matchIn, params);
-		this.client.query(sql, params, callback);
+		sql = sql + DbClientPostgres.buildQuery(fields, params) + " RETURNING *";
+		return this.client.query(sql, params).then(result => result.rows[0]);
 	}
 
-	deleteOne(tableName, matchExact, matchIn, callback) {
-		tableName = convertCaseCamelToUnderscore(tableName);
+	deleteOne(tableName, fields) {
+		tableName = CaseConvert.camelToUnderscore(tableName);
 		var params = [];
-		var sql = "DELETE FROM " + tableName + DbClientPostgres.buildQuery(matchExact, matchIn, params);
-		this.client.query(sql, params, callback);
+		var sql = "DELETE FROM " + tableName + DbClientPostgres.buildQuery(fields, params);
+		return this.client.query(sql, params);
 	}
 }

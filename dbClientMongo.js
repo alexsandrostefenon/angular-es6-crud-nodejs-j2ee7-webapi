@@ -1,21 +1,17 @@
-//var MongoClient = require('mongodb').MongoClient;
+const Client = require("mongodb").MongoClient;
 
 module.exports =
 
 class DbClientMongo {
-	
+
 	constructor(dbName) {
-		var scope = this;
-		
-		MongoClient.connect('mongodb://localhost:27017/' + dbName, function(err, db) {
-			if (err == null) {
-				scope.db = db;
-			} else {
-				
-			}
-		});
+		this.url = "mongodb://localhost:27017/" + dbName;
 	}
-	
+
+	connect() {
+		return Client.connect().then((clent) => {this.db = client.db(dbname)}.bind(this));
+	}
+
 	find(table, matchExact, matchIn, callback) {
 		var query = Object.assign({}, matchExact);
 		

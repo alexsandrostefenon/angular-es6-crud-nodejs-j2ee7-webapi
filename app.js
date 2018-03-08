@@ -1,100 +1,32 @@
-var fs = require('fs');
-var https = require('https');
-var express = require('express');
-var bodyParser = require('body-parser');
-var WebSocketServer = require('websocket').server;
-const url = require('url');
+import fs from "fs";
+import https from "https";
+import express from "express";
+import bodyParser from "body-parser";
+import websocket from "websocket";
+import url from "url";
+import {DbClientPostgres} from "./dbClientPostgres.js";
+import {Response, MediaType} from "./server-utils.js";
+import {CaseConvert} from "./src/main/webapp/es6/CaseConvert.js";
+
+let WebSocketServer = websocket.server;
 
 var dbName = process.argv[2] || "crud";
-var webapp = process.argv[3] || './src/main/webapp';
+var webapp = process.argv[3] || "./src/main/webapp";
 var portListen = process.argv[4] || 9443;
 var fileNamePrivateKey = process.argv[5] || "key.pem";
 var fileNameCertificate = process.argv[6] || "cert.pem";
-
-function convertCaseUnderscoreToCamel(str, isFirstUpper) {
-	var ret = "";
-	var nextIsUpper = false;
-
-	if (isFirstUpper == true) {
-		nextIsUpper = true;
-	}
-
-	for (var i = 0; i < str.length; i++) {
-		var ch = str[i];
-
-		if (nextIsUpper == true) {
-			ch = ch.toUpperCase();
-			nextIsUpper = false;
-		}
-
-		if (ch == '_') {
-			nextIsUpper = true;
-		} else {
-			ret = ret + ch;
-		}
-	}
-
-	return ret;
-}
-
-var DbClientPostgres = require('./dbClientPostgres.js');
-var dbClient = new DbClientPostgres(dbName);
-
-/*
-class HttpRestRequest {
-
-	constructor(urlString, token) {
-		var urlObj = url.parse(urlString);
-		this.hostname = urlObj.hostname;
-		this.port = urlObj.port;
-		this.path = urlObj.path;
-	}
-
-	request(path, method, postData, sucessCallback, failCallback) {
-		var options = {
-				  hostname: this.hostname,
-				  port: this.port,
-				  path: this.path + "/" + path,
-				  method: method,
-				  rejectUnauthorized: false
-				};
-
-
-		var req = https.request(options, (res) => {
-		  console.log(`STATUS: ${res.statusCode}`);
-		  console.log(`HEADERS: ${JSON.stringify(res.headers)}`);
-		  res.setEncoding('utf8');
-		  res.on('data', (chunk) => {
-		    console.log(`BODY: ${chunk}`);
-		  });
-		  res.on('end', () => {
-		    console.log('No more data in response.');
-		  });
-		});
-
-		req.on('error', (e) => {
-		  console.log(`problem with request: ${e.message}`);
-		});
-
-		// write data to request body
-		req.write(postData);
-		req.end();
-	}
-
-}
-*/
 
 var app = express();
 app.use("/" + dbName, express.static(webapp));
 app.use(bodyParser.urlencoded({extended:true}));
 app.use(bodyParser.json());
 
-app.options("/" + dbName + '/rest', function (req, res, next) {
+app.options("/" + dbName + '/rest', (req, res, next) => {
 	return next();
 });
 
 //Add headers
-app.use(function (req, res, next) {
+app.use((req, res, next) => {
     // Website you wish to allow to connect
     res.setHeader('Access-Control-Allow-Origin', '*');
     // Request methods you wish to allow
@@ -104,378 +36,450 @@ app.use(function (req, res, next) {
     next();
 });
 
-app.post("/" + dbName + '/rest/authc', function (req, res, next) {
-	var userQuery = {"name":req.body.userId, "password":req.body.password};
+function getPrimaryKeys(service) {
+	var orderBy = [];
 
-	var callbackFind = function(error, result) {
-		if (error == null) {
-			if (result.rowCount == 1) {
-				function guid() {
-				  function s4() {
-				    return Math.floor((1 + Math.random()) * 0x10000).toString(16).substring(1);
-				  }
+	for (var fieldName in service.jsonFields) {
+		var field = service.jsonFields[fieldName];
 
-				  return s4() + s4() + '-' + s4() + '-' + s4() + '-' + s4() + '-' + s4() + s4() + s4();
-				}
-
-				var user = result.rows[0];
-				user.authctoken = guid();
-
-				var callbackUpdate = function(error, result) {
-					if (error == null) {
-						var callbackServices = function(error, result) {
-							if (error == null) {
-								var loginResponse = {};
-								loginResponse.user = user;
-								loginResponse.crudServices = result.rows;
-								loginResponse.title = user.name;
-								console.log("loginResponse:", loginResponse);
-								res.send(loginResponse);
-							} else {
-								return next(error);
-							}
-						}
-
-						var roles = JSON.parse(user.roles);
-						var names = Object.keys(roles);
-						dbClient.find("crud_service", null, {"name": names}, null, callbackServices);
-					} else {
-						return next(error);
-					}
-				}
-
-				var userUpdate = {"authctoken": user.authctoken};
-				dbClient.update("crud_user", userQuery, null, userUpdate, callbackUpdate);
-			} else {
-				next("don't find user");
-			}
-		} else {
-			return next(error);
+		if (field.primaryKey == true) {
+			orderBy.push(fieldName);
 		}
 	}
 
-	dbClient.find("crud_user", userQuery, null, null, callbackFind);
-});
+	return orderBy;
+}
 
-// accessName : create,read,update,delete,query
-// MethodName : create,findById,listAll,deleteById,update
-function authWithToken(req, res, next, path, accessName, callback) {
-	var authorizationHeader = req.get("Authorization");
-	console.log("authorization header :", authorizationHeader);
+function guid() {
+  function s4() {
+    return Math.floor((1 + Math.random()) * 0x10000).toString(16).substring(1);
+  }
 
-	if (authorizationHeader != undefined && authorizationHeader.startsWith("Token ")) {
-		var token = authorizationHeader.substring(6);
+  return s4() + s4() + '-' + s4() + '-' + s4() + '-' + s4() + '-' + s4() + s4() + s4();
+}
 
-		var callbackFind = function (err, result) {
-			if (err) {
-				console.log("error in find user with token:", err);
-				res.status(401).send("error in find user with token");
-			}
+class LoginResponse {
 
-			if (result.rows.length == 1) {
-				req.user = result.rows[0];
-
-				if (req.user.roles != undefined) {
-					var userRoles = JSON.parse(req.user.roles);
-					req.serviceName = convertCaseUnderscoreToCamel(path, false);
-					var userRole = userRoles[req.serviceName];
-
-					if (userRole != undefined) {
-						// verfica a permissao de acesso ao serviço
-						if (accessName == null || userRole[accessName] != false) {
-							var callbackFindService = function(error, result) {
-								if (error == null) {
-									req.service = result.rows[0];
-									req.primaryKeys = [];
-									req.service.fields = JSON.parse(req.service.fields);
-
-									for (var fieldName in req.service.fields) {
-										var field = req.service.fields[fieldName];
-
-										if (field.primaryKey == true) {
-											req.primaryKeys.push(fieldName);
-										}
-									}
-
-									req.primaryKey = {};
-
-									for (var fieldName of req.primaryKeys) {
-										req.primaryKey[fieldName] = req.query[fieldName];
-									}
-
-									console.log("user:", req.user.name);
-									console.log('Client IP:', req.connection.remoteAddress);
-									console.log("URL:", req.originalUrl);
-									callback(req, res, next);
-								} else {
-									return next(error);
-								}
-							}
-
-							dbClient.find("crud_service", {"name": req.serviceName}, null, null, callbackFindService);
-						} else {
-							console.log("unauthorized access: " + req.serviceName);
-							res.status(401).send("unauthorized access");
-						}
-					} else {
-						console.log("unauthorized : " + req.serviceName);
-						res.status(401).send("unauthorized");
+	load(dbClient) {
+		return dbClient.findOne("crud_company", {"id": this.user.company})
+		.catch(error => {
+			throw new Error("don't get user company : " + error.message);
+		})
+		.then(company => {
+			this.title = company.name + " - " + this.user.name;
+			// TODO : código temporário para caber o na tela do celular
+			this.title = this.user.name;
+			return dbClient.find("crud_service", {"name": this.servicesNames}, null)
+				.catch(error => {
+					throw new Error("don't get user services : " + error.message);
+				})
+				.then(services => {
+					this.crudServices = services;
+					// TODO : temporary code, until hibernate persist postgresql jsonb type
+					for (var service of this.crudServices) {
+						service.jsonFields = JSON.parse(service.fields);
 					}
-				} else {
-					console.log("report to admin check : " + req.user);
-					res.status(401).send("report to admin check");
-				}
-			} else {
-				console.log("Authorization replaced by new login in another session");
-				res.status(401).send("Authorization replaced by new login in another session");
-			}
-		};
 
-		dbClient.find("crud_user", {"authctoken":token}, null, null, callbackFind);
-	} else {
-		console.log("Authorization token header invalid : ", authorizationHeader);
-		res.status(401).send("Authorization token header invalid");
+					return dbClient.find("category_company", {"company": this.user.company}, null)
+					.catch(error => {
+						throw new Error("don't match request category for user company : " + error.message);
+					})
+					.then(categories => {
+						this.categories = [];
+
+						for (let categoryCompany of categories) {
+							this.categories.push(categoryCompany.id);
+						}
+					});
+				});
+		});
+	}
+
+	constructor(user) {
+		this.user = user;
+		this.servicesNames = [];
+		this.websocketServices = [];
+		var roles = JSON.parse(user.roles);
+
+		for (var key in roles) {
+			this.servicesNames.push(key);
+			var jsonAccess = roles[key];
+			// verfica a permissao de aviso de alterações via websocket
+			if (jsonAccess.read == true) {
+				this.websocketServices.push(key);
+			}
+		}
 	}
 }
 
-app.get("/" + dbName + '/rest/:collectionName/query', function (req, res, next) {
-	var callbackAuth = function() {
-		var fieldQuery = req.query.fieldQuery;
-		var valueQuery = req.query.valueQuery;
-		var searchQuery = undefined;
+class RequestFilter {
+	constructor(dbname, app) {
+		this.dbClient = new DbClientPostgres(dbName);
+    	this.clients = [];
+		this.webSocket = this;
 
-		if (fieldQuery != undefined && valueQuery != undefined) {
-			searchQuery = {};
-			searchQuery[fieldQuery] = valueQuery;
-		}
+		app.post("/" + dbName + '/rest/authc', (req, res, next) => {
+			this.authenticateByUserAndPassword(req)
+			.catch(error => next(error.message))
+			.then(response => res.status(response.status).send(response.data))
+			.catch(error => next(error.message));
+		});
 
-		console.log("find: searchQuery:", searchQuery);
+		app.post("/" + dbName + '/rest/:collectionName/create', (req, res, next) => {
+			this.processRequest(req, res, next, req.params.collectionName, "create");
+		});
 
-		var callbackFind = function (e, results) {
-			if (e) {
-				return next(e);
+		app.get("/" + dbName + '/rest/:collectionName/read', (req, res, next) => {
+			this.processRequest(req, res, next, req.params.collectionName, "read");
+		});
+
+		app.put("/" + dbName + '/rest/:collectionName/update', (req, res, next) => {
+			this.processRequest(req, res, next, req.params.collectionName, "update");
+		});
+
+		app.delete("/" + dbName + '/rest/:collectionName/delete', (req, res, next) => {
+			this.processRequest(req, res, next, req.params.collectionName, "delete");
+		});
+
+		app.get("/" + dbName + '/rest/:collectionName/query', (req, res, next) => {
+			this.processRequest(req, res, next, req.params.collectionName, "query");
+		});
+	}
+
+	start() {
+		return this.dbClient.connect();
+	}
+	// private to create,update,delete,read
+	checkObjectAccess(login, req, service, obj) {
+		var response = null;
+
+		if (login.user.company > 1 && service.jsonFields.company != undefined) {
+			if (obj.company == undefined) {
+				obj.company = login.user.company;
 			}
 
-			res.send(results.rows);
-		};
+			if (obj.company == login.user.company) {
+				if (service.jsonFields.category != undefined) {
+					if (login.categories.indexOf(obj.category) < 0) {
+						response = Response.status(Response.Status.UNAUTHORIZED).entity("unauthorized object category").build();
+					}
+				}
+			} else {
+				response = Response.status(Response.Status.UNAUTHORIZED).entity("unauthorized object company").build();
+			}
+		}
+
+		return response;
+	}
+	// public
+	processCreate(login, req, service, obj) {
+		let response = this.checkObjectAccess(login, req, service, obj);
+
+		if (response != null) Promisse.resolve(response);
+
+		return this.dbClient.insert(service.name, obj).then(newObj => {
+			this.notify(newObj, service, false);
+			return Response.ok(newObj, MediaType.APPLICATION_JSON).build();
+		});
+	}
+	// public
+	getObject(login, req, service) {
+		var fields = {};
+
+		for (let fieldName in service.jsonFields) {
+			let field = service.jsonFields[fieldName];
+
+			if (field.primaryKey == true) {
+				fields[fieldName] = req.query[fieldName];
+			}
+		}
+
+		var company = login.user.company;
+
+		if (service.jsonFields["company"] != undefined) {
+			if (company == 1) {
+				// se for admin, direciona a busca para a empresa informada
+				company = req.query["company"];
+			}
+
+			fields["company"] = company;
+		} else if (company != 1 && service.jsonFields["category"] != undefined) {
+			// se não for admin, limita os resultados para as categorias vinculadas a empresa do usuário
+			fields["category"] = login.categories;
+		}
+
+		return this.dbClient.findOne(service.name, fields)
+		.catch(error => {
+			throw new Error("fail to find object with company, category and query parameters related : " + error.message);
+		});
+	}
+	// public processRead
+	processRead(login, req, service) {
+		return this.getObject(login, req, service).then(obj => Response.ok(obj, MediaType.APPLICATION_JSON).build());
+	}
+	// public processUpdate
+	processUpdate(login, req, service, obj) {
+		return this.getObject(login, req, service).then(oldObj => {
+			let response = this.checkObjectAccess(req, login, obj, service);
+
+			if (response != null) return Promisse.resolve(response);
+
+			if (oldObj["id"] != undefined) {
+				let oldId = oldObj["id"];
+				let newId = obj["id"];
+
+				if (newId == null || newId != oldId) {
+					return Promisse.resolve(Response.status(Response.Status.UNAUTHORIZED).entity("changed id").build());
+				}
+			}
+
+			return this.dbClient.update(service.name, req.primaryKey, obj, null).then(newObj => {
+				this.notify(newObj, service, false);
+				return Response.ok(newObj, MediaType.APPLICATION_JSON).build();
+			});
+		});
+	}
+	// public processDelete
+	processDelete(login, req, service) {
+		return this.getObject(login, req, service).then(obj => {
+			return this.dbClient.deleteOne(service.name, req.primaryKey).then(obj => {
+				this.notify(obj, service, true);
+				return Response.ok().build();
+			});
+		});
+	}
+	// public
+	processQuery(login, req, service) {
+		var fields = {};
+		var company = login.user.company;
+
+		if (company != 1) {
+			if (service.jsonFields["company"] != undefined) {
+				fields["company"] = company;
+			} else if (service.jsonFields["category"] != undefined) {
+				// se não for admin, limita os resultados para as categorias vinculadas a empresa do usuário
+				fields["category"] = login.categories;
+			}
+		}
 
 		var orderBy;
 
-		if (req.service.orderBy != undefined && req.service.orderBy != null) {
-			orderBy = req.service.orderBy;
+		if (service.orderBy != undefined && service.orderBy != null) {
+			orderBy = service.orderBy.split(",");
 		} else {
-			orderBy = req.primaryKeys.toString();
+			orderBy = getPrimaryKeys(service);
 		}
 
-		dbClient.find(req.params.collectionName, searchQuery, null, orderBy, callbackFind);
+		return this.dbClient.find(service.name, fields, orderBy).then(results =>
+			Response.ok(results, MediaType.APPLICATION_JSON).build()
+		);
 	}
 
-	authWithToken(req, res, next, req.params.collectionName, "query", callbackAuth);
-});
+	// resource : serviceName
+	// access : create,read,update,delete,query or custom method
+	processRequest(req, res, next, resource, access) {
+		let crudProcess = (login) => {
+			let service = login.crudServices.find(item => item.name == req.serviceName);
 
-app.get("/" + dbName + '/rest/:collectionName/read', function (req, res, next) {
-	var callbackAuth = function() {
-		var callbackDb = function (e, results) {
-			if (e) {
-				return next(e);
+			req.primaryKey = {};
+
+			for (var fieldName in service.jsonFields) {
+				req.primaryKey[fieldName] = req.query[fieldName];
 			}
 
-			res.send(results.rows[0]);
-		};
+			console.log("user:", login.user.name);
+			console.log('Client IP:', req.connection.remoteAddress);
+			console.log("URL:", req.originalUrl);
 
-		dbClient.find(req.params.collectionName, req.primaryKey, null, null, callbackDb);
-	}
+			var obj = null;
 
-	authWithToken(req, res, next, req.params.collectionName, "read", callbackAuth);
-});
-
-app.delete("/" + dbName + '/rest/:collectionName/delete', function(req, res, next) {
-	var callbackAuth = function() {
-		var callbackDb = function (e, results) {
-			if (e) {
-				return next(e);
+			if (access == "create" || access == "update") {
+				obj = req.body;
 			}
 
-			res.send("OK");
-		};
+			var cf;
 
-		dbClient.deleteOne(req.params.collectionName, req.primaryKey, null, callbackDb);
-	}
-
-	authWithToken(req, res, next, req.params.collectionName, "delete", callbackAuth);
-});
-
-app.put("/" + dbName + '/rest/:collectionName/update', function(req, res, next) {
-	var callbackAuth = function() {
-		var obj = req.body;
-
-		var callbackDb = function (e, results) {
-			if (e) {
-				return next(e);
+			if (access == "create") {
+				cf = this.processCreate(login, req, service, obj);
+			} else if (access == "update") {
+				cf = this.processUpdate(login, req, service, obj);
+			} else if (access == "delete") {
+				cf = this.processDelete(login, req, service);
+			} else if (access == "read") {
+				cf = this.processRead(login, req, service);
+			} else if (access = "query") {
+				cf = this.processQuery(login, req, service);
+			} else {
+				return next();
 			}
 
-			res.send(obj);
-		};
-
-		dbClient.update(req.params.collectionName, req.primaryKey, null, obj, callbackDb);
-	}
-
-	authWithToken(req, res, next, req.params.collectionName, "update", callbackAuth);
-});
-
-function checkObjectAccess(req, obj, callback) {
-	if (req.user.company > 1 && req.service.fields.company != undefined) {
-		obj.company = req.user.company;
-
-		if (req.service.fields.category != undefined && req.serviceName != "categoryCompany") {
-			var callbackFindCategory = function(error, result) {
-				if (error != null) {
-					callback(error);
-				} else if (result.rowCount > 0) {
-					callback(null);
-				} else {
-					callback("don't match request category for user company");
-				}
-			}
-
-			dbClient.find("category_company", null, {"company": obj.company, "category": obj.category}, null, callbackFindCategory);
-		} else {
-			callback(null);
-		}
-	} else {
-		callback(null);
-	}
-}
-
-app.post("/" + dbName + '/rest/:collectionName/create', function (req, res, next) {
-	var callbackAuth = function(error) {
-		if (error != undefined && error != null) {
-			return next(error);
+			return cf.catch(error => Response.status(Response.Status.BAD_REQUEST).entity(error.message).build())
+			.then(response =>
+				res.status(response.status).send(response.data)
+			);
 		}
 
-		var tableName = req.params.collectionName;
-		var obj = req.body;
+		let authorization = user => {
+			var msgErr;
+			var roles = user.roles;
 
-		var callback = function(error, result) {
-			if (error) {
-				return next(error);
-			}
+			if (roles != null && roles != undefined) {
+				var json = JSON.parse(roles);
+				req.serviceName = CaseConvert.underscoreToCamel(resource, false);
 
-			res.send(obj);
-		}
-
-		if (req.primaryKeys.indexOf("id") >= 0) {
-			var callbackFindMaxId = function(error, result) {
-				if (error == null && result.rows.length == 1) {
-					var lastId = result.rows[0].max;
-
-					if (lastId == null) {
-						lastId = 0;
+				if (json[req.serviceName] != undefined) {
+					let serviceAuth = json[req.serviceName];
+					// verfica a permissao de acesso
+					if (serviceAuth[access] != false) {
+						msgErr = null;
+						console.log("[authorization] Sucessful authorization : path: = %s, user = %s, roles = %s, token = %s", resource, user.name, roles, user.authctoken);
+					} else {
+						msgErr = "unauthorized access";
 					}
-
-					obj.id = lastId + 1;
-					dbClient.insert(tableName, obj, callback);
 				} else {
-					callback(error, null);
+					msgErr = "unauthorized resource";
 				}
+			} else {
+				msgErr = "report to admin check";
 			}
 
-			dbClient.findMax(tableName, "id", null, null, callbackFindMaxId);
-		} else {
-			dbClient.insert(tableName, obj, callback);
+			return msgErr;
+		};
+
+		let authWithToken = () => {
+			var authorizationHeader = req.get("Authorization");
+			console.log("authorization header :", authorizationHeader);
+
+			if (authorizationHeader != undefined && authorizationHeader.startsWith("Token ")) {
+				var token = authorizationHeader.substring(6);
+				var login = RequestFilter.getLogin(token);
+
+				if (login != null) {
+					var msgErr = authorization(login.user);
+
+					if (msgErr == null) {
+						crudProcess(login);
+					} else {
+						res.status(401).send(msgErr);
+						console.log("user : ", login.user.name, " - path : ", resource, " - msgErr : ", msgErr);
+					}
+				} else {
+					res.status(401).send("Authorization replaced by new login in another session");
+					console.log("Authorization replaced by new login in another session");
+				}
+			} else {
+				res.status(401).send("Authorization token header invalid");
+				console.log("Authorization token header invalid : ", authorizationHeader);
+			}
 		}
+
+		authWithToken();
+	}
+	// public
+	authenticateByUserAndPassword(req) {
+		let userQuery = {"name":req.body.userId, "password":req.body.password};
+		return this.dbClient.findOne("crud_user", userQuery)
+		.then(user => {
+			var token = guid();
+			user.authctoken = token;
+			return this.dbClient.update("crud_user", userQuery, {"authctoken": user.authctoken}).then(userAfterUpdate => {
+				var loginResponse = new LoginResponse(userAfterUpdate);
+				return loginResponse.load(this.dbClient).then(() => {
+					console.log("[authenticateByUserAndPassword] Sucessful login : user = ", userAfterUpdate.name, ", roles = ", userAfterUpdate.roles, ", token = ", userAfterUpdate.authctoken);
+					RequestFilter.logins.set(token, loginResponse);
+					return Response.ok(loginResponse, MediaType.APPLICATION_JSON).build();
+				});
+			});
+		});
 	}
 
-	var callbackAccess = function(error) {
-		checkObjectAccess(req, req.body, callbackAuth);
+	static getLogin(token) {
+		return RequestFilter.logins.get(token);
 	}
 
-	authWithToken(req, res, next, req.params.collectionName, "create", callbackAccess);
-});
+    onMessage(session, token) {
+    	let login = RequestFilter.getLogin(token);
+
+		if (login != null) {
+			session.login = login;
+		    console.log("New websocket session opened: token : ", token, ", id : ", session.id);
+	        this.clients.push(session);
+		}
+    }
+    // remove the session after it's closed
+    onClose(session) {
+        console.log("Websoket session closed: " + session.login.authctoken);
+        var index = this.clients.indexOf(session);
+
+        if (index >= 0) {
+        	this.clients.splice(index, 1);
+        }
+    }
+    // This method sends the same Bidding object to all opened sessions
+    notify(serviceName, primaryKey, isRemove) {
+		var msg = {};
+		msg.service = serviceName;
+		msg.primaryKey = primaryKey;
+
+		if (isRemove == false) {
+			msg.action = "notify";
+		} else {
+			msg.action = "delete";
+		}
+
+		let str = msg.toString();
+		let objCompany = primaryKey["company"];
+		let category = primaryKey["category"];
+
+		for (var session of this.clients) {
+			let login = session.login;
+			var userCompany = login.user.company;
+			// enviar somente para os clients de "company"
+			if (objCompany == undefined || userCompany == 1 || objCompany == userCompany) {
+				// restrição de categoria
+				if (category == undefined || login.categories.indexOf(category) >= 0) {
+					// envia somente para os usuários com acesso ao serviço alterado
+					if (login.websocketServices.contains(serviceName)) {
+						console.log("notify, user ", login.user.name, ":", msg);
+						Promisse.resolved().then(() => session.sendUTF(str));
+					}
+				}
+			}
+		}
+    }
+
+}
 
 var privateKey  = fs.readFileSync(fileNamePrivateKey, 'utf8');
 var certificate = fs.readFileSync(fileNameCertificate, 'utf8');
 var credentials = {key: privateKey, cert: certificate};
 var server = https.createServer(credentials, app);
 
-server.listen(portListen, function () {
-  var host = server.address().address;
-  var port = server.address().port;
+RequestFilter.logins = new Map();
+var requestFilter = new RequestFilter(dbName, app);
+requestFilter.start().then(() => {
+	server.listen(portListen, () => {
+		  var host = server.address().address;
+		  var port = server.address().port;
 
-  console.log('Example app listening at http://%s:%s', host, port);
+		  console.log('Example app listening at http://%s:%s', host, port);
+		});
 });
 
-class WebSocketNotifierServer {
-
-	constructor() {
-    	this.clients = [];
-    }
-
-	onConnect(session) {
-        this.clients.push(session);
-	}
-
-    onClose(session) {
-//        console.log("Websoket session closed: " + session.user.authctoken);
-        var index = this.clients.indexOf(session);
-
-        if (index >= 0) {
-        	this.clients = this.clients.slice(index, 1);
-        }
-    }
-
-    onMessage(session, token) {
-		var callbackFind = function (err, result) {
-			if (err == null) {
-				if (result.rows.length == 1) {
-			    	session.user = result.rows[0];
-			        console.log("New websocket session opened: " + session.user);
-				} else {
-			        console.log("Fail tl new websocket session: " + session + ", token: " + token);
-				}
-			} else {
-				console.log("Fail on find user");
-			}
-		};
-
-		dbClient.find("crud_user", {"authctoken":token}, null, null, callbackFind);
-    }
-
-    notify(objClassName, obj, id, isRemove) {
-    	var msg = {"action":"notify", "service":objClassName, "id":id};
-
-    	if (isRemove == true) {
-    		msg.action = "delete";
-    	}
-
-		for (var session of this.clients) {
-			var roles = JSON.parse(session.user.roles);
-
-			if (roles[objClassName]) {
-				console.log("WebSocket.Notifier, session: " + session);
-				session.sendUTF(msg.toString());
-			}
-		}
-    }
-
-}
-
-var webSocketNotifierServer = new WebSocketNotifierServer();
 var wsServer = new WebSocketServer({httpServer: server, autoAcceptConnections: true});
 
-wsServer.on('connect', function(connection) {
+wsServer.on('connect', (connection) => {
     console.log((new Date()) + ' Connection accepted.');
-    webSocketNotifierServer.onConnect(connection);
 
-    connection.on("message", function(message) {
+    connection.on("message", (message) => {
         if (message.type === 'utf8') {
             console.log('Received Message: ' + message.utf8Data);
-            webSocketNotifierServer.onMessage(connection, message.utf8Data);
+            requestFilter.onMessage(connection, message.utf8Data);
         }
     });
 
-    connection.on("close", function(reasonCode, description) {
+    connection.on("close", (reasonCode, description) => {
         console.log((new Date()) + ' Peer ' + connection.remoteAddress + ' disconnected.');
-        webSocketNotifierServer.onClose(connection);
+        requestFilter.onClose(connection);
     });
 });
