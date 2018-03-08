@@ -1,9 +1,10 @@
-/**
- * http://usejsdoc.org/
- */
-define(["Utils", "CrudUiSkeleton"], function(Utils, CrudUiSkeleton) {
+import {Utils} from "./Utils.js";
+import {CrudUiSkeleton} from "./CrudUiSkeleton.js";
+import {app} from "./app-globals.js";
+import {DatabaseUiAdapter} from "./ServerConnectionUI.js";
+import {CrudService, ServerConnection} from "./ServerConnection.js";
 
-globalCompileProvider.directive('crudJsonArray', function() {
+app.directive('crudJsonArray', function() {
 	return {
 		restrict: 'E',
 
@@ -16,7 +17,7 @@ globalCompileProvider.directive('crudJsonArray', function() {
 	};
 });
 
-class CrudJsonArray extends CrudUiSkeleton {
+export class CrudJsonArray extends CrudUiSkeleton {
 
 	constructor(fields, instanceExternal, fieldNameExternal, title, serverConnection, selectCallback) {
 		super(serverConnection, fieldNameExternal, new DatabaseUiAdapter(serverConnection, fields), selectCallback);
@@ -94,7 +95,3 @@ class CrudJsonArray extends CrudUiSkeleton {
 	}
 
 }
-
-return CrudJsonArray;
-
-});

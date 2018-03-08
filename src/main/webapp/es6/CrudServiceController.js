@@ -1,9 +1,10 @@
-/**
- * http://usejsdoc.org/
- */
-define(["CrudController", "CrudItemJson", "Utils"], function(CrudController, CrudItemJson, Utils) {
+import {CrudController} from "./CrudController.js";
+import {CrudItemJson} from "./CrudItemJson.js";
+import {Utils} from "./Utils.js";
 
-class CrudServiceController extends CrudController {
+export const name = "CrudServiceController";
+
+export class Controller extends CrudController {
 
     constructor(serverConnection) {
     	super(serverConnection);
@@ -13,11 +14,11 @@ class CrudServiceController extends CrudController {
     	var types = Utils.getFieldTypes();
 		// params.fields = {"field": {"flags": ["label 1", "label 2", ...], "type": "text"}}
     	var serviceOptions = [];
-    	
+
     	for (var item of this.serverConnection.services.crudService.list) {
     		serviceOptions.push(item.name);
     	}
-    	
+
     	var fields = {
     			"type":{"options": types},
     			"defaultValue": {},
@@ -31,16 +32,8 @@ class CrudServiceController extends CrudController {
     			"title":{},
     			"isClonable":{"options": [true, false]}
     			};
-    	
+
     	this.listItemCrudJson.push(new CrudItemJson(fields, this.instance, "fields", "Campos dos formulários", this.serverConnection));
     }
 
 }
-
-globalControllerProvider.register("CrudServiceController", function(ServerConnectionService) {
-	return new CrudServiceController(ServerConnectionService);
-});
-
-return CrudServiceController;
-
-});

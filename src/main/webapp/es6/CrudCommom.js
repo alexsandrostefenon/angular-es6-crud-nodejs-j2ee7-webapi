@@ -1,6 +1,7 @@
-define(["Utils", "CrudUiSkeleton"], function(Utils, CrudUiSkeleton) {
+import {Utils} from "./Utils.js";
+import {CrudUiSkeleton} from "./CrudUiSkeleton.js";
 
-class Pagination {
+export class Pagination {
 
     constructor(pageSize) {
     	this.pageSize = pageSize;
@@ -45,7 +46,7 @@ class Pagination {
 
 }
 
-class CrudCommom extends CrudUiSkeleton {
+export class CrudCommom extends CrudUiSkeleton {
 
 	constructor(serverConnection, crudService, searchParams, action) {
 		super(serverConnection, crudService.params.name, crudService.databaseUiAdapter);
@@ -195,7 +196,3 @@ class CrudCommom extends CrudUiSkeleton {
 	}
 
 }
-
-return CrudCommom;
-
-});

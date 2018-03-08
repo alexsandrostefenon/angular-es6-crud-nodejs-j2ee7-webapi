@@ -1,6 +1,13 @@
-define(["Utils", "CrudCommom", "CrudItem"], function(Utils, CrudCommom, CrudItem) {
+import {Utils} from "./Utils.js";
+import {CrudCommom} from "./CrudCommom.js";
+import {CrudItem} from "./CrudItem.js";
+import {CrudItemJson} from "./CrudItemJson.js";
+import {CrudObjJson} from "./CrudObjJson.js";
+import {CrudJsonArray} from "./CrudJsonArray.js";
+import {app} from "./app-globals.js";
+import {CaseConvert} from "./CaseConvert.js";
 
-globalCompileProvider.directive('crudTable', function() {
+app.directive('crudTable', function() {
 	return {
 		restrict: 'E',
 
@@ -81,7 +88,7 @@ class CrudBase extends CrudCommom {
 
 }
 
-class CrudController extends CrudBase {
+export class CrudController extends CrudBase {
 
     constructor(serverConnection) {
     	var params = serverConnection.$location.search();
@@ -94,10 +101,6 @@ class CrudController extends CrudBase {
 
 }
 
-globalControllerProvider.register("CrudController", function(ServerConnectionService) {
+app.controller("CrudController", function(ServerConnectionService) {
 	return new CrudController(ServerConnectionService);
-});
-
-return CrudController;
-
 });

@@ -1,38 +1,17 @@
-require.config({
-	baseUrl: 'es6',
-    waitSeconds: 30
-});
-
-var app = angular.module('app', ['ngRoute', 'ui.bootstrap']);
-
-var globalRouteProvider;
-var globalControllerProvider;
-var globalCompileProvider;
-
-app.config(['$routeProvider', function($routeProvider) {
-	$routeProvider.when('/app/login',{templateUrl:'templates/login.html', controller:'LoginController', controllerAs: "vm"});
-	$routeProvider.otherwise({redirectTo: '/app/login'});
-	globalRouteProvider = $routeProvider;
-}]);
-
-app.config(['$controllerProvider', function($controllerProvider) {
-	globalControllerProvider = $controllerProvider;
-}]);
-
-app.config(['$compileProvider', function($compileProvider) {
-	globalCompileProvider = $compileProvider;
-}]);
+import {app} from "./app-globals.js";
+import {ServerConnectionUI, CrudServiceUI} from "./ServerConnectionUI.js";
+import {HttpRestRequest} from "./ServerConnection.js";
 
 class ServerConnectionService extends ServerConnectionUI {
 
 	constructor($location, $locale, $route, $rootScope) {
 		super($location, $locale, $route, $rootScope);
     }
-	
+
     login(server, user, password, callbackFinish, callbackFail, callbackPartial) {
         super.login(server, user, password, CrudServiceUI, callbackFinish, callbackFail, callbackPartial);
     }
-    
+
 }
 
 app.service("ServerConnectionService", function($location, $locale, $route, $rootScope, $http) {
@@ -48,7 +27,7 @@ class LoginController {
 		this.user = "";
 		this.password = "";
 		this.message = "";
-		
+
 	  	if (this.serverConnection.user != undefined) {
 	    	this.serverConnection.logout();
 	    	$window.location.reload();
@@ -57,14 +36,14 @@ class LoginController {
 
     login() {
     	var scope = this;
-    	
+
 		var callback = function(message) {
 			scope.message = message;
 		}
-	
+
     	this.serverConnection.login(this.server, this.user, this.password, callback, callback, callback);
     }
-    
+
 }
 
 app.controller('LoginController', function(ServerConnectionService, $window) {
@@ -78,11 +57,11 @@ class MenuController {
     	this.serverConnection = serverConnection;
     	this.isCollapsed = true;
     }
-    
+
     label(str) {
     	return this.serverConnection.convertCaseAnyToLabel(str);
     }
-	
+
 }
 
 app.controller("MenuController", function(ServerConnectionService) {

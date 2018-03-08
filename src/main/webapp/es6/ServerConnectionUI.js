@@ -1,4 +1,8 @@
-class DatabaseUiAdapter {
+import {CrudService, ServerConnection} from "./ServerConnection.js";
+import {CrudController} from "./CrudController.js";
+import {app, globalRouteProvider, globalControllerProvider} from "./app-globals.js";
+
+export class DatabaseUiAdapter {
 
 	constructor(serverConnection, fields) {
 		this.serverConnection = serverConnection;
@@ -85,7 +89,7 @@ class DatabaseUiAdapter {
 
 }
 
-class CrudServiceUI extends CrudService {
+export class CrudServiceUI extends CrudService {
 
 	constructor(serverConnection, params, httpRest) {
 		super(serverConnection, params, httpRest);
@@ -153,8 +157,8 @@ class CrudServiceUI extends CrudService {
         	this.listStr[newPos] = str;
         } else {
         	// remove and add
-        	this.listStr.slice(oldPos, 1);
-        	this.listStr.slice(newPos, 0, str);
+        	this.listStr.splice(oldPos, 1);
+        	this.listStr.splice(newPos, 0, str);
         }
 
     	if (callback != null) {
@@ -248,7 +252,7 @@ class CrudServiceUI extends CrudService {
 
 }
 
-class ServerConnectionUI extends ServerConnection {
+export class ServerConnectionUI extends ServerConnection {
 
 	constructor($location, $locale, $route, $rootScope) {
 		super();
@@ -321,7 +325,7 @@ class ServerConnectionUI extends ServerConnection {
 		}
         // routes and modules
 //		var config = JSON.parse(this.user.config);
-		var modules = ["CrudController"];
+		var promises = [];
 		globalRouteProvider.when('/app/login',{templateUrl:'templates/login.html', controller:'LoginController', controllerAs: "vm"});
 
 		if (this.user.routes != undefined && this.user.routes != null) {
@@ -339,26 +343,27 @@ class ServerConnectionUI extends ServerConnection {
 				if (route.templateUrl == undefined) {
 					route.templateUrl = "templates/crud.html";
 				}
+				// consider http://devdocs.io/dom-fetch/
+				var promise = import("./" + route.controller + ".js").then(module => {
+					console.log("loaded :", module.name);
 
-				modules.push(route.controller);
+					globalControllerProvider.register(module.name, function(ServerConnectionService) {
+						return new module.Controller(ServerConnectionService);
+					});
+				});
+				promises.push(promise);
 				globalRouteProvider.when(route.path, {"templateUrl":route.templateUrl, "controller": route.controller, controllerAs: "vm"});
 			}
 		}
 
-		globalRouteProvider.when("/app/:name/:action", {templateUrl: "templates/crud.html", controller: "CrudController", controllerAs: "vm"});
-		globalRouteProvider.otherwise({redirectTo: '/app/login'});
-		// start page
-		var scope = this;
+		Promise.all(promises).then(() => {
+			globalRouteProvider.when("/app/:name/:action", {templateUrl: "templates/crud.html", controller: "CrudController", controllerAs: "vm"});
+			globalRouteProvider.otherwise({redirectTo: '/app/login'});
 
-		requirejs(modules, function() {
-	        if (scope.user.path != undefined && scope.user.path != null && scope.user.path.length > 0) {
-				scope.$route.reload();
-	            scope.$location.path(scope.user.path);
+	        if (this.user.path != undefined && this.user.path != null && this.user.path.length > 0) {
+	        	this.$route.reload();
+	        	this.$location.path(this.user.path);
 	        }
-		}, function (err) {
-		    for (let item of err.requireModules) {
-		    	console.log("requirejs err :", item);
-		    }
 		});
     }
     // public

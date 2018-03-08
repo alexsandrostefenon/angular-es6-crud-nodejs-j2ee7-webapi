@@ -1,3 +1,4 @@
+import {CaseConvert} from "./CaseConvert.js";
 
 class Filter {
 
@@ -117,68 +118,7 @@ class Filter {
 
 }
 
-class CaseConvert {
-
-    static camelToUnderscore(str) {
-		var ret = "";
-
-		for (var i = 0; i < str.length; i++) {
-			var ch = str[i];
-
-			if (ch >= 'A' && ch <= 'Z') {
-				ch = ch.toLowerCase();
-				ret = ret + '_' + ch;
-			} else {
-				ret = ret + ch;
-			}
-		}
-
-		if (ret.length > 0 && ret[0] == '_') {
-			ret = ret.substring(1);
-		}
-
-		return ret;
-    }
-
-    static underscoreToCamel(str, isFirstUpper) {
-		var ret = "";
-		var nextIsUpper = false;
-
-		if (isFirstUpper == true) {
-			nextIsUpper = true;
-		}
-
-		for (var i = 0; i < str.length; i++) {
-			var ch = str[i];
-
-			if (nextIsUpper == true) {
-				ch = ch.toUpperCase();
-				nextIsUpper = false;
-			}
-
-			if (ch == '_') {
-				nextIsUpper = true;
-			} else {
-				ret = ret + ch;
-			}
-		}
-
-		return ret;
-    }
-
-    static camelUpToCamelLower(str) {
-		var ret = str;
-
-		if (str != undefined && str != null && str.length > 0) {
-			ret = str.charAt(0).toLocaleLowerCase() + str.substring(1);
-		}
-
-		return ret;
-    }
-
-}
-
-class HttpRestRequest {
+export class HttpRestRequest {
 
 	constructor(url) {
 		this.url = url;
@@ -295,7 +235,7 @@ class HttpRestRequest {
 	}
 }
 
-class CrudService {
+export class CrudService {
 
 	static getPrimaryKeysFromFields(fields) {
 		var primaryKeys = [];
@@ -546,7 +486,7 @@ class CrudService {
 
 }
 
-class ServerConnection {
+export class ServerConnection {
 
 	constructor() {
     	this.services = {};

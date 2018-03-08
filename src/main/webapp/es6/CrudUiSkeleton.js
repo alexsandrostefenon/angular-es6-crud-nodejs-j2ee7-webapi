@@ -1,9 +1,6 @@
-/**
- * http://usejsdoc.org/
- */
-define(["Utils"], function(Utils) {
+import {Utils} from "./Utils.js";
 
-class CrudUiSkeleton {
+export class CrudUiSkeleton {
 
 	constructor(serverConnection, name, databaseUiAdapter, selectCallback) {
 		this.serverConnection = serverConnection;
@@ -125,7 +122,3 @@ class CrudUiSkeleton {
 	}
 
 }
-
-return CrudUiSkeleton;
-
-});

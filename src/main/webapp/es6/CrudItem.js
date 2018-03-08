@@ -1,22 +1,21 @@
-/**
- * http://usejsdoc.org/
- */
-define(["Utils", "CrudCommom"], function(Utils, CrudCommom) {
+import {Utils} from "./Utils.js";
+import {CrudCommom} from "./CrudCommom.js";
+import {app} from "./app-globals.js";
 
-globalCompileProvider.directive('crudItem', function() {
+app.directive('crudItem', function() {
 	return {
 		restrict: 'E',
-		
+
 		scope: {
 			vm: '=',
 			edit: '='
 		},
-		
+
 		templateUrl: 'templates/crud-item.html'
 	};
 });
 
-class CrudItem extends CrudCommom {
+export class CrudItem extends CrudCommom {
 
 	constructor(serverConnection, serviceName, fieldName, foreignKey, isClonable, title, numMaxItems, queryCallback, selectCallback) {
     	super(serverConnection, serverConnection.services[serviceName], {}, 1);
@@ -30,14 +29,14 @@ class CrudItem extends CrudCommom {
 		this.isClonable = isClonable;
 		this.query();
 	}
-	
+
 	query() {
 		var params = {}
 		params[this.fieldName] = Object.values(this.foreignKey)[0];
 		this.filterResults = this.crudService.find(params);
 		// pagina e monta a listStr
 		this.paginate();
-		
+
 		if (this.queryCallback != undefined && this.queryCallback != null) {
 			this.queryCallback(this.filterResults);
 		}
@@ -48,19 +47,19 @@ class CrudItem extends CrudCommom {
 
 	clone(foreignKeyRefNew) {
 		this.foreignKey = foreignKeyRefNew;
-		
+
 		if (this.isClonable == true) {
 			var count = 0;
 			var scope = this;
-			
+
 			var callback = function(item) {
 				count++;
-				
+
 				if (count == scope.filterResults.length) {
 					scope.query();
 				}
 			}
-			
+
 			for (var item of this.filterResults) {
 				var newItem = angular.copy(item);
 				newItem[this.fieldName] = Object.values(this.foreignKey)[0];
@@ -79,7 +78,3 @@ class CrudItem extends CrudCommom {
 		this.query();
 	}
 }
-
-return CrudItem;
-
-});

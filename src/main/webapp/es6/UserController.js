@@ -1,9 +1,12 @@
-/**
- * http://usejsdoc.org/
- */
-define(["CrudController", "CrudItemJson", "CrudObjJson", "CrudJsonArray"], function(CrudController, CrudItemJson, CrudObjJson, CrudJsonArray) {
+import {CrudController} from "./CrudController.js";
+import {CrudItemJson} from "./CrudItemJson.js";
+import {CrudObjJson} from "./CrudObjJson.js";
+import {CrudJsonArray} from "./CrudJsonArray.js";
+import {Utils} from "./Utils.js";
 
-class UserController extends CrudController {
+export const name = "UserController";
+
+export class Controller extends CrudController {
 
     constructor(serverConnection) {
     	super(serverConnection);
@@ -18,13 +21,13 @@ class UserController extends CrudController {
     			"update":{"defaultValue":true, "options":[false,true]},
     			"delete":{"defaultValue":true, "options":[false,true]}
     			};
-    	
+
     	var nameOptionsRoles = [];
-    	
+
     	for (var item of this.serverConnection.services.crudService.list) {
     		nameOptionsRoles.push(item.name);
     	}
-    	
+
     	this.listItemCrudJson.push(new CrudItemJson(fieldsRoles, this.instance, "roles", "Controle de Acesso", this.serverConnection, nameOptionsRoles));
     	// Menu do usuário
 //    	$routeProvider.when("/app/:name/:action", {templateUrl: "templates/crud.html", controller: "CrudController", controllerAs: "vm"});
@@ -33,14 +36,14 @@ class UserController extends CrudController {
     			"label":{},
     			"path":{"defaultValue":"service/action?search1=1&search2=2"}
     			};
-    	
+
     	this.listItemCrudJson.push(new CrudItemJson(fieldsMenu, this.instance, "menu", "Menu", this.serverConnection));
     	// Configurações Json
 /*
     	var fieldsConfig = {
     			"modules":{"defaultValue":"es6/Utils.js,es6/CrudController.js"}
     			};
-    	
+
     	this.listObjCrudJson.push(new CrudObjJson(fieldsConfig, this.instance, "config", "Configurações", this.serverConnection));
 */
     	var fieldsRoute = {
@@ -53,11 +56,3 @@ class UserController extends CrudController {
     }
 
 }
-
-globalControllerProvider.register("UserController", function(ServerConnectionService) {
-	return new UserController(ServerConnectionService);
-});
-
-return UserController;
-
-});
