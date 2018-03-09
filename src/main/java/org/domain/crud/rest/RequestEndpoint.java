@@ -3,8 +3,13 @@ package org.domain.crud.rest;
 import java.sql.Timestamp;
 import java.util.List;
 
+import javax.annotation.Resource;
+import javax.ejb.EJBContext;
 import javax.ejb.Stateless;
+import javax.ejb.TransactionManagement;
+import javax.ejb.TransactionManagementType;
 import javax.inject.Inject;
+import javax.inject.Named;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.TypedQuery;
@@ -33,7 +38,12 @@ import org.domain.crud.entity.RequestState;
  */
 @Stateless
 @Path("/request")
+@TransactionManagement(TransactionManagementType.BEAN)
+@Named 
 public class RequestEndpoint {
+	@Resource
+	private EJBContext context;	
+
 	@PersistenceContext(unitName = "primary")
 	private EntityManager entityManager;
 
@@ -60,7 +70,7 @@ public class RequestEndpoint {
 			obj.setDate(new Timestamp(System.currentTimeMillis()));
 		}
 
-		RequestFilter.processCreate(securityContext.getUserPrincipal(), this.entityManager, this.webSocket, obj)
+		RequestFilter.processCreate(securityContext.getUserPrincipal(), this.context.getUserTransaction(), this.entityManager, this.webSocket, obj)
 		.exceptionally(error -> Response.status(Response.Status.BAD_REQUEST).entity(error.getMessage()).build())
 		.thenAccept(response -> ar.resume(response));
 	}
@@ -72,7 +82,7 @@ public class RequestEndpoint {
 		// TODO : validar se entity.getState() é um State com antecessor e precedente validos.
 		RequestFilter.getObject((LoginResponse) securityContext.getUserPrincipal(), uriInfo, this.entityManager, Request.class)
 		.thenAccept(oldObj -> {
-			RequestFilter.processUpdate((LoginResponse) securityContext.getUserPrincipal(), uriInfo, this.entityManager, this.webSocket, newObj)
+			RequestFilter.processUpdate((LoginResponse) securityContext.getUserPrincipal(), uriInfo, this.context.getUserTransaction(), this.entityManager, this.webSocket, newObj)
 			.exceptionally(error -> Response.status(Response.Status.BAD_REQUEST).entity(error.getMessage()).build())
 			.thenAccept(response -> {
 				ar.resume(response);

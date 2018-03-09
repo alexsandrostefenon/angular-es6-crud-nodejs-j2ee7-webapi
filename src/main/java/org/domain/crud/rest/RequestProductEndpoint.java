@@ -1,8 +1,13 @@
 package org.domain.crud.rest;
 
 
+import javax.annotation.Resource;
+import javax.ejb.EJBContext;
 import javax.ejb.Stateless;
+import javax.ejb.TransactionManagement;
+import javax.ejb.TransactionManagementType;
 import javax.inject.Inject;
+import javax.inject.Named;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.TypedQuery;
@@ -29,7 +34,12 @@ import org.domain.crud.entity.RequestState;
  */
 @Stateless
 @Path("/request_product")
+@TransactionManagement(TransactionManagementType.BEAN)
+@Named 
 public class RequestProductEndpoint {
+	@Resource
+	private EJBContext context;	
+
 	@PersistenceContext(unitName = "primary")
 	private EntityManager entityManager;
 
@@ -47,7 +57,7 @@ public class RequestProductEndpoint {
 	@Path("/create")
 	@Consumes("application/json")
 	public void create(@Context SecurityContext securityContext, @Context UriInfo uriInfo, RequestProduct entity, @Suspended AsyncResponse ar) {
-		RequestFilter.processCreate(securityContext.getUserPrincipal(), this.entityManager, this.webSocket, entity)
+		RequestFilter.processCreate(securityContext.getUserPrincipal(), this.context.getUserTransaction(), this.entityManager, this.webSocket, entity)
 		.exceptionally(error -> Response.status(Response.Status.BAD_REQUEST).entity(error.getMessage()).build())
 		.thenAccept(response -> {
 			ar.resume(response);
@@ -63,7 +73,7 @@ public class RequestProductEndpoint {
 	public void update(@Context SecurityContext securityContext, @Context UriInfo uriInfo, RequestProduct entity, @Suspended AsyncResponse ar) {
 		RequestFilter.getObject((LoginResponse) securityContext.getUserPrincipal(), uriInfo, this.entityManager, RequestProduct.class)
 		.thenAccept(old -> {
-			RequestFilter.processUpdate((LoginResponse) securityContext.getUserPrincipal(), uriInfo, entityManager, webSocket, entity)
+			RequestFilter.processUpdate((LoginResponse) securityContext.getUserPrincipal(), uriInfo, this.context.getUserTransaction(), entityManager, webSocket, entity)
 			.exceptionally(error -> Response.status(Response.Status.BAD_REQUEST).entity(error.getMessage()).build())
 			.thenAccept(response -> {
 				ar.resume(response);

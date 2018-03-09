@@ -192,12 +192,12 @@ public class RequestFilter implements ContainerRequestFilter, ContainerResponseF
 		return response;
 	}
 	// public
-	static public CompletableFuture<Response> processCreate(Principal login, EntityManager entityManager, RequestFilter webSocket, Object obj) {
+	static public CompletableFuture<Response> processCreate(Principal login, UserTransaction userTransaction, EntityManager entityManager, RequestFilter webSocket, Object obj) {
 		Response response = checkObjectAccess((LoginResponse) login, entityManager, obj);
 
 		if (response != null) CompletableFuture.completedFuture(response);
 
-		return Utils.insert(entityManager, obj).thenApply(newObj -> {
+		return Utils.insert(userTransaction, entityManager, obj).thenApply(newObj -> {
 			webSocket.notify(newObj, false);
 			return Response.ok(newObj, MediaType.APPLICATION_JSON).build();
 		});
@@ -236,7 +236,7 @@ public class RequestFilter implements ContainerRequestFilter, ContainerResponseF
 		return RequestFilter.getObject(login, uriInfo, entityManager, objectClass).thenApply(obj -> Response.ok(obj, MediaType.APPLICATION_JSON).build());
 	}
 	// public processUpdate
-	static public CompletableFuture<Response> processUpdate(LoginResponse login, UriInfo uriInfo, EntityManager entityManager, RequestFilter webSocket, Object obj) {
+	static public CompletableFuture<Response> processUpdate(LoginResponse login, UriInfo uriInfo, UserTransaction userTransaction, EntityManager entityManager, RequestFilter webSocket, Object obj) {
 		return RequestFilter.getObject(login, uriInfo, entityManager, obj.getClass()).thenCompose(oldObj -> {
 			Response response = checkObjectAccess(login, entityManager, obj);
 
@@ -251,7 +251,7 @@ public class RequestFilter implements ContainerRequestFilter, ContainerResponseF
 				}
 			}
 
-			return Utils.update(null, entityManager, obj).thenApply(newObj -> {
+			return Utils.update(userTransaction, entityManager, obj).thenApply(newObj -> {
 				webSocket.notify(newObj, false);
 				return Response.ok(newObj, MediaType.APPLICATION_JSON).build();
 			});
@@ -346,9 +346,9 @@ public class RequestFilter implements ContainerRequestFilter, ContainerResponseF
 				CompletableFuture<Response> cf;
 
 				if (access.equals("create")) {
-					cf = RequestFilter.processCreate(login, RequestFilter.this.entityManager, RequestFilter.this.webSocket, obj);
+					cf = RequestFilter.processCreate(login, userTransaction, RequestFilter.this.entityManager, RequestFilter.this.webSocket, obj);
 				} else if (access.equals("update")) {
-					cf = RequestFilter.processUpdate(login, uriInfo, RequestFilter.this.entityManager, RequestFilter.this.webSocket, obj);
+					cf = RequestFilter.processUpdate(login, uriInfo, userTransaction, RequestFilter.this.entityManager, RequestFilter.this.webSocket, obj);
 				} else if (access.equals("delete")) {
 					cf = RequestFilter.processDelete(login, uriInfo, RequestFilter.this.entityManager, RequestFilter.this.webSocket, objectClass);
 				} else if (access.equals("read")) {

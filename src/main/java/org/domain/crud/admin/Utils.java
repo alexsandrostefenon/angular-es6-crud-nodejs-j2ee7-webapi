@@ -1293,10 +1293,16 @@ public class Utils {
 		return CompletableFuture.supplyAsync(() -> buildQuery(entityManager, resultClass, fields, null).getSingleResult());
 	}
 
-	public static <T> CompletableFuture<T> insert(EntityManager entityManager, T obj) {
+	public static <T> CompletableFuture<T> insert(UserTransaction userTransaction, EntityManager entityManager, T obj) {
 		return CompletableFuture.supplyAsync(() -> {
-			entityManager.persist(obj);
-			return obj;
+			try {
+				if (userTransaction != null) userTransaction.begin();
+				entityManager.persist(obj);
+				if (userTransaction != null) userTransaction.commit();
+				return obj;
+			} catch (Exception e) {
+				throw new RuntimeException(e);
+			}
 		});
 	}
 
