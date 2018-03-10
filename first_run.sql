@@ -1,29 +1,29 @@
+CREATE TABLE category (
+    id SERIAL PRIMARY KEY,
+    name character varying(100) NOT NULL
+);
+
+CREATE TABLE crud_company (
+    id SERIAL PRIMARY KEY,
+    name character varying(255) NOT NULL
+);
+
+CREATE TABLE category_company (
+    company integer references company,
+    id SERIAL,
+    category integer references category,
+    PRIMARY KEY(company,id)
+);
+
 CREATE TABLE IF NOT EXISTS account (
-    company integer,
-    id integer,
+    company integer references company,
+    id SERIAL,
     account character varying(20),
     agency character varying(20),
     bank character varying(20),
     description character varying(255),
     PRIMARY KEY(company,id),
 	unique(bank,agency,account)
-);
-
-CREATE TABLE category (
-    id SERIAL PRIMARY KEY,
-    name character varying(100) NOT NULL
-);
-
-CREATE TABLE category_company (
-    company integer,
-    id integer,
-    category integer,
-    PRIMARY KEY(company,id)
-);
-
-CREATE TABLE crud_company (
-    id SERIAL PRIMARY KEY,
-    name character varying(255) NOT NULL
 );
 
 CREATE TABLE crud_service (
@@ -48,8 +48,8 @@ CREATE TABLE crud_translation (
 );
 
 CREATE TABLE crud_user (
-    company integer NOT NULL,
-    id integer NOT NULL,
+    company integer references company,
+    id SERIAL,
     authctoken character varying(255),
     ip character varying(255),
     menu character varying(10240),
@@ -65,14 +65,14 @@ CREATE TABLE crud_user (
 );
 
 CREATE TABLE payment_type (
-    id integer PRIMARY KEY,
+    id SERIAL PRIMARY KEY,
     description character varying(100),
     name character varying(255) NOT NULL
 );
 
 CREATE TABLE person (
-    company integer,
-    id integer,
+    company integer references company,
+    id SERIAL,
     additional_data character varying(255),
     address character varying(100),
     city character varying(64),
@@ -91,10 +91,10 @@ CREATE TABLE person (
 );
 
 CREATE TABLE product (
-    id serial PRIMARY KEY,
+    id SERIAL PRIMARY KEY,
+    category integer references category,
     additional_data character varying(255),
     barcode varchar(13) unique,
-    category integer NOT NULL,
     cl_fiscal character varying(16),
     departament character varying(64),
     description character varying(255),
@@ -111,8 +111,8 @@ CREATE TABLE product (
 );
 
 CREATE TABLE request (
-    company integer NOT NULL,
-    id integer NOT NULL,
+    company integer references company,
+    id SERIAL NOT NULL,
     additional_data character varying(255),
     date timestamp without time zone,
     payments_value numeric(19,2),
@@ -128,8 +128,8 @@ CREATE TABLE request (
 );
 
 CREATE TABLE request_payment (
-    company integer NOT NULL,
-    id integer NOT NULL,
+    company integer references company,
+    id SERIAL NOT NULL,
     account integer,
     number character varying(16),
     payday timestamp without time zone,
@@ -144,8 +144,8 @@ CREATE TABLE request_payment (
 );
 
 CREATE TABLE request_product (
-    company integer NOT NULL,
-    id integer NOT NULL,
+    company integer references company,
+    id SERIAL NOT NULL,
     containers int DEFAULT 1, -- quantidade de embalagens
     product integer references product,
     quantity numeric(9,3) DEFAULT 1.000 not null,
@@ -165,7 +165,7 @@ CREATE TABLE request_product (
 );
 
 CREATE TABLE request_state (
-    id integer PRIMARY KEY,
+    id SERIAL PRIMARY KEY,
     description character varying(100),
     name character varying(255) NOT NULL,
     next integer,
@@ -175,13 +175,13 @@ CREATE TABLE request_state (
 );
 
 CREATE TABLE request_type (
-    id integer PRIMARY KEY,
+    id SERIAL PRIMARY KEY,
     description character varying(100),
     name character varying(255) NOT NULL
 );
 
 CREATE TABLE stock (
-    company integer,
+    company integer references company,
     id integer references product,
     count_in numeric(9,3) DEFAULT 0.000,
     count_out numeric(9,3) DEFAULT 0.000,
@@ -205,7 +205,7 @@ CREATE TABLE stock (
 );
 
 CREATE TABLE stock_action (
-    id integer PRIMARY KEY,
+    id SERIAL PRIMARY KEY,
     name character varying(255) UNIQUE NOT NULL
 );
 
