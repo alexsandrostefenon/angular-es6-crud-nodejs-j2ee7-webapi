@@ -1,6 +1,6 @@
 import {CaseConvert} from "./CaseConvert.js";
 
-class Filter {
+export class Filter {
 
 	constructor() {
 	}

@@ -1,4 +1,4 @@
-import {CrudService, ServerConnection} from "./ServerConnection.js";
+import {Filter, CrudService, ServerConnection} from "./ServerConnection.js";
 import {CrudController} from "./CrudController.js";
 import {app, globalRouteProvider, globalControllerProvider} from "./app-globals.js";
 
