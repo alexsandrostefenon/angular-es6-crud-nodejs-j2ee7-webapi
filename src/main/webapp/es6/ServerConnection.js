@@ -544,7 +544,7 @@ export class ServerConnection {
     			var service = new CrudServiceClass(scope, params, scope.httpRest);
     			scope.services[service.params.name] = service;
 
-    			if (service.isOnLine != true) {
+    			if (service.isOnLine != true && service.params.access.query != false) {
     				listQueryRemote.push(service);
     			}
             }
