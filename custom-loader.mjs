@@ -16,6 +16,8 @@ export function resolve(specifier, parentModuleURL, defaultResolve) {
   if (/^\.{0,2}[/]/.test(specifier) !== true && !specifier.startsWith('file:')) {
     return defaultResolve(specifier, parentModuleURL);
   }
+  console.log("specifier:", specifier, ", parentModuleURL:", parentModuleURL);
+  if (parentModuleURL == undefined) parentModuleURL = "file://";
   const resolved = new url.URL(specifier, parentModuleURL);
   const ext = path.extname(resolved.pathname);
   if (!JS_EXTENSIONS.has(ext)) {
