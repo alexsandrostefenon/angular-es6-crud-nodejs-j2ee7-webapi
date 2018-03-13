@@ -439,7 +439,7 @@ class RequestFilter {
 				// restrição de categoria
 				if (category == undefined || login.categories.indexOf(category) >= 0) {
 					// envia somente para os usuários com acesso ao serviço alterado
-					if (login.websocketServices.contains(serviceName)) {
+					if (login.websocketServices.indexOf(serviceName) >= 0) {
 						console.log("notify, user ", login.user.name, ":", msg);
 						Promisse.resolved().then(() => session.sendUTF(str));
 					}
