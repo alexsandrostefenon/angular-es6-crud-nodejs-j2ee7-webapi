@@ -21,9 +21,10 @@ in psql terminal execute configurations commands :
 `CREATE USER development LOGIN PASSWORD '123456';`
 `CREATE DATABASE crud WITH OWNER development;`
 
-exit psql terminal and import default configuration data with command :
+exit psql terminal and import default configuration data with commands :
 
 `psql -U development -h localhost crud < first_run.sql;`
+`psql -U development -h localhost crud < first_run_data.sql;`
 
 ## NodeJs based server
 

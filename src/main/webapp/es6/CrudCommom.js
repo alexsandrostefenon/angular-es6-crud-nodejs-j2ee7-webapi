@@ -5,43 +5,19 @@ export class Pagination {
 
     constructor(pageSize) {
     	this.pageSize = pageSize;
-    	this.currentPage = 0;
-    	this.numPages = 0;
-    	this.pageRange = [];
-    	this.list = [];
-    	this.listPage = [];
+    	this.process([]);
     }
 
     process(list) {
     	this.list = list;
         var result = Math.ceil(list.length/this.pageSize);
         this.numPages = (result == 0) ? 1 : result;
-        this.pageRange = [];
-
-        for(var i = 0; i < this.numPages; i++) {
-        	this.pageRange.push(i);
-        }
-
-        this.setPage(0);
+    	this.currentPage = 1;
+    	this.changePage();
     }
 
-    previous() {
-        if (this.currentPage > 0) {
-     	   this.currentPage--;
-     	   this.setPage(this.currentPage);
-        }
-     }
-
-     next() {
-        if (this.currentPage < (this.numPages - 1)) {
-     	   this.currentPage++;
-     	   this.setPage(this.currentPage);
-        }
-     }
-
-     setPage(n) {
-     	this.currentPage = n;
-     	this.listPage = this.list.slice(this.currentPage * this.pageSize, (this.currentPage + 1) * this.pageSize);
+    changePage(n) {
+     	this.listPage = this.list.slice((this.currentPage-1) * this.pageSize, this.currentPage * this.pageSize);
      }
 
 }
