@@ -39,9 +39,9 @@ export class DbClientPostgres {
 			let field = fields[fieldName];
 
 			if (Array.isArray(field)) {
-				str = str + fieldName + " = ANY ($" + i + ") AND ";
+				str = str + CaseConvert.camelToUnderscore(fieldName) + " = ANY ($" + i + ") AND ";
 			} else {
-				str = str + fieldName + "=$" + i + " AND ";
+				str = str + CaseConvert.camelToUnderscore(fieldName) + "=$" + i + " AND ";
 			}
 
 			params.push(field);
@@ -135,7 +135,7 @@ export class DbClientPostgres {
 		return this.client.query(sql, params).then(result => result.rows[0]);;
 	}
 
-	update(tableName, fields, updateObj) {
+	update(tableName, primaryKey, updateObj) {
 		tableName = CaseConvert.camelToUnderscore(tableName);
 		var sql = "UPDATE " + tableName;
 		var params = [];
@@ -161,14 +161,14 @@ export class DbClientPostgres {
 			sql = sql + " SET " + str;
 		}
 
-		sql = sql + DbClientPostgres.buildQuery(fields, params) + " RETURNING *";
+		sql = sql + DbClientPostgres.buildQuery(primaryKey, params) + " RETURNING *";
 		return this.client.query(sql, params).then(result => result.rows[0]);
 	}
 
-	deleteOne(tableName, fields) {
+	deleteOne(tableName, primaryKey) {
 		tableName = CaseConvert.camelToUnderscore(tableName);
 		var params = [];
-		var sql = "DELETE FROM " + tableName + DbClientPostgres.buildQuery(fields, params);
+		var sql = "DELETE FROM " + tableName + DbClientPostgres.buildQuery(primaryKey, params);
 		return this.client.query(sql, params);
 	}
 }

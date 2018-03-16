@@ -424,7 +424,14 @@ export class CrudService {
 		var dataOut = {};
 
 		for (let fieldName in this.params.fields) {
-			dataOut[fieldName] = dataIn[fieldName];
+			let field = this.params.fields[fieldName];
+			let value = dataIn[fieldName];
+			
+			if (field.type == "i" && (typeof value) === "string") {
+				dataOut[fieldName] = Number.parseInt(value);
+			} else {
+				dataOut[fieldName] = value;
+			}
 		}
 
 		return dataOut;

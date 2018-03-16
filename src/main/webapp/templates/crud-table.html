@@ -1,7 +1,5 @@
 <div id="crud-table-{{vm.crudService.path}}" ng-show="vm.filterResults.length > 0">
 
-	<ul uib-pagination ng-change="vm.pagination.changePage()" items-per-page="vm.pagination.pageSize" total-items="vm.filterResults.length" ng-model="vm.pagination.currentPage" max-size="10" boundary-link-numbers="true" rotate="false"></ul>
-
     <div class="table-responsive">
         <table class="table table-responsive table-bordered table-striped clearfix">
             <thead>

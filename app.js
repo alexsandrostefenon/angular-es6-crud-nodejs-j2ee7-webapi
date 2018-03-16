@@ -150,7 +150,7 @@ class RequestFilter {
 		return this.dbClient.connect();
 	}
 	// private to create,update,delete,read
-	checkObjectAccess(login, req, service, obj) {
+	checkObjectAccess(login, service, obj) { // LoginResponse login, EntityManager entityManager, Object obj
 		var response = null;
 
 		if (login.user.company > 1 && service.jsonFields.company != undefined) {
@@ -173,7 +173,7 @@ class RequestFilter {
 	}
 	// public
 	processCreate(login, req, service, obj) {
-		let response = this.checkObjectAccess(login, req, service, obj);
+		let response = this.checkObjectAccess(login, service, obj);
 
 		if (response != null) Promisse.resolve(response);
 
@@ -220,7 +220,7 @@ class RequestFilter {
 	// public processUpdate
 	processUpdate(login, req, service, obj) {
 		return this.getObject(login, req, service).then(oldObj => {
-			let response = this.checkObjectAccess(req, login, obj, service);
+			let response = this.checkObjectAccess(login, service, obj);
 
 			if (response != null) return Promisse.resolve(response);
 
@@ -233,7 +233,7 @@ class RequestFilter {
 				}
 			}
 
-			return this.dbClient.update(service.name, req.primaryKey, obj, null).then(newObj => {
+			return this.dbClient.update(service.name, req.primaryKey, obj).then(newObj => {
 				this.notify(newObj, service, false);
 				return Response.ok(newObj, MediaType.APPLICATION_JSON).build();
 			});
@@ -283,8 +283,9 @@ class RequestFilter {
 
 			req.primaryKey = {};
 
-			for (var fieldName in service.jsonFields) {
-				req.primaryKey[fieldName] = req.query[fieldName];
+			for (let fieldName in service.jsonFields) {
+				let value = req.query[fieldName];
+				if (value != undefined) req.primaryKey[fieldName] = value;
 			}
 
 			console.log("user:", login.user.name);
