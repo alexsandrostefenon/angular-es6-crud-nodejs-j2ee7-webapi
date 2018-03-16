@@ -91,17 +91,13 @@ export class CrudCommom extends CrudUiSkeleton {
 			primaryKey = this.primaryKey;
 		}
 
-		var scope = this;
-
-		var callback = function(data) {
-			if (scope.removeCallback != undefined) {
-				scope.removeCallback();
+		this.crudService.remove(primaryKey, data => {
+			if (this.removeCallback != undefined) {
+				this.removeCallback();
 			} else if (this.primaryKey) {
-				scope.goToSearch();
+				this.goToSearch();
 			}
-		}
-
-		this.crudService.remove(primaryKey, callback);
+		});
 	}
 
 	save(forceReload) {
