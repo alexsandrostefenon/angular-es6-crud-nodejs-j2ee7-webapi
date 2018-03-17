@@ -1,6 +1,6 @@
 <div id="crud-table-{{vm.crudService.path}}" ng-show="vm.filterResults.length > 0">
 
-    <div class="table-responsive">
+    <div class="table-responsive" style="white-space: nowrap;">
         <table class="table table-responsive table-bordered table-striped clearfix">
             <thead>
                 <tr>
@@ -23,6 +23,6 @@
         </table>
     </div>
 
-	<ul uib-pagination ng-change="vm.pagination.changePage()" items-per-page="vm.pagination.pageSize" total-items="vm.filterResults.length" ng-model="vm.pagination.currentPage" max-size="10" boundary-link-numbers="true" rotate="false"></ul>
+	<ul uib-pagination ng-show="vm.filterResults.length > vm.pagination.pageSize" ng-change="vm.pagination.changePage()" items-per-page="vm.pagination.pageSize" total-items="vm.filterResults.length" ng-model="vm.pagination.currentPage" max-size="10" boundary-link-numbers="true" rotate="false"></ul>
 
 </div>

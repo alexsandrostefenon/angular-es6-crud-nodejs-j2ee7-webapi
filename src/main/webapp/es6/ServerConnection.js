@@ -131,6 +131,23 @@ export class HttpRestRequest {
 	setToken(token) {
 		this.token = token;
 	}
+	
+	requestFetch() {
+/*
+Response.headers Read only Contains the Headers object associated with the response.
+Response.ok Read only Contains a boolean stating whether the response was successful (status in the range 200-299) or not.
+Response.redirected Read only Indicates whether or not the response is the result of a redirect; that is, its URL list has more than one entry.
+Response.status Read only Contains the status code of the response (e.g., 200 for a success).
+Response.statusText Read only Contains the status message corresponding to the status code (e.g., OK for 200).
+Response.type Read only Contains the type of the response (e.g., basic, cors).
+Response.url Read only Contains the URL of the response.
+Response.useFinalURL Contains a boolean stating whether this is the final URL of the response.
+Response implements Body, so it also has the following properties available to it:
+
+Body.body Read only A simple getter used to expose a ReadableStream of the body contents.
+Body.bodyUsed Read only Stores a Boolean that declares whether the body has been used in a response yet.
+ * */		
+	}
 
 	requestXHR(path, method, params, objSend, sucessCallback, failCallback) {
 //        console.log("[HttpRestRequest] getRemote : successCallback :", scope.path, params, "response :", JSON.stringify(item));
@@ -175,6 +192,19 @@ export class HttpRestRequest {
 	    } else {
 		    httpRequest.send();
 	    }
+/*
+4.6 Response
+4.6.1 The responseURL attribute
+4.6.2 The status attribute
+4.6.3 The statusText attribute
+4.6.4 The getResponseHeader() method
+4.6.5 The getAllResponseHeaders() method
+4.6.6 Response body
+4.6.7 The overrideMimeType() method
+4.6.8 The responseType attribute
+4.6.9 The response attribute
+4.6.10 The responseText attribute
+4.6.11 The responseXML attribute */	    
 	}
 
 	requestAngularHttp(path, method, params, objSend, sucessCallback, failCallback) {
@@ -204,34 +234,44 @@ export class HttpRestRequest {
 		}
 
 		HttpRestRequest.$http(req).then(callbackOk, callbackFail);
+/*
+The response object has these properties:
+
+data – {string|Object} – The response body transformed with the transform functions.
+status – {number} – HTTP status code of the response.
+headers – {function([headerName])} – Header getter function.
+config – {Object} – The configuration object that was used to generate the request.
+statusText – {string} – HTTP status text of the response.
+xhrStatus – {string} – Status of the XMLHttpRequest (complete, error,  timeout or abort).
+ */		
 	}
 
 	request(path, method, params, objSend, sucessCallback, failCallback) {
 		if (HttpRestRequest.$http) {
-			this.requestAngularHttp(path, method, params, objSend, sucessCallback, failCallback);
+			return this.requestAngularHttp(path, method, params, objSend, sucessCallback, failCallback);
 		} else {
-			this.requestXHR(path, method, params, objSend, sucessCallback, failCallback);
+			return this.requestXHR(path, method, params, objSend, sucessCallback, failCallback);
 		}
 	}
 
 	save(path, params, itemSend, successCallback, errorCallback) {
-		this.request(path, "POST", params, itemSend, successCallback, errorCallback);
+		return this.request(path, "POST", params, itemSend, successCallback, errorCallback);
 	}
 
 	update(path, params, itemSend, successCallback, errorCallback) {
-		this.request(path, "PUT", params, itemSend, successCallback, errorCallback);
+		return this.request(path, "PUT", params, itemSend, successCallback, errorCallback);
 	}
 
 	remove(path, params, successCallback, errorCallback) {
-		this.request(path, "DELETE", params, null, successCallback, errorCallback);
+		return this.request(path, "DELETE", params, null, successCallback, errorCallback);
 	}
 
 	get(path, params, successCallback, errorCallback) {
-		this.request(path, "GET", params, null, successCallback, errorCallback);
+		return this.request(path, "GET", params, null, successCallback, errorCallback);
 	}
 
 	query(path, params, successCallback, errorCallback) {
-		this.request(path, "GET", params, null, successCallback, errorCallback);
+		return this.request(path, "GET", params, null, successCallback, errorCallback);
 	}
 }
 
