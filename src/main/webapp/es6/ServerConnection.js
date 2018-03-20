@@ -106,6 +106,12 @@ export class Filter {
         return ret;
 	}
 	// public
+	static findPos(list, params) {
+		var ret = -1;
+        Filter.findOne(list, params, pos => ret = pos);
+        return ret;
+	}
+	// public
 	static findOneIn(list, listParams) {
 		var filterResults = [];
 
@@ -122,6 +128,7 @@ export class HttpRestRequest {
 
 	constructor(url) {
 		this.url = url;
+		this.message = "";
 	}
 
 	getToken() {
@@ -264,11 +271,22 @@ xhrStatus – {string} – Status of the XMLHttpRequest (complete, error,  timeo
 	}
 	// private
 	request(path, method, params, objSend) {
+		var promise;
+		this.message = "Processando...";
+		
 		if (HttpRestRequest.$http) {
-			return this.requestAngularHttp(path, method, params, objSend);
+			promise = this.requestAngularHttp(path, method, params, objSend);
 		} else {
-			return this.requestXHR(path, method, params, objSend);
+			promise = this.requestXHR(path, method, params, objSend);
 		}
+		
+		return promise.then(data => {
+			this.message = "";
+			return data;
+		}).catch(error => {
+			this.message = error.message;
+			throw error;
+		});
 	}
 
 	save(path, params, itemSend, successCallback, errorCallback) {
@@ -366,19 +384,12 @@ export class CrudService {
 	}
 
 	findPos(params) {
-		var ret = -1;
-        Filter.findOne(this.list, params, pos => ret = pos);
-        return ret;
+		return Filter.findPos(this.list, params);
 	}
 
 	findOne(params) {
-		var pos = this.findPos(params);
+		let pos = this.findPos(params);
 		return pos >= 0 ? this.list[pos] : null;
-	}
-
-	removeInternal(primaryKey) {
-        let pos = this.findPos(primaryKey);
-        return this.processList(this.list[pos], pos);
 	}
 	// private, use in getRemote, save, update and remove
 	processList(data, oldPos, newPos) {
@@ -443,7 +454,12 @@ export class CrudService {
         
         return {"data": data, "oldPos": oldPos, "newPos": newPos};
 	}
-
+	// used by websocket
+	removeInternal(primaryKey) {
+        let pos = this.findPos(primaryKey);
+        return this.processList(this.list[pos], pos);
+	}
+	// used by websocket
 	getRemote(primaryKey) {
     	return this.httpRest.get(this.path + "/read", primaryKey).then(data => {
             let pos = this.findPos(primaryKey);
@@ -454,6 +470,16 @@ export class CrudService {
             	return this.processList(data, pos, pos);
             }
     	});
+	}
+
+	get(primaryKey) {
+        let pos = this.findPos(primaryKey);
+
+        if (pos < 0) {
+        	return this.getRemote(primaryKey);
+        } else {
+        	return Promise.resolve({"data": this.list[pos]});
+        }
 	}
 	// private, use in save and update methods
 	copyFields(dataIn) {
@@ -474,17 +500,17 @@ export class CrudService {
 	}
 
 	save(primaryKey, itemSend) {
-    	return this.httpRest.save(this.path + "/create", primaryKey, this.copyFields(itemSend)).then(data => this.processList(data));
+    	return this.httpRest.save(this.path + "/create", primaryKey, this.copyFields(itemSend));//.then(data => this.processList(data));
 	}
 
 	update(primaryKey, itemSend) {
         let pos = this.findPos(primaryKey);
-        return this.httpRest.update(this.path + "/update", primaryKey, this.copyFields(itemSend)).then(data => this.processList(data, pos, pos));
+        return this.httpRest.update(this.path + "/update", primaryKey, this.copyFields(itemSend));//.then(data => this.processList(data, pos, pos));
 	}
 
 	remove(primaryKey) {
         let pos = this.findPos(primaryKey);
-        return this.httpRest.remove(this.path + "/delete", primaryKey).then(data => this.processList(data, pos));
+        return this.httpRest.remove(this.path + "/delete", primaryKey);//.then(data => this.processList(data, pos));
 	}
 
 	queryRemote(params) {
@@ -514,16 +540,15 @@ export class ServerConnection {
 
 		url = "wss://" + url + "websocket";
 		this.webSocket = new WebSocket(url);
-    	var scope = this;
 
-    	this.webSocket.onopen = function(event) {
-    		scope.webSocket.send(scope.httpRest.getToken());
+    	this.webSocket.onopen = event => {
+    		this.webSocket.send(this.httpRest.getToken());
     	};
 
-    	this.webSocket.onmessage = function(event) {
+    	this.webSocket.onmessage = event => {
 			var item = JSON.parse(event.data);
             console.log("[ServerConnection] webSocketConnect : onMessage :", item);
-            var service = scope.services[item.service];
+            var service = this.services[item.service];
 
             if (service != undefined) {
         		if (item.action == "delete") {

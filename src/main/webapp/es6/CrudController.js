@@ -23,7 +23,6 @@ class CrudBase extends CrudCommom {
 
 	constructor(serverConnection, serviceName, primaryKey, action, $scope) {
     	super(serverConnection, serverConnection.services[serviceName], primaryKey, action);
-		this.message = {};
 		this.disabled = false;
 		this.isCollapsedForm = false;
 		this.required = "false";

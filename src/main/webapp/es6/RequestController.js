@@ -6,23 +6,10 @@ export const name = "RequestController";
 export class Controller extends CrudController {
 
     enableRequestFields() {
-    	var scope = this;
-
-        var productsQueryCallback = function(list) {
-    		scope.onProductsChanged(list);
-        }
-
-        var paymentsQueryCallback = function(list) {
-    		scope.onPaymentsChanged(list);
-        }
-
-        var productsSelectCallback = function(field, id) {
-    		scope.onProductSelected(id);
-        }
-
-        var paymentsSelectCallback = function(field, id) {
-    		scope.onAccountSelected(id);
-        }
+        var productsQueryCallback = list => this.onProductsChanged(list);
+        var paymentsQueryCallback = list => this.onPaymentsChanged(list);
+        var productsSelectCallback = (field, id) => this.onProductSelected(id);
+        var paymentsSelectCallback = (field, id) => this.onAccountSelected(id);
 
         // serverConnection, serviceName, fieldName, fieldValue, title, numMaxItems, queryCallback, selectCallback
         this.crudItemProduct = new CrudItem(this.serverConnection, "requestProduct", "request", this.primaryKey, false, 'Produtos', null, productsQueryCallback, productsSelectCallback);

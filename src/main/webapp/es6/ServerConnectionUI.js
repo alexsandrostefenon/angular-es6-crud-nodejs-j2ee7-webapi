@@ -135,11 +135,6 @@ export class CrudServiceUI extends CrudService {
 
 		return list;
 	}
-
-	removeInternal(primaryKey) {
-		let response = super.removeInternal(primaryKey);
-        return this.processListUi(response);
-	}
 	// private
 	processListUi(response) {
 		let str = response.data == undefined ? null : this.buildItemStr(response.data);
@@ -161,33 +156,28 @@ export class CrudServiceUI extends CrudService {
         
         return response;
 	}
-
+	// used by websocket
+	removeInternal(primaryKey) {
+		let response = super.removeInternal(primaryKey);
+        return this.processListUi(response);
+	}
+	// used by websocket
 	getRemote(primaryKey) {
     	return super.getRemote(primaryKey).then(response => this.processListUi(response));
 	}
-
-	get(primaryKey) {
-        let pos = this.findPos(primaryKey);
-
-        if (pos < 0) {
-        	return this.getRemote(primaryKey);
-        } else {
-        	return Promise.resolve({"data": this.list[pos]});
-        }
-	}
-
+/*
 	save(primaryKey, itemSend) {
     	return super.save(primaryKey, itemSend).then(response => this.processListUi(response));
 	}
 
 	update(primaryKey, itemSend) {
-        return this.update(primaryKey, itemSend).then(response => this.processListUi(response));
+        return super.update(primaryKey, itemSend).then(response => this.processListUi(response));
 	}
 
 	remove(primaryKey) {
     	return super.remove(primaryKey).then(response => this.processListUi(response));
 	}
-
+*/
 	queryRemote(params) {
     	return super.queryRemote(params).then(list => {
     		this.listStr = this.buildListStr(this.list);

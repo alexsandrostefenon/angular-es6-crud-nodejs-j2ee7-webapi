@@ -50,11 +50,7 @@ export class CrudJsonArray extends CrudUiSkeleton {
 			primaryKey[fieldName] = this.instance[fieldName];
 		}
 
-		var scope = this;
-
-		var callbackReplace = function(index) {
-			scope.list[index] = scope.instance;
-		};
+		var callbackReplace = index => this.list[index] = this.instance;
 
 		if (Filter.findOne(this.list, primaryKey, callbackReplace) == null) {
 			this.list.push(this.instance);

@@ -11,8 +11,8 @@
             <tbody id="crud-table-body-{{vm.crudService.path}}">
                 <tr ng-repeat="item in vm.pagination.listPage">
 					<td>
-						<a href ng-if="vm.crudService.params.access.read != false" ng-click="vm.goToView(vm.crudService.getPrimaryKey(item))"><span class="glyphicon glyphicon-eye-open"></span> {{vm.translation.view}}</a> /
-						<a href ng-if="vm.crudService.params.access.update != false" ng-click="vm.goToEdit(vm.crudService.getPrimaryKey(item))"><span class="glyphicon glyphicon-edit"></span> {{vm.translation.edit}}</a> /
+						<a href ng-if="vm.crudService.params.access.update == false" ng-click="vm.goToView(vm.crudService.getPrimaryKey(item))"><span class="glyphicon glyphicon-eye-open"></span> {{vm.translation.view}}</a>
+						<a href ng-if="vm.crudService.params.access.update != false" ng-click="vm.goToEdit(vm.crudService.getPrimaryKey(item))"><span class="glyphicon glyphicon-edit"></span> {{vm.translation.edit}}</a>
 						<a href ng-if="vm.crudService.params.access.delete != false" ng-click="vm.remove(vm.crudService.getPrimaryKey(item))"><span class="glyphicon glyphicon-trash"></span> {{vm.translation.delete}}</a>
 					</td>
                     <td ng-repeat="(fieldName,field) in vm.fields" ng-if="field.hiden != true">
@@ -22,6 +22,10 @@
             </tbody>
         </table>
     </div>
+
+	<div id="crud-table-{{vm.crudService.path}}-messages" class="check-element animate-show" ng-show="vm.crudService.httpRest.message.length > 0">
+		<strong>{{vm.crudService.httpRest.message}}</strong>
+	</div>
 
 	<ul uib-pagination ng-show="vm.filterResults.length > vm.pagination.pageSize" ng-change="vm.pagination.changePage()" items-per-page="vm.pagination.pageSize" total-items="vm.filterResults.length" ng-model="vm.pagination.currentPage" max-size="10" boundary-link-numbers="true" rotate="false"></ul>
 

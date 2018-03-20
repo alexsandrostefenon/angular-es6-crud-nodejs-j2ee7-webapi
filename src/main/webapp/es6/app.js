@@ -35,7 +35,7 @@ class LoginController {
     }
 
     login() {
-    	return this.serverConnection.login(this.server, this.user, this.password, message => this.message = message);
+    	return this.serverConnection.login(this.server, this.user.toLowerCase(), this.password, message => this.message = message);
     }
 
 }

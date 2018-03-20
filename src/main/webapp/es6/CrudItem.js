@@ -67,8 +67,8 @@ export class CrudItem extends CrudCommom {
 		}
 	}
 
-	remove() {
-		return super.remove().then(response => this.query());
+	remove(primaryKey) {
+		return super.remove(primaryKey).then(response => this.query());
 	}
 
 	save() {
