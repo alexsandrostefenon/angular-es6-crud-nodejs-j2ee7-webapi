@@ -132,7 +132,13 @@ export class DbClientPostgres {
 		tableName = CaseConvert.camelToUnderscore(tableName);
 		var params = [];
 		var sql = "SELECT MAX(" + fieldName + ") FROM " + tableName + DbClientPostgres.buildQuery(fields, params);
-		return this.client.query(sql, params).then(result => result.rows[0]);;
+		return this.client.query(sql, params).then(result => {
+			if (result.rowCount == 0) {
+				throw new Error("NoResultException");
+			}
+
+			return result.rows[0]
+		});
 	}
 
 	update(tableName, primaryKey, updateObj) {
@@ -162,13 +168,25 @@ export class DbClientPostgres {
 		}
 
 		sql = sql + DbClientPostgres.buildQuery(primaryKey, params) + " RETURNING *";
-		return this.client.query(sql, params).then(result => result.rows[0]);
+		return this.client.query(sql, params).then(result => {
+			if (result.rowCount == 0) {
+				throw new Error("NoResultException");
+			}
+
+			return result.rows[0]
+		});
 	}
 
 	deleteOne(tableName, primaryKey) {
 		tableName = CaseConvert.camelToUnderscore(tableName);
 		var params = [];
-		var sql = "DELETE FROM " + tableName + DbClientPostgres.buildQuery(primaryKey, params);
-		return this.client.query(sql, params);
+		var sql = "DELETE FROM " + tableName + DbClientPostgres.buildQuery(primaryKey, params) + " RETURNING *";
+		return this.client.query(sql, params).then(result => {
+			if (result.rowCount == 0) {
+				throw new Error("NoResultException");
+			}
+
+			return result.rows[0]
+		});
 	}
 }

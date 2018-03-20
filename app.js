@@ -244,7 +244,7 @@ class RequestFilter {
 		return this.getObject(login, req, service).then(obj => {
 			return this.dbClient.deleteOne(service.name, req.primaryKey).then(objDeleted => {
 				this.notify(objDeleted, service, true);
-				return Response.ok().build();
+				return Response.ok(objDeleted).build();
 			});
 		});
 	}
@@ -457,10 +457,8 @@ class RequestFilter {
 				if (category == undefined || login.categories.indexOf(category) >= 0) {
 					// envia somente para os usuários com acesso ao serviço alterado
 					if (login.websocketServices.indexOf(serviceName) >= 0) {
-						Promise.resolve().then(() => {
-							console.log("notify, user ", login.user.name, ":", msg);
-							session.sendUTF(str)
-						});
+						console.log("notify, user ", login.user.name, ":", msg);
+						session.sendUTF(str)
 					}
 				}
 			}
