@@ -175,7 +175,7 @@ class RequestFilter {
 	processCreate(login, req, service, obj) {
 		let response = this.checkObjectAccess(login, service, obj);
 
-		if (response != null) Promisse.resolve(response);
+		if (response != null) Promise.resolve(response);
 
 		return this.dbClient.insert(service.name, obj).then(newObj => {
 			this.notify(newObj, service, false);
@@ -222,14 +222,14 @@ class RequestFilter {
 		return this.getObject(login, req, service).then(oldObj => {
 			let response = this.checkObjectAccess(login, service, obj);
 
-			if (response != null) return Promisse.resolve(response);
+			if (response != null) return Promise.resolve(response);
 
 			if (oldObj["id"] != undefined) {
 				let oldId = oldObj["id"];
 				let newId = obj["id"];
 
 				if (newId == null || newId != oldId) {
-					return Promisse.resolve(Response.status(Response.Status.UNAUTHORIZED).entity("changed id").build());
+					return Promise.resolve(Response.status(Response.Status.UNAUTHORIZED).entity("changed id").build());
 				}
 			}
 
@@ -242,8 +242,8 @@ class RequestFilter {
 	// public processDelete
 	processDelete(login, req, service) {
 		return this.getObject(login, req, service).then(obj => {
-			return this.dbClient.deleteOne(service.name, req.primaryKey).then(obj => {
-				this.notify(obj, service, true);
+			return this.dbClient.deleteOne(service.name, req.primaryKey).then(objDeleted => {
+				this.notify(objDeleted, service, true);
 				return Response.ok().build();
 			});
 		});
@@ -417,7 +417,23 @@ class RequestFilter {
         }
     }
     // This method sends the same Bidding object to all opened sessions
-    notify(serviceName, primaryKey, isRemove) {
+    notify(obj, service, isRemove) {
+    	let getPrimaryKey = (objRef) => {
+    		var primaryKey = {};
+
+    		for (var fieldName in service.jsonFields) {
+    			var field = service.jsonFields[fieldName];
+
+    			if (field.primaryKey == true) {
+        			primaryKey[fieldName] = objRef[fieldName];
+    			}
+    		}
+
+    		return primaryKey;
+    	}
+
+    	let primaryKey = getPrimaryKey(obj);
+		let serviceName = CaseConvert.underscoreToCamel(service.name, false);
 		var msg = {};
 		msg.service = serviceName;
 		msg.primaryKey = primaryKey;
@@ -428,7 +444,7 @@ class RequestFilter {
 			msg.action = "delete";
 		}
 
-		let str = msg.toString();
+		let str = JSON.stringify(msg);
 		let objCompany = primaryKey["company"];
 		let category = primaryKey["category"];
 
@@ -441,8 +457,10 @@ class RequestFilter {
 				if (category == undefined || login.categories.indexOf(category) >= 0) {
 					// envia somente para os usuários com acesso ao serviço alterado
 					if (login.websocketServices.indexOf(serviceName) >= 0) {
-						console.log("notify, user ", login.user.name, ":", msg);
-						Promisse.resolved().then(() => session.sendUTF(str));
+						Promise.resolve().then(() => {
+							console.log("notify, user ", login.user.name, ":", msg);
+							session.sendUTF(str)
+						});
 					}
 				}
 			}
