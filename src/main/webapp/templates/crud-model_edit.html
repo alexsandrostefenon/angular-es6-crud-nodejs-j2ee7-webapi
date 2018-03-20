@@ -4,8 +4,8 @@
     <div class="form-group">
       <div class="col-sm-offset-2 col-sm-10">
 		<button id="cancel" name="cancel" class="btn btn-default" ng-click="vm.goToSearch()"><span class="glyphicon glyphicon-remove"></span> {{vm.translation.cancel}}</button>
-		<button ng-if="vm.crudService.params.access.update != false" id="save" name="save" class="btn btn-primary" ng-disabled="vm.isClean() || {{vm.formId}}.$invalid" ng-click="vm.save()"><span class="glyphicon glyphicon-save"></span> {{vm.translation.save}}</button>
-		<button ng-if="vm.crudService.params.access.create != false" id="saveAsNew" name="saveAsNew" class="btn btn-primary" ng-disabled="vm.isClean() || {{vm.formId}}.$invalid" ng-click="vm.saveAsNew()"><span class="glyphicon glyphicon-import"></span> {{vm.translation.saveAsNew}}</button>
+		<button ng-if="vm.crudService.params.access.update != false" id="update" name="update" class="btn btn-primary" ng-disabled="vm.isClean() || {{vm.formId}}.$invalid" ng-click="vm.update()"><span class="glyphicon glyphicon-save"></span> {{vm.translation.save}}</button>
+		<button ng-if="vm.crudService.params.access.create != false" id="save" name="save" class="btn btn-primary" ng-disabled="vm.isClean() || {{vm.formId}}.$invalid" ng-click="vm.save()"><span class="glyphicon glyphicon-import"></span> {{vm.translation.saveAsNew}}</button>
 		<button ng-if="vm.crudService.params.access.delete != false" id="delete" name="delete" class="btn btn-danger" ng-click="vm.remove()"><span class="glyphicon glyphicon-trash"></span> {{vm.translation.delete}}</button>
       </div>
     </div>

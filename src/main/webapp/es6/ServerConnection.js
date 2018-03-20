@@ -131,7 +131,7 @@ export class HttpRestRequest {
 	setToken(token) {
 		this.token = token;
 	}
-	
+	// private
 	requestFetch() {
 /*
 Response.headers Read only Contains the Headers object associated with the response.
@@ -148,50 +148,77 @@ Body.body Read only A simple getter used to expose a ReadableStream of the body 
 Body.bodyUsed Read only Stores a Boolean that declares whether the body has been used in a response yet.
  * */		
 	}
+	// private
+	requestNodeJsNative(path, method, params, objSend) {
+		return new Promise((resolve, reject) => {
+			const https = require('https');
 
-	requestXHR(path, method, params, objSend, sucessCallback, failCallback) {
+			const options = {
+			  hostname: this.url,
+			  port: this.port,
+			  path: "/" + path,
+			  method: method
+			};
+
+			const req = https.request(options, (res) => {
+			  console.log('statusCode:', res.statusCode);
+			  console.log('headers:', res.headers);
+
+			  res.on('data', (d) => {
+				 resolve(d);
+			  });
+			});
+
+			req.on('error', (e) => {
+				reject(new Error(e));
+			});
+			
+			req.end();
+		});
+	}
+	// private
+	requestXHR(path, method, params, objSend) {
 //        console.log("[HttpRestRequest] getRemote : successCallback :", scope.path, params, "response :", JSON.stringify(item));
-		var httpRequest = new XMLHttpRequest();
-
-		if (!httpRequest) {
-	    	failCallback("Cannot create an XMLHTTP instance");
-		}
-
-		var alertContents = function() {
-		    if (httpRequest.readyState === XMLHttpRequest.DONE) {
-		      if (httpRequest.status === 200) {
-		    	  if (sucessCallback) {
+		return new Promise((resolve, reject) => {
+			var httpRequest = new XMLHttpRequest();
+	
+			if (!httpRequest) {
+		    	reject(new Error("Cannot create an XMLHTTP instance"));
+			}
+	
+			var alertContents = function() {
+			    if (httpRequest.readyState === XMLHttpRequest.DONE) {
+			      if (httpRequest.status >= 200 && httpRequest.status < 300) {
 		    		  var objReceive = null;
-
+		    			
 		    		  if (httpRequest.response) {
 		    			objReceive = JSON.parse(httpRequest.response);
 		    		  }
 
 //		              console.log("[HttpRestRequest] response : success : objReceive : " + JSON.stringify(objReceive));
-			    	  sucessCallback(objReceive);
-		    	  }
-		      } else {
-		    	  if (failCallback) {
-			    	  failCallback(httpRequest.statusText);
-		    	  }
-		      }
+			    	  resolve(objReceive);
+			      } else {
+			    	  reject(new Error(httpRequest.response));
+			      }
+			    }
+			}
+	
+		    httpRequest.onreadystatechange = alertContents;
+		    httpRequest.open(method, this.url + "/" + path); // GET, POST, PUT, DELETE
+		    httpRequest.setRequestHeader('accept', 'application/json');
+	//	    httpRequest.setRequestHeader('Content-Type', 'application/json');
+	
+		    if (this.token) {
+			    httpRequest.setRequestHeader('Authorization', 'Token ' + this.token);
 		    }
-		}
-
-	    httpRequest.onreadystatechange = alertContents;
-	    httpRequest.open(method, this.url + "/" + path); // GET, POST, PUT, DELETE
-	    httpRequest.setRequestHeader('accept', 'application/json');
-//	    httpRequest.setRequestHeader('Content-Type', 'application/json');
-
-	    if (this.token) {
-		    httpRequest.setRequestHeader('Authorization', 'Token ' + this.token);
-	    }
-
-	    if (objSend) {
-		    httpRequest.send(JSON.stringify(objSend));
-	    } else {
-		    httpRequest.send();
-	    }
+	
+		    if (objSend) {
+			    httpRequest.send(JSON.stringify(objSend));
+		    } else {
+			    httpRequest.send();
+		    }
+	    
+		});
 /*
 4.6 Response
 4.6.1 The responseURL attribute
@@ -206,8 +233,8 @@ Body.bodyUsed Read only Stores a Boolean that declares whether the body has been
 4.6.10 The responseText attribute
 4.6.11 The responseXML attribute */	    
 	}
-
-	requestAngularHttp(path, method, params, objSend, sucessCallback, failCallback) {
+	// private
+	requestAngularHttp(path, method, params, objSend) {
 		var req = {};
 		req.method = method;
 		req.url = this.url + "/" + path;
@@ -221,19 +248,9 @@ Body.bodyUsed Read only Stores a Boolean that declares whether the body has been
 			req.headers = {"Authorization": "Token " + this.token};
 		}
 
-		var callbackOk = function(response) {
-			if (sucessCallback) {
-				sucessCallback(response.data);
-			}
-		}
-
-		var callbackFail = function(response) {
-			if (failCallback) {
-				failCallback(response.statusText + " : " + response.data);
-			}
-		}
-
-		HttpRestRequest.$http(req).then(callbackOk, callbackFail);
+		return HttpRestRequest.$http(req).then(response => response.data).catch(response => {
+			throw new Error(response.data);
+		});
 /*
 The response object has these properties:
 
@@ -245,33 +262,33 @@ statusText – {string} – HTTP status text of the response.
 xhrStatus – {string} – Status of the XMLHttpRequest (complete, error,  timeout or abort).
  */		
 	}
-
-	request(path, method, params, objSend, sucessCallback, failCallback) {
+	// private
+	request(path, method, params, objSend) {
 		if (HttpRestRequest.$http) {
-			return this.requestAngularHttp(path, method, params, objSend, sucessCallback, failCallback);
+			return this.requestAngularHttp(path, method, params, objSend);
 		} else {
-			return this.requestXHR(path, method, params, objSend, sucessCallback, failCallback);
+			return this.requestXHR(path, method, params, objSend);
 		}
 	}
 
 	save(path, params, itemSend, successCallback, errorCallback) {
-		return this.request(path, "POST", params, itemSend, successCallback, errorCallback);
+		return this.request(path, "POST", params, itemSend);
 	}
 
 	update(path, params, itemSend, successCallback, errorCallback) {
-		return this.request(path, "PUT", params, itemSend, successCallback, errorCallback);
+		return this.request(path, "PUT", params, itemSend);
 	}
 
 	remove(path, params, successCallback, errorCallback) {
-		return this.request(path, "DELETE", params, null, successCallback, errorCallback);
+		return this.request(path, "DELETE", params, null);
 	}
 
 	get(path, params, successCallback, errorCallback) {
-		return this.request(path, "GET", params, null, successCallback, errorCallback);
+		return this.request(path, "GET", params, null);
 	}
 
 	query(path, params, successCallback, errorCallback) {
-		return this.request(path, "GET", params, null, successCallback, errorCallback);
+		return this.request(path, "GET", params, null);
 	}
 }
 
@@ -348,27 +365,24 @@ export class CrudService {
         return Filter.findOneIn(this.list, paramsList);
 	}
 
-	findOne(params, callback) {
-        return Filter.findOne(this.list, params, callback);
-	}
-
-	onDelete(primaryKey) {
+	findPos(params) {
 		var ret = -1;
-		var scope = this;
-
-        this.findOne(primaryKey, function(pos) {
-        	scope.list.splice(pos, 1);
-        	ret = pos;
-        });
-
+        Filter.findOne(this.list, params, pos => ret = pos);
         return ret;
 	}
 
-	// private, used in getRemote and saveAsNew
-	processAdd(newItem, callback, oldPos) {
-		var newPos;
+	findOne(params) {
+		var pos = this.findPos(params);
+		return pos >= 0 ? this.list[pos] : null;
+	}
 
-		if (this.params.orderBy != undefined) {
+	removeInternal(primaryKey) {
+        let pos = this.findPos(primaryKey);
+        return this.processList(this.list[pos], pos);
+	}
+	// private, use in getRemote, save, update and remove
+	processList(data, oldPos, newPos) {
+		let findSortedPos = () => {
 			var fieldNames = this.params.orderBy.split(",");
 			var fieldNamesOrderAsc = new Array(fieldNames.length);
 
@@ -385,79 +399,61 @@ export class CrudService {
 
 			var found = false;
 
-			for (newPos = 0; newPos < this.list.length; newPos++) {
-				var item = this.list[newPos];
+			for (var pos = 0; pos < this.list.length && found == false; pos++) {
+				var item = this.list[pos];
 
 				for (var j = 0; j < fieldNames.length; j++) {
 					var fieldName = fieldNames[j];
 					var isAsc = fieldNamesOrderAsc[j];
 					var _value = item[fieldName];
-					var value = newItem[fieldName];
+					var value = data[fieldName];
 
-					if (isAsc == true && _value > value) {
+					if ((isAsc == true && _value > value) || (isAsc == false && _value < value)) {
 						found = true;
 						break;
 					}
-
-					if (isAsc == false && _value < value) {
-						found = true;
-						break;
-					}
-
-					if (_value != value) {
-						break;
-					}
-				}
-
-				if (found == true) {
-					break;
 				}
 			}
 
-			if (found == true) {
-				this.list.splice(newPos, 0, newItem);
-			} else {
-				newPos = null;
-				this.list.push(newItem);
-			}
-		} else {
-	    	this.list.push(newItem);
-	    	newPos = (this.list.length)-1;
+			return pos;
 		}
-
-		if (callback) {
-			callback(newItem, newPos, oldPos);
-		}
+		
+        if (oldPos == undefined && newPos == undefined) {
+        	// add
+    		if (this.params.orderBy != undefined) {
+            	newPos = findSortedPos(data);
+            	this.list.splice(newPos, 0, data);
+    		} else {
+            	this.list.push(data);
+            	newPos = this.list.length - 1;
+    		}
+        } else if (oldPos != undefined && newPos == undefined) {
+        	// remove
+        	this.list.splice(oldPos, 1);
+        } else if (oldPos != undefined && oldPos == newPos) {
+        	// replace
+    		if (this.params.orderBy != undefined) {
+            	this.list.splice(oldPos, 1);
+            	newPos = findSortedPos(data);
+            	this.list.splice(newPos, 0, data);
+    		} else {
+            	this.list[oldPos] = data;
+    		}
+        }
+        
+        return {"data": data, "oldPos": oldPos, "newPos": newPos};
 	}
 
-	// private, used in getRemote and update
-	processReplace(newItem, oldPos, callback) {
-		if (this.params.orderBy != undefined) {
-			this.list.splice(oldPos, 1);
-			this.processAdd(newItem, callback, oldPos);
-		} else {
-			this.list[oldPos] = newItem;
+	getRemote(primaryKey) {
+    	return this.httpRest.get(this.path + "/read", primaryKey).then(data => {
+            let pos = this.findPos(primaryKey);
 
-			if (callback) {
-				callback(newItem, null, oldPos);
-			}
-		}
-	}
-
-	getRemote(primaryKey, successCallback, errorCallback) {
-	    var scope = this;
-
-        var callback = function(item) {
-            var itemFind = scope.findOne(primaryKey, function(pos) {
-            	scope.processReplace(item, pos, successCallback);
-            });
-
-            if (itemFind == null) {
-            	scope.processAdd(item, successCallback, pos);
+            if (pos < 0) {
+            	return this.processList(data);
+            } else {
+            	return this.processList(data, pos, pos);
             }
-        };
-
-    	this.httpRest.get(this.path + "/read", primaryKey, callback, errorCallback);
+    	});
 	}
 	// private, use in save and update methods
 	copyFields(dataIn) {
@@ -477,58 +473,22 @@ export class CrudService {
 		return dataOut;
 	}
 
-	save(primaryKey, itemSend, successCallback, errorCallback) {
-	    var scope = this;
-
-        var callback = function(itemReceived) {
-        	scope.processAdd(itemReceived, successCallback, null);
-        };
-
-    	this.httpRest.save(this.path + "/create", primaryKey, this.copyFields(itemSend), callback, errorCallback);
+	save(primaryKey, itemSend) {
+    	return this.httpRest.save(this.path + "/create", primaryKey, this.copyFields(itemSend)).then(data => this.processList(data));
 	}
 
-	update(primaryKey, itemSend, successCallback, errorCallback) {
-	    var scope = this;
-
-        var callback = function(itemReceived) {
-            scope.findOne(primaryKey, function(pos) {
-            	scope.processReplace(itemReceived, pos, successCallback);
-            });
-        };
-
-    	this.httpRest.update(this.path + "/update", primaryKey, this.copyFields(itemSend), callback, errorCallback);
+	update(primaryKey, itemSend) {
+        let pos = this.findPos(primaryKey);
+        return this.httpRest.update(this.path + "/update", primaryKey, this.copyFields(itemSend)).then(data => this.processList(data, pos, pos));
 	}
 
-	remove(primaryKey, successCallback, errorCallback) {
-		var scope = this;
-
-        var callback = function(response) {
-            // depois que removeu no servidor, remove também na lista local
-            scope.findOne(primaryKey, function(pos) {
-        		scope.list.splice(pos, 1);
-
-            	if (successCallback) {
-            		successCallback(response, pos);
-            	}
-            });
-        };
-
-    	this.httpRest.remove(this.path + "/delete", primaryKey, callback, errorCallback);
+	remove(primaryKey) {
+        let pos = this.findPos(primaryKey);
+        return this.httpRest.remove(this.path + "/delete", primaryKey).then(data => this.processList(data, pos));
 	}
 
-	queryRemote(params, successCallback, errorCallback) {
-	    var scope = this;
-
-        var callback = function(list) {
-        	// TODO : sort
-            scope.list = list;
-
-            if (successCallback) {
-	            successCallback(scope);
-            }
-        };
-
-    	this.httpRest.query(this.path + "/query", params, callback, errorCallback);
+	queryRemote(params) {
+        return this.httpRest.query(this.path + "/query", params).then(list => this.list = list);
 	}
 
 }
@@ -567,7 +527,7 @@ export class ServerConnection {
 
             if (service != undefined) {
         		if (item.action == "delete") {
-        			service.onDelete(item.primaryKey);
+        			service.removeInternal(item.primaryKey);
         		} else {
         			service.getRemote(item.primaryKey);
         		}
@@ -575,49 +535,48 @@ export class ServerConnection {
 		};
 	}
     // public
-    login(server, user, password, CrudServiceClass, callbackFinish, callbackFail, callbackPartial) {
-        var scope = this;
-
-        var callbackLoginOk = function(loginResponse) {
-        	scope.title = loginResponse.title;
-        	scope.user = loginResponse.user;
-        	scope.httpRest.setToken(scope.user.authctoken);
-    		var acess = JSON.parse(scope.user.roles);
+    login(server, user, password, CrudServiceClass, callbackPartial) {
+		this.url = server;
+    	this.httpRest = new HttpRestRequest(this.url + "/rest");
+    	return this.httpRest.request("authc", "POST", null, {"userId":user, "password":password})
+    	.then(loginResponse => {
+    		this.title = loginResponse.title;
+    		this.user = loginResponse.user;
+    		this.httpRest.setToken(this.user.authctoken);
+    		var acess = JSON.parse(this.user.roles);
         	var listQueryRemote = [];
             // depois carrega os serviços autorizados
             for (var params of loginResponse.crudServices) {
     			params.access = acess[params.name];
     			params.name = CaseConvert.camelUpToCamelLower(params.name);
-    			var service = new CrudServiceClass(scope, params, scope.httpRest);
-    			scope.services[service.params.name] = service;
+    			var service = new CrudServiceClass(this, params, this.httpRest);
+    			this.services[service.params.name] = service;
 
     			if (service.isOnLine != true && service.params.access.query != false) {
     				listQueryRemote.push(service);
     			}
             }
 
-        	var queryRemoteServices = function() {
-        		if (listQueryRemote.length > 0) {
-            		var service = listQueryRemote.shift();
-            		console.log("[ServerConnection] loading", service.label, "...");
-            		callbackPartial("loading... " + service.label);
+            return new Promise((resolve, reject) => {
+            	var queryRemoteServices = () => {
+            		if (listQueryRemote.length > 0) {
+                		var service = listQueryRemote.shift();
+                		console.log("[ServerConnection] loading", service.label, "...");
+                		callbackPartial("loading... " + service.label);
 
-            		service.queryRemote(null, function(crudService) {
-            			console.log("[ServerConnection] ...loaded", crudService.label, crudService.list.length);
-            			queryRemoteServices();
-            		}, callbackFail);
-        		} else {
-        	    	scope.webSocketConnect();
-                	callbackFinish();
-        		}
-        	}
+                		service.queryRemote(null).then(list => {
+                			console.log("[ServerConnection] ...loaded", service.label, list.length);
+                			queryRemoteServices();
+                		}).catch(error => reject(error));
+            		} else {
+            	    	this.webSocketConnect();
+                    	resolve(loginResponse);
+            		}
+            	}
 
-            queryRemoteServices();
-        }
-
-		this.url = server;
-    	this.httpRest = new HttpRestRequest(this.url + "/rest");
-    	this.httpRest.request("authc", "POST", null, {"userId":user, "password":password}, callbackLoginOk, callbackFail);
+                queryRemoteServices();
+        	});
+    	});
     }
     // public
     logout() {

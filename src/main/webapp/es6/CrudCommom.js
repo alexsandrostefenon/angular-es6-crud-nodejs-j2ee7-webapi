@@ -91,16 +91,10 @@ export class CrudCommom extends CrudUiSkeleton {
 			primaryKey = this.primaryKey;
 		}
 
-		this.crudService.remove(primaryKey, data => {
-			if (this.removeCallback != undefined) {
-				this.removeCallback();
-			} else if (this.primaryKey) {
-				this.goToSearch();
-			}
-		});
+		return this.crudService.remove(primaryKey);
 	}
-
-	save(forceReload) {
+	// private, use in save and update
+	loadInstance() {
 		for (var fieldName in this.fields) {
 			var field = this.fields[fieldName];
 			// primeiro, parseia as flags
@@ -114,39 +108,17 @@ export class CrudCommom extends CrudUiSkeleton {
 				this.instance[fieldName] = field.strJson;
 			}
 		}
-
-		var scope = this;
-
-		var callback = function(data) {
-			if (scope.saveCallback != undefined) {
-				scope.saveCallback(data);
-			} else if (forceReload != true && scope.crudService.params.saveAndExit == true) {
-				scope.goToSearch();
-			} else {
-				scope.goToEdit(scope.crudService.getPrimaryKey(data));
-			}
-		}
-
-		var callbackNew = function(data) {
-			var primaryKey = scope.crudService.getPrimaryKey(data);
-
-			for (var item of scope.listItemCrud) {
-				item.clone(primaryKey);
-			}
-
-			callback(data);
-		}
-
-		if (this.crudService.checkPrimaryKey(this.primaryKey) == true) {
-			this.crudService.update(this.primaryKey, this.instance, callback);
-		} else {
-			this.crudService.save({}, this.instance, callbackNew);
-		}
 	}
 
-	saveAsNew() {
+	update() {
+		this.loadInstance();
+		return this.crudService.update(this.primaryKey, this.instance);
+	}
+
+	save() {
 		this.primaryKey = {};
-		this.save(true);
+		this.loadInstance();
+		return this.crudService.save({}, this.instance);
 	}
 
 	paginate() {

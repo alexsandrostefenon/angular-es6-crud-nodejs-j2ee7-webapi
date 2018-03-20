@@ -21,13 +21,14 @@ app.directive('crudTable', function() {
 
 class CrudBase extends CrudCommom {
 
-	constructor(serverConnection, serviceName, primaryKey, action) {
+	constructor(serverConnection, serviceName, primaryKey, action, $scope) {
     	super(serverConnection, serverConnection.services[serviceName], primaryKey, action);
 		this.message = {};
 		this.disabled = false;
 		this.isCollapsedForm = false;
 		this.required = "false";
 		this.templateModel = "templates/crud-model_" + action + ".html";
+		this.$scope = $scope;
 
 		if (this.action == "search") {
 			this.isCollapsedForm = true;
@@ -45,62 +46,93 @@ class CrudBase extends CrudCommom {
 	}
 
 	get(primaryKey) {
-		var scope = this;
-
-		var successCallback = function(data) {
-			scope.original = data;
-			scope.instance = angular.copy(data);
-			scope.isCollapsedForm = false;
+		return this.crudService.get(primaryKey).then(response => {
+			this.original = response.data;
+			this.instance = angular.copy(response.data);
+			this.isCollapsedForm = false;
 			// atualiza as strings de referência
-			scope.setValues(scope.instance);
+			this.setValues(this.instance);
 			// monta a lista dos CrudItem
-			for (let serviceName in scope.serverConnection.services) {
-				var service = scope.serverConnection.services[serviceName];
+			for (let serviceName in this.serverConnection.services) {
+				var service = this.serverConnection.services[serviceName];
 
 				for (let fieldName in service.params.fields) {
 					var field = service.params.fields[fieldName];
-//					console.log("comparando", scope.name, "com", field.service);
-					if (field.service == scope.name) {
+
+					if (field.service == this.name) {
 						if (field.title != undefined && field.title.length > 0) {
 							var isClonable = field.isClonable == undefined ? false : field.isClonable;
-					    	scope.listItemCrud.push(new CrudItem(scope.serverConnection, serviceName, fieldName, scope.primaryKey, isClonable, field.title));
+					    	this.listItemCrud.push(new CrudItem(this.serverConnection, serviceName, fieldName, this.primaryKey, isClonable, field.title));
 						}
 					}
 				}
 			}
-/*
-	    	// CompanyController
-	    	this.listItemCrud.push(new CrudItem(this.serverConnection, "categoryCompany", "company", this.primaryKey.id, true, 'Categorias Vinculadas'));
-	    	// ProductController
-	    	this.listItemCrud.push(new CrudItem(this.serverConnection, "productAssembleProduct", "productOut", this.primaryKey.id, true, 'Componentes para Fabricação/Montagem'));
-	    	this.listItemCrud.push(new CrudItem(this.serverConnection, "productAssembleProduct", "productIn", this.primaryKey.id, false, 'Produtos que utilizam este componente na Fabricação/Montagem'));
-	    	this.listItemCrud.push(new CrudItem(this.serverConnection, "productAssembleService", "productOut", this.primaryKey.id, true, 'Serviços para Fabricação/Montagem'));
-	    	// SpendingController
-	    	this.listItemCrud.push(new CrudItem(this.serverConnection, "spendingItem", "spending", this.primaryKey.id, true, "Items"));
-*/
-	    	if (scope.getCallback != undefined) {
-				scope.getCallback(data);
-			}
-		};
-
-		this.crudService.get(primaryKey, successCallback);
+			
+			return response;
+		});
 	}
 
 }
 
 export class CrudController extends CrudBase {
 
-    constructor(serverConnection) {
+    constructor(serverConnection, $scope) {
     	var params = serverConnection.$location.search();
 		var path = serverConnection.$location.path();
 		var list = path.split('/');
 		var action = list[list.length-1];
 		var serviceName = CaseConvert.underscoreToCamel(list[list.length-2]);
-    	super(serverConnection, serviceName, params, action);
+    	super(serverConnection, serviceName, params, action, $scope);
     }
+    
+    get(primaryKey) {
+    	return super.get(primaryKey).then(response => {
+    		this.$scope.$apply();
+    		return response;
+    	});
+    }
+	
+	remove() {
+		return super.remove().then(response => {
+			this.goToSearch();
+			return response;
+		});
+	}
+
+	update() {
+		return super.update().then(response => {
+			var primaryKey = this.crudService.getPrimaryKey(response.data);
+
+			if (this.crudService.params.saveAndExit == true) {
+				this.goToSearch();
+			} else {
+				this.goToEdit(primaryKey);
+			}
+			
+			return response;
+		});
+	}
+
+	save() {
+		return super.save().then(response => {
+			var primaryKey = this.crudService.getPrimaryKey(response.data);
+
+			for (var item of this.listItemCrud) {
+				item.clone(primaryKey);
+			}
+			
+			if (this.crudService.params.saveAndExit == true) {
+				this.goToSearch();
+			} else {
+				this.goToEdit(primaryKey);
+			}
+			
+			return response;
+		});
+	}
 
 }
 
-app.controller("CrudController", function(ServerConnectionService) {
-	return new CrudController(ServerConnectionService);
+app.controller("CrudController", function(ServerConnectionService, $scope) {
+	return new CrudController(ServerConnectionService, $scope);
 });

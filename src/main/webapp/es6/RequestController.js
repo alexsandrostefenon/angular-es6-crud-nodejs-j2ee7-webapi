@@ -93,16 +93,16 @@ export class Controller extends CrudController {
 		}
 	}
 
-    getCallback(data) {
-       	this.enableRequestFields();
+    get(primaryKey) {
+    	return super.get(primaryKey).then(response => {
+           	this.enableRequestFields();
+    		this.$scope.$apply();
+        	return response;
+    	});
     }
 
-	saveCallback(data) {
-		this.goToEdit(this.crudService.getPrimaryKey(data));
-	}
-
-    constructor(serverConnection) {
-    	super(serverConnection);
+    constructor(serverConnection, $scope) {
+    	super(serverConnection, $scope);
     	this.saveAndExit = false;
 
     	if (this.action == "new") {

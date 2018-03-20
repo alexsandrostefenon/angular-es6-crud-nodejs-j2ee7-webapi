@@ -50,31 +50,32 @@ export class CrudItem extends CrudCommom {
 
 		if (this.isClonable == true) {
 			var count = 0;
-			var scope = this;
-
-			var callback = function(item) {
-				count++;
-
-				if (count == scope.filterResults.length) {
-					scope.query();
-				}
-			}
 
 			for (var item of this.filterResults) {
 				var newItem = angular.copy(item);
 				newItem[this.fieldName] = Object.values(this.foreignKey)[0];
-				this.crudService.save({}, newItem, callback);
+				this.crudService.save({}, newItem).then(data => {
+					count++;
+
+					if (count == this.filterResults.length) {
+						this.query();
+					}
+				});
 			}
 		} else {
 			this.query();
 		}
 	}
 
-	removeCallback() {
-		this.query();
+	remove() {
+		return super.remove().then(response => this.query());
 	}
 
-	saveCallback() {
-		this.query();
+	save() {
+		return super.save().then(response => this.query());
+	}
+
+	update() {
+		return super.update().then(response => this.query());
 	}
 }

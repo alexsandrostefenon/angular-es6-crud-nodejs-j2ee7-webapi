@@ -61,9 +61,8 @@ export class DatabaseUiAdapter {
 				// neste caso, valRef contém o id do registro de referência
 				var service = this.serverConnection.services[serviceName];
 				var primaryKey = service.getPrimaryKey(item, value);
-				service.findOne(primaryKey, function(pos) {
-					value = service.listStr[pos];
-				});
+				let pos = service.findPos(primaryKey);
+				value = service.listStr[pos];
 			} else if (fieldName == "id") {
 				// TODO : o "id" não deve fazer parte de StrValue, criar uma lista para armazenar os primaryKeys
 				function padLeft(str, size, ch) {
@@ -137,117 +136,78 @@ export class CrudServiceUI extends CrudService {
 		return list;
 	}
 
-	onDelete(primaryKey) {
-        var pos = super.onDelete(primaryKey);
-
-        if (pos >= 0) {
-        	this.listStr.splice(pos, 1);
-        }
+	removeInternal(primaryKey) {
+		let response = super.removeInternal(primaryKey);
+        return this.processListUi(response);
 	}
+	// private
+	processListUi(response) {
+		let str = response.data == undefined ? null : this.buildItemStr(response.data);
 
-	// private, used in getRemote, save and update
-	processAddOrReplaceUi(newItem, newPos, oldPos, callback) {
-		var str = this.buildItemStr(newItem);
-
-        if (newPos == null) {
+        if (response.oldPos == undefined && response.newPos == undefined) {
         	// add
         	this.listStr.push(str);
-        } else if (newPos == oldPos) {
+        } else if (response.oldPos != undefined && response.newPos == undefined) {
+        	// remove
+        	this.listStr.splice(response.oldPos, 1);
+        } else if (response.newPos == response.oldPos) {
         	// replace
-        	this.listStr[newPos] = str;
-        } else {
+        	this.listStr[response.newPos] = str;
+        } else if (response.oldPos != undefined && response.newPos != undefined) {
         	// remove and add
-        	this.listStr.splice(oldPos, 1);
-        	this.listStr.splice(newPos, 0, str);
+        	this.listStr.splice(response.oldPos, 1);
+        	this.listStr.splice(response.newPos, 0, str);
         }
-
-    	if (callback != null) {
-        	callback(newItem, newPos, oldPos);
-    	}
+        
+        return response;
 	}
 
-	getRemote(primaryKey, successCallback, errorCallback) {
-	    var scope = this;
-
-        var callback = function(item, newPos, oldPos) {
-        	scope.processAddOrReplaceUi(item, newPos, oldPos, successCallback);
-        };
-
-    	super.getRemote(primaryKey, callback, errorCallback);
+	getRemote(primaryKey) {
+    	return super.getRemote(primaryKey).then(response => this.processListUi(response));
 	}
 
-	get(primaryKey, successCallback, errorCallback) {
-        var item = this.findOne(primaryKey);
+	get(primaryKey) {
+        let pos = this.findPos(primaryKey);
 
-        if (item == null) {
-        	this.getRemote(primaryKey, successCallback, errorCallback);
+        if (pos < 0) {
+        	return this.getRemote(primaryKey);
         } else {
-        	if (successCallback) {
-            	successCallback(item);
-        	}
+        	return Promise.resolve({"data": this.list[pos]});
         }
 	}
 
-	save(restParams, itemSend, successCallback, errorCallback) {
-	    var scope = this;
-
-        var callback = function(itemReceived, newPos, oldPos) {
-        	scope.processAddOrReplaceUi(itemReceived, newPos, oldPos, successCallback);
-        };
-
-    	super.save(restParams, itemSend, callback, errorCallback);
+	save(primaryKey, itemSend) {
+    	return super.save(primaryKey, itemSend).then(response => this.processListUi(response));
 	}
 
-	update(primaryKey, itemSend, successCallback, errorCallback) {
-	    var scope = this;
-
-        var callback = function(itemReceived, newPos, oldPos) {
-        	scope.processAddOrReplaceUi(itemReceived, newPos, oldPos, successCallback);
-        };
-
-    	super.update(primaryKey, itemSend, callback, errorCallback);
+	update(primaryKey, itemSend) {
+        return this.update(primaryKey, itemSend).then(response => this.processListUi(response));
 	}
 
-	remove(primaryKey, successCallback, errorCallback) {
-		var scope = this;
-
-        var callback = function(response, pos) {
-    		scope.listStr.splice(pos, 1);
-
-        	if (successCallback) {
-            	successCallback(response, pos);
-        	}
-        };
-
-    	super.remove(primaryKey, callback, errorCallback);
+	remove(primaryKey) {
+    	return super.remove(primaryKey).then(response => this.processListUi(response));
 	}
 
-	queryRemote(params, successCallback, errorCallback) {
-	    var scope = this;
-
-        var callback = function() {
-    		scope.listStr = scope.buildListStr(scope.list);
+	queryRemote(params) {
+    	return super.queryRemote(params).then(list => {
+    		this.listStr = this.buildListStr(this.list);
             // também atualiza a lista de nomes de todos os serviços que dependem deste
-			for (var serviceName in scope.serverConnection.services) {
-				var service = scope.serverConnection.services[serviceName];
+			for (var serviceName in this.serverConnection.services) {
+				var service = this.serverConnection.services[serviceName];
 
 				for (var fieldName in service.databaseUiAdapter.fields) {
 					var field = service.databaseUiAdapter.fields[fieldName];
 
-					if (field.service == scope.params.name) {
-				        console.log("[CrudServiceUI] queryRemote, update listStr from", service.label, service.list.length, "by", scope.label, scope.list.length);
+					if (field.service == this.params.name) {
+				        console.log("[CrudServiceUI] queryRemote, update listStr from", service.label, service.list.length, "by", this.label, this.list.length);
 		    			service.listStr = service.buildListStr(service.list);
 						break;
 					}
 				}
 			}
-
-            if (successCallback) {
-	            successCallback(scope);
-            }
-        };
-
-    	super.queryRemote(params, callback, errorCallback);
+			
+			return list;
+    	});
 	}
 
 }
@@ -279,7 +239,7 @@ export class ServerConnectionUI extends ServerConnection {
 		this.translation.filter = "Filter";
 	}
     // private <- login
-	loginDone() {
+	loginDone(loginResponse) {
         this.menu = {user:[{path:"login", label:"Exit"}]};
         // user menu
 		if (this.user.menu != undefined && this.user.menu.length > 0) {
@@ -347,8 +307,8 @@ export class ServerConnectionUI extends ServerConnection {
 				var promise = import("./" + route.controller + ".js").then(module => {
 					console.log("loaded :", module.name);
 
-					globalControllerProvider.register(module.name, function(ServerConnectionService) {
-						return new module.Controller(ServerConnectionService);
+					globalControllerProvider.register(module.name, function(ServerConnectionService, $scope) {
+						return new module.Controller(ServerConnectionService, $scope);
 					});
 				});
 				promises.push(promise);
@@ -356,7 +316,7 @@ export class ServerConnectionUI extends ServerConnection {
 			}
 		}
 
-		Promise.all(promises).then(() => {
+		return Promise.all(promises).then(() => {
 			globalRouteProvider.when("/app/:name/:action", {templateUrl: "templates/crud.html", controller: "CrudController", controllerAs: "vm"});
 			globalRouteProvider.otherwise({redirectTo: '/app/login'});
 
@@ -367,17 +327,7 @@ export class ServerConnectionUI extends ServerConnection {
 		});
     }
     // public
-    login(server, user, password, CrudServiceClass, callbackFinish, callbackFail, callbackPartial) {
-        var scope = this;
-
-        var internalCallbackFinish = function() {
-			scope.loginDone();
-
-        	if (callbackFinish) {
-        		callbackFinish();
-        	}
-        }
-
+    login(server, user, password, CrudServiceClass, callbackPartial) {
     	if (server == null || server.length == 0) {
     		server = this.$location.absUrl();
     		// remove o /#/xxx no final do path
@@ -388,7 +338,7 @@ export class ServerConnectionUI extends ServerConnection {
 			}
     	}
 
-        super.login(server, user, password, CrudServiceClass, internalCallbackFinish, callbackFail, callbackPartial);
+        super.login(server, user, password, CrudServiceClass, callbackPartial).then(loginResponse => this.loginDone(loginResponse));
     }
 
     logout() {

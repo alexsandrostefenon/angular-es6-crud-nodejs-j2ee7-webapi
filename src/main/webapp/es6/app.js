@@ -8,8 +8,8 @@ class ServerConnectionService extends ServerConnectionUI {
 		super($location, $locale, $route, $rootScope);
     }
 
-    login(server, user, password, callbackFinish, callbackFail, callbackPartial) {
-        super.login(server, user, password, CrudServiceUI, callbackFinish, callbackFail, callbackPartial);
+    login(server, user, password, callbackPartial) {
+        super.login(server, user, password, CrudServiceUI, callbackPartial);
     }
 
 }
@@ -35,13 +35,7 @@ class LoginController {
     }
 
     login() {
-    	var scope = this;
-
-		var callback = function(message) {
-			scope.message = message;
-		}
-
-    	this.serverConnection.login(this.server, this.user, this.password, callback, callback, callback);
+    	return this.serverConnection.login(this.server, this.user, this.password, message => this.message = message);
     }
 
 }
