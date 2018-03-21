@@ -457,8 +457,10 @@ class RequestFilter {
 				if (category == undefined || login.categories.indexOf(category) >= 0) {
 					// envia somente para os usuários com acesso ao serviço alterado
 					if (login.websocketServices.indexOf(serviceName) >= 0) {
-						console.log("notify, user ", login.user.name, ":", msg);
-						session.sendUTF(str)
+						Promise.resolve().then(() => {
+							console.log("notify, user ", login.user.name, ":", msg);
+							session.sendUTF(str)
+						});
 					}
 				}
 			}
