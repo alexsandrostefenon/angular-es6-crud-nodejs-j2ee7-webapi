@@ -2,7 +2,7 @@ import {Utils} from "./Utils.js";
 import {CrudUiSkeleton} from "./CrudUiSkeleton.js";
 import {app} from "./app-globals.js";
 import {DatabaseUiAdapter} from "./ServerConnectionUI.js";
-import {CrudService, ServerConnection} from "./ServerConnection.js";
+import {Filter, CrudService, ServerConnection} from "./ServerConnection.js";
 
 app.directive('crudJsonArray', function() {
 	return {

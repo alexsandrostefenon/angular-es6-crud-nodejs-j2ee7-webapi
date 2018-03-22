@@ -6,17 +6,12 @@ export const name = "RequestController";
 export class Controller extends CrudController {
 
     enableRequestFields() {
-        var productsQueryCallback = list => this.onProductsChanged(list);
-        var paymentsQueryCallback = list => this.onPaymentsChanged(list);
-        var productsSelectCallback = (field, id) => this.onProductSelected(id);
-        var paymentsSelectCallback = (field, id) => this.onAccountSelected(id);
-
         // serverConnection, serviceName, fieldName, fieldValue, title, numMaxItems, queryCallback, selectCallback
-        this.crudItemProduct = new CrudItem(this.serverConnection, "requestProduct", "request", this.primaryKey, false, 'Produtos', null, productsQueryCallback, productsSelectCallback);
+        this.crudItemProduct = new CrudItem(this.serverConnection, "requestProduct", "request", this.primaryKey, false, 'Produtos', null, list => this.onProductsChanged(list), (field, id) => this.onProductSelected(id));
 		this.listItemCrud.push(this.crudItemProduct);
 
 		if (this.serverConnection.services.requestPayment != undefined && this.serverConnection.services.requestPayment.params.access.update != false) {
-	        this.crudItemPayment = new CrudItem(this.serverConnection, "requestPayment", "request", this.primaryKey, false, 'Pagamentos', null, paymentsQueryCallback, paymentsSelectCallback);
+	        this.crudItemPayment = new CrudItem(this.serverConnection, "requestPayment", "request", this.primaryKey, false, 'Pagamentos', null, list => this.onPaymentsChanged(list), (field, id) => this.onAccountSelected(id));
 			this.listItemCrud.push(this.crudItemPayment);
 		}
     }

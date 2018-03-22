@@ -5,8 +5,8 @@
 
     <div class="form-group">
       <div class="col-sm-offset-2 col-sm-10">
-		<button id="exit" name="exit" class="btn btn-default" ng-click="vm.goToSearch()"><span class="glyphicon glyphicon-remove"></span> {{vm.translation.exit}}</button>
-		<button ng-if="vm.crudService.params.access.create != false" id="saveAsNew" name="saveAsNew" class="btn btn-primary" ng-disabled="vm.isClean() || {{vm.formId}}.$invalid" ng-click="vm.saveAsNew()"><span class="glyphicon glyphicon-import"></span> {{vm.translation.saveAsNew}}</button>
+		<button id="{{vm.formId}}-exit" name="exit" class="btn btn-default" ng-click="vm.goToSearch()"><span class="glyphicon glyphicon-remove"></span> {{vm.translation.exit}}</button>
+		<button ng-if="vm.crudService.params.access.create != false" id="{{vm.formId}}-save" name="save" class="btn btn-primary" ng-disabled="vm.isClean() || {{vm.formId}}.$invalid" ng-click="vm.saveAsNew()"><span class="glyphicon glyphicon-import"></span> {{vm.translation.saveAsNew}}</button>
       </div>
     </div>
 </form>

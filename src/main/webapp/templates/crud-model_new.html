@@ -9,8 +9,8 @@
 
     <div class="form-group">
       <div class="col-sm-offset-2 col-sm-10">
-		<button id="cancel" name="cancel" class="btn btn-primary" ng-click="vm.goToSearch()"><span class="glyphicon glyphicon-remove"></span> {{vm.translation.cancel}}</button>
-		<button ng-if="vm.crudService.params.access.edit != false" id="save" name="save" class="btn btn-default" ng-disabled="vm.isClean() || {{vm.formId}}.$invalid" ng-click="vm.save()"><span class="glyphicon glyphicon-save"></span> {{vm.translation.save}}</button>
+		<button id="{{vm.formId}}-cancel" name="cancel" class="btn btn-primary" ng-click="vm.goToSearch()"><span class="glyphicon glyphicon-remove"></span> {{vm.translation.cancel}}</button>
+		<button ng-if="vm.crudService.params.access.edit != false" id="{{vm.formId}}-save" name="save" class="btn btn-default" ng-disabled="vm.isClean() || {{vm.formId}}.$invalid" ng-click="vm.save()"><span class="glyphicon glyphicon-save"></span> {{vm.translation.save}}</button>
       </div>
     </div>
 </form>

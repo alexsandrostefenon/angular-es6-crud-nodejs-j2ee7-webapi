@@ -1,4 +1,4 @@
-<div id="crud-table-{{vm.crudService.path}}" ng-show="vm.filterResults.length > 0">
+<div id="{{vm.formId}}-crud-table" ng-show="vm.filterResults.length > 0">
 
     <div class="table-responsive" style="white-space: nowrap;">
         <table class="table table-responsive table-bordered table-striped clearfix">
@@ -8,7 +8,7 @@
                		<th ng-repeat="(fieldName,field) in vm.fields" ng-if="field.hiden != true">{{vm.serverConnection.convertCaseAnyToLabel(field.label)}}</th>
                 </tr>
             </thead>
-            <tbody id="crud-table-body-{{vm.crudService.path}}">
+            <tbody id="{{vm.formId}}-crud-table-body">
                 <tr ng-repeat="item in vm.pagination.listPage">
 					<td>
 						<a href ng-if="vm.crudService.params.access.update == false" ng-click="vm.goToView(vm.crudService.getPrimaryKey(item))"><span class="glyphicon glyphicon-eye-open"></span> {{vm.translation.view}}</a>
@@ -23,7 +23,7 @@
         </table>
     </div>
 
-	<div id="crud-table-{{vm.crudService.path}}-messages" class="check-element animate-show" ng-show="vm.crudService.httpRest.message.length > 0">
+	<div id="{{vm.formId}}-crud-table-messages" class="check-element animate-show" ng-show="vm.crudService.httpRest.message.length > 0">
 		<strong>{{vm.crudService.httpRest.message}}</strong>
 	</div>
 
