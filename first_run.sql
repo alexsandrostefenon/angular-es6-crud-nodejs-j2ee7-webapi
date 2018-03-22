@@ -93,21 +93,25 @@ CREATE TABLE person (
 CREATE TABLE product (
     id SERIAL PRIMARY KEY,
     category integer references category,
-    additional_data character varying(255),
-    barcode varchar(13) unique,
     cl_fiscal character varying(16),
     departament character varying(64),
-    description character varying(255),
-    image_url character varying(255),
-    manufacturer varchar(64), -- fabricante
-    model character varying(255),
     name character varying(100) NOT NULL,
-    tax_icms numeric(9,3) DEFAULT 0.000,
-    tax_ipi numeric(9,3) DEFAULT 0.000,
-    tax_iss numeric(9,3) DEFAULT 0.000,
+    model character varying(255),
     unit character varying(16),
     weight numeric(9,3) DEFAULT 0.000,
-    unique(name,manufacturer,model,description)
+    image_url character varying(255),
+    description character varying(255),
+    additional_data character varying(255),
+    tax_ipi numeric(9,3) DEFAULT 0.000,
+    tax_icms numeric(9,3) DEFAULT 0.000,
+    tax_iss numeric(9,3) DEFAULT 0.000,
+    unique(name,model,description)
+);
+
+CREATE TABLE barcode (
+    barcode varchar(13) PRIMARY KEY,
+    manufacturer varchar(64), -- fabricante
+    product integer references product
 );
 
 CREATE TABLE request (
