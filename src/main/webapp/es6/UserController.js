@@ -54,6 +54,7 @@ export class Controller extends CrudController {
         			};
         	// fields, instanceExternal, fieldNameExternal, title, serverConnection, selectCallback
         	this.listCrudJsonArray.push(new CrudJsonArray(fieldsRoute, this.instance, "routes", "Rotas de URL AngularJs", this.serverConnection));
+    		this.$scope.$apply();
         	return response;
     	});
     }

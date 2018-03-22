@@ -457,7 +457,8 @@ export class CrudService {
 	// used by websocket
 	removeInternal(primaryKey) {
         let pos = this.findPos(primaryKey);
-        return this.processList(this.list[pos], pos);
+		console.log("CrudService.removeInternal : pos = ", pos, ", data :", this.list[pos]);
+        return pos >= 0 ? this.processList(this.list[pos], pos) : null;
 	}
 	// used by websocket
 	getRemote(primaryKey) {
@@ -500,17 +501,21 @@ export class CrudService {
 	}
 
 	save(primaryKey, itemSend) {
-    	return this.httpRest.save(this.path + "/create", primaryKey, this.copyFields(itemSend));//.then(data => this.processList(data));
+    	return this.httpRest.save(this.path + "/create", primaryKey, this.copyFields(itemSend)).then(data => this.processList(data));
 	}
 
 	update(primaryKey, itemSend) {
-        let pos = this.findPos(primaryKey);
-        return this.httpRest.update(this.path + "/update", primaryKey, this.copyFields(itemSend));//.then(data => this.processList(data, pos, pos));
+        return this.httpRest.update(this.path + "/update", primaryKey, this.copyFields(itemSend)).then(data => {
+            let pos = this.findPos(primaryKey);
+        	return this.processList(data, pos, pos);
+        });
 	}
 
 	remove(primaryKey) {
-        let pos = this.findPos(primaryKey);
-        return this.httpRest.remove(this.path + "/delete", primaryKey);//.then(data => this.processList(data, pos));
+        return this.httpRest.remove(this.path + "/delete", primaryKey).then(data => {
+            let pos = this.findPos(primaryKey);
+        	return data;//this.processList(data, pos);
+        });
 	}
 
 	queryRemote(params) {

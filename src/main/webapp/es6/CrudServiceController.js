@@ -35,6 +35,7 @@ export class Controller extends CrudController {
         			};
 
         	this.listItemCrudJson.push(new CrudItemJson(fields, this.instance, "fields", "Campos dos formulários", this.serverConnection));
+    		this.$scope.$apply();
         	return response;
     	});
     }

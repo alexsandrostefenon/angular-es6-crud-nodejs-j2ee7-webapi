@@ -54,7 +54,7 @@ export class CrudItem extends CrudCommom {
 			for (var item of this.filterResults) {
 				var newItem = angular.copy(item);
 				newItem[this.fieldName] = Object.values(this.foreignKey)[0];
-				this.crudService.save({}, newItem).then(data => {
+				this.crudService.save({}, newItem).then(response => {
 					count++;
 
 					if (count == this.filterResults.length) {

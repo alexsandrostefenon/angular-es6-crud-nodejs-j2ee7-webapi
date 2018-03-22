@@ -159,13 +159,14 @@ export class CrudServiceUI extends CrudService {
 	// used by websocket
 	removeInternal(primaryKey) {
 		let response = super.removeInternal(primaryKey);
-        return this.processListUi(response);
+		console.log("CrudService.removeInternal : response = ", response, ", str :", this.listStr[response.oldPos]);
+        return response != null ? this.processListUi(response) : null;
 	}
 	// used by websocket
 	getRemote(primaryKey) {
     	return super.getRemote(primaryKey).then(response => this.processListUi(response));
 	}
-/*
+
 	save(primaryKey, itemSend) {
     	return super.save(primaryKey, itemSend).then(response => this.processListUi(response));
 	}
@@ -175,9 +176,9 @@ export class CrudServiceUI extends CrudService {
 	}
 
 	remove(primaryKey) {
-    	return super.remove(primaryKey).then(response => this.processListUi(response));
+    	return super.remove(primaryKey);//.then(response => this.processListUi(response));
 	}
-*/
+
 	queryRemote(params) {
     	return super.queryRemote(params).then(list => {
     		this.listStr = this.buildListStr(this.list);
