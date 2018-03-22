@@ -1,3 +1,8 @@
+INSERT INTO crud_company (id, name) VALUES (1, 'ADMIN');
+INSERT INTO crud_company (id, name) VALUES (2, 'ENTERPRISE 1');
+INSERT INTO crud_company (id, name) VALUES (3, 'ENTERPRISE 2');
+INSERT INTO crud_company (id, name) VALUES (4, 'USO DOMÉSTICO');
+
 INSERT INTO account (company, id, account, agency, bank, description) VALUES (4, 1, NULL, NULL, NULL, 'Caixa');
 INSERT INTO account (company, id, account, agency, bank, description) VALUES (4, 2, NULL, NULL, NULL, 'Conta Bancária Principal');
 
@@ -12,11 +17,6 @@ INSERT INTO category_company (company, id, category) VALUES (2, 2, 2);
 INSERT INTO category_company (company, id, category) VALUES (3, 1, 1);
 INSERT INTO category_company (company, id, category) VALUES (3, 2, 2);
 INSERT INTO category_company (company, id, category) VALUES (4, 3, 3);
-
-INSERT INTO crud_company (id, name) VALUES (1, 'ADMIN');
-INSERT INTO crud_company (id, name) VALUES (2, 'ENTERPRISE 1');
-INSERT INTO crud_company (id, name) VALUES (3, 'ENTERPRISE 2');
-INSERT INTO crud_company (id, name) VALUES (4, 'USO DOMÉSTICO');
 
 INSERT INTO crud_service (id, fields, filter_fields, is_on_line, menu, name, save_and_exit, template, title, orderby, order_by) VALUES (1, '{"id":{"type":"i","hiden":true,"primaryKey":true},"menu":{},"name":{},"template":{},"title":{},"filterFields":{},"isOnLine":{"type":"b"},"fields":{"readOnly":true},"orderBy":{},"saveAndExit":{"type":"b"}}', 'id,name', NULL, 'admin', 'crudService', NULL, NULL, NULL, NULL, NULL);
 INSERT INTO crud_service (id, fields, filter_fields, is_on_line, menu, name, save_and_exit, template, title, orderby, order_by) VALUES (2, '{"id":{"type":"i","primaryKey":true,"hiden":true},"name":{"required":true}}', 'id,name', NULL, 'admin', 'crudCompany', NULL, NULL, NULL, NULL, NULL);

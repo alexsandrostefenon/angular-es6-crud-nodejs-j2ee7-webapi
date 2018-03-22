@@ -260,8 +260,8 @@ public class RequestFilter implements ContainerRequestFilter, ContainerResponseF
 	// public processDelete
 	static public CompletableFuture<Response> processDelete(LoginResponse login, UriInfo uriInfo, EntityManager entityManager, RequestFilter webSocket, Class<?> objectClass) {
 		return RequestFilter.getObject(login, uriInfo, entityManager, objectClass).thenCompose(obj -> {
-			return Utils.deleteOne(entityManager, obj).thenApply((arg) -> {
-				webSocket.notify(obj, true);
+			return Utils.deleteOne(entityManager, obj).thenApply((objDeleted) -> {
+				webSocket.notify(objDeleted, true);
 				return Response.ok().build();
 			});
 		});
