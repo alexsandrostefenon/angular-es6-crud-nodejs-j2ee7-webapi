@@ -105,7 +105,17 @@ CREATE TABLE product (
     tax_ipi numeric(9,3) DEFAULT 0.000,
     tax_icms numeric(9,3) DEFAULT 0.000,
     tax_iss numeric(9,3) DEFAULT 0.000,
+<<<<<<< HEAD
     unique(name,model,description)
+);
+
+CREATE TABLE barcode (
+    barcode varchar(13) PRIMARY KEY,
+    manufacturer varchar(64), -- fabricante
+    product integer references product
+=======
+    unique(name,manufacturer,model,description)
+>>>>>>> branch 'master' of https://github.com/alexsandrostefenon/angular-es6-crud-nodejs-j2ee7.git
 );
 
 CREATE TABLE barcode (
