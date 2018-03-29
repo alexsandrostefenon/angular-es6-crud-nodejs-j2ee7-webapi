@@ -115,8 +115,10 @@ export class Filter {
 	static findOneIn(list, listParams) {
 		var filterResults = [];
 
-		for (var params of listParams) {
-			filterResults.push(Filter.findOne(list, params));
+		if (list.length > 0) {
+			for (var params of listParams) {
+				filterResults.push(Filter.findOne(list, params));
+			}
 		}
 
 		return filterResults;

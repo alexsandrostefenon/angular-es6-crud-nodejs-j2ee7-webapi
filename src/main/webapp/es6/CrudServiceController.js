@@ -22,14 +22,14 @@ export class Controller extends CrudController {
 
         	var fields = {
         			"type":{"options": types},
+        			"primaryKey":{"options": [true, false]},
+        			"service":{"options": serviceOptions},
         			"defaultValue": {},
         			"options": {},
         			"hiden":{"options": [true, false]},
         			"required":{"options": [true, false]},
         			"flags":{},
         			"readOnly":{"options": [true, false]},
-        			"primaryKey":{"options": [true, false]},
-        			"service":{"options": serviceOptions},
         			"title":{},
         			"isClonable":{"options": [true, false]}
         			};

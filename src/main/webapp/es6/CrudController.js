@@ -58,7 +58,7 @@ class CrudBase extends CrudCommom {
 				for (let fieldName in service.params.fields) {
 					var field = service.params.fields[fieldName];
 
-					if (field.service == this.name) {
+					if (field.service == this.crudService.path) {
 						if (field.title != undefined && field.title.length > 0) {
 							var isClonable = field.isClonable == undefined ? false : field.isClonable;
 					    	this.listItemCrud.push(new CrudItem(this.serverConnection, serviceName, fieldName, this.primaryKey, isClonable, field.title));
@@ -91,8 +91,8 @@ export class CrudController extends CrudBase {
     	});
     }
 	
-	remove() {
-		return super.remove().then(response => {
+	remove(primaryKey) {
+		return super.remove(primaryKey).then(response => {
 			this.goToSearch();
 			return response;
 		});
@@ -128,6 +128,14 @@ export class CrudController extends CrudBase {
 			
 			return response;
 		});
+	}
+	
+	saveAsNew() {
+		if (this.instance.id != undefined) {
+			this.instance.id = undefined;
+		}
+		
+		return this.save();
 	}
 
 }

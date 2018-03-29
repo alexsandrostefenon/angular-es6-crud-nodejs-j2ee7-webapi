@@ -3,18 +3,7 @@ import {CrudItem} from "./CrudItem.js";
 
 export const name = "RequestController";
 
-export class Controller extends CrudController {
-
-    enableRequestFields() {
-        // serverConnection, serviceName, fieldName, fieldValue, title, numMaxItems, queryCallback, selectCallback
-        this.crudItemProduct = new CrudItem(this.serverConnection, "requestProduct", "request", this.primaryKey, false, 'Produtos', null, list => this.onProductsChanged(list), (field, id) => this.onProductSelected(id));
-		this.listItemCrud.push(this.crudItemProduct);
-
-		if (this.serverConnection.services.requestPayment != undefined && this.serverConnection.services.requestPayment.params.access.update != false) {
-	        this.crudItemPayment = new CrudItem(this.serverConnection, "requestPayment", "request", this.primaryKey, false, 'Pagamentos', null, list => this.onPaymentsChanged(list), (field, id) => this.onAccountSelected(id));
-			this.listItemCrud.push(this.crudItemPayment);
-		}
-    }
+export class RequestController extends CrudController {
 
     getSumValues(list) {
     	var sum = 0.0;
@@ -30,32 +19,49 @@ export class Controller extends CrudController {
     	return sum;
     }
 
-    onProductsChanged(list) {
-    	this.instance.productsValue = this.getSumValues(list);
-    	this.instance.sumValue = this.instance.productsValue + this.instance.servicesValue + this.instance.transportValue;
+    enableRequestProduct() {
+        var onProductsChanged = (list) => {
+        	this.instance.productsValue = this.getSumValues(list);
+        	this.instance.sumValue = this.instance.productsValue + this.instance.servicesValue + this.instance.transportValue;
+        }
+        
+        var onProductSelected = (id) => {
+        	var item = this.serverConnection.services.stock.findOne({product:id});
+    		this.crudItemProduct.instance.value = (item != null) ? item.value : 0.0;
+        }
+        
+        this.crudItemProduct = new CrudItem(this.serverConnection, "requestProduct", "request", this.primaryKey, false, 'Produtos', null, list => onProductsChanged(list), (field, id) => onProductSelected(id));
+		this.listItemCrud.push(this.crudItemProduct);
     }
-
-    onPaymentsChanged(list) {
-    	this.instance.paymentsValue = this.getSumValues(list);
+    
+    enableRequestPayment() {
+		if (this.serverConnection.services.requestPayment != undefined && this.serverConnection.services.requestPayment.params.access.update != false) {
+		    var onPaymentsChanged = (list) => {
+		    	this.instance.paymentsValue = this.getSumValues(list);
+		    }
+		    
+		    var onAccountSelected = (id) => {
+				this.crudItemPayment.instance.value = this.instance.sumValue - this.instance.paymentsValue;
+		    }
+		    
+	        this.crudItemPayment = new CrudItem(this.serverConnection, "requestPayment", "request", this.primaryKey, false, 'Pagamentos', null, list => onPaymentsChanged(list), (field, id) => onAccountSelected(id));
+			this.listItemCrud.push(this.crudItemPayment);
+		}
     }
-
-    onProductSelected(id) {
-    	var item = this.serverConnection.services.stock.findOne({product:id});
-		this.crudItemProduct.instance.value = (item != null) ? item.value : 0.0;
-    }
-
-    onAccountSelected(id) {
-		this.crudItemPayment.instance.value = this.instance.sumValue - this.instance.paymentsValue;
+    
+    enableRequestFields() {
+    	this.enableRequestProduct();
+    	this.enableRequestPayment();
     }
 
 	filterRequestState() {
+		var filterResults = [];
 		var list = this.fields.state.crudService.list;
 
 		for (var j = 0; j < list.length; j++) {
 			var itemRef = list[j];
 
 			if (itemRef.id == this.instance.state) {
-				var filterResults = [];
 
 				for (var i = 0; i < list.length; i++) {
 					var item = list[i];
@@ -69,14 +75,24 @@ export class Controller extends CrudController {
 					}
 				}
 
-				this.setFieldOptions("state", filterResults);
 				break;
 			}
 		}
+
+		this.setFieldOptions("state", filterResults);
+	}
+
+	update() {
+    	return super.update().then(response => {
+	    	this.filterRequestState();
+    		this.$scope.$apply();
+        	return response;
+    	});
 	}
 
     get(primaryKey) {
     	return super.get(primaryKey).then(response => {
+	    	this.filterRequestState();
            	this.enableRequestFields();
     		this.$scope.$apply();
         	return response;
@@ -90,9 +106,9 @@ export class Controller extends CrudController {
     	if (this.action == "new") {
         	this.instance.date = new Date();
         	this.instance.date.setMilliseconds(0);
+	    	this.filterRequestState();
 		}
 
-    	this.filterRequestState();
 		this.fields.type.readOnly = true;
 		var count = 3;
 
@@ -116,3 +132,7 @@ export class Controller extends CrudController {
     }
 
 }
+
+export class Controller extends RequestController {
+}
+
