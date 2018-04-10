@@ -25,14 +25,20 @@ export class CrudItem extends CrudCommom {
 		this.selectCallback = selectCallback;
 		this.fields[fieldName].hiden = true;
 		this.fieldName = fieldName;
-		this.foreignKey = foreignKey;
 		this.isClonable = isClonable;
+
+		if (typeof foreignKey === 'object') {
+			this.foreignKey = Object.values(foreignKey)[0];
+		} else {
+			this.foreignKey = foreignKey;
+		}
+		
 		this.query();
 	}
 
 	query() {
 		var params = {}
-		params[this.fieldName] = Object.values(this.foreignKey)[0];
+		params[this.fieldName] = this.foreignKey;
 		this.filterResults = this.crudService.find(params);
 		// pagina e monta a listStr
 		this.paginate();
@@ -42,7 +48,7 @@ export class CrudItem extends CrudCommom {
 		}
 		// aproveita e limpa os campos de inserção de novo instance
 		this.clear();
-		this.instance[this.fieldName] = Object.values(this.foreignKey)[0];
+		this.instance[this.fieldName] = this.foreignKey;
 	}
 
 	clone(foreignKeyRefNew) {
@@ -53,7 +59,7 @@ export class CrudItem extends CrudCommom {
 
 			for (var item of this.filterResults) {
 				var newItem = angular.copy(item);
-				newItem[this.fieldName] = Object.values(this.foreignKey)[0];
+				newItem[this.fieldName] = this.foreignKey;
 				this.crudService.save({}, newItem).then(response => {
 					count++;
 

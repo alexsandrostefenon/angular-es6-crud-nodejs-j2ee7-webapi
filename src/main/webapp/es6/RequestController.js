@@ -49,9 +49,22 @@ export class RequestController extends CrudController {
 		}
     }
     
+    enableRequestFreight() {
+		if (this.serverConnection.services.requestFreight != undefined && this.serverConnection.services.requestFreight.params.access.update != false) {
+		    var onTransportChanged = (list) => {
+		    	this.instance.transportValue = this.getSumValues(list);
+		    	this.instance.sumValue = this.instance.productsValue + this.instance.servicesValue + this.instance.transportValue;
+		    }
+		    
+	        this.crudItemFreight = new CrudItem(this.serverConnection, "requestFreight", "request", this.primaryKey, false, 'Transportador', 1, list => onTransportChanged(list));
+			this.listItemCrud.push(this.crudItemFreight);
+		}
+    }
+    
     enableRequestFields() {
     	this.enableRequestProduct();
     	this.enableRequestPayment();
+    	this.enableRequestFreight();
     }
 
 	filterRequestState() {

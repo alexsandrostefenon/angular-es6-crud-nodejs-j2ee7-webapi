@@ -15,6 +15,7 @@ export class CrudUiSkeleton {
 
 			if (field.service != undefined) {
 				field.crudService = this.serverConnection.services[field.service];
+				console.log("updating listStr from ", field.service);
 				field.filterResultsStr = field.crudService.listStr;
 			} else {
 				field.filterResultsStr = [];
