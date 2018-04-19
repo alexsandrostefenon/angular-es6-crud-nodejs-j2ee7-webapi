@@ -6,12 +6,12 @@ export const name = "RequestController";
 export class RequestController extends CrudController {
 
     getSumValues(list) {
-    	var sum = 0.0;
+    	let sum = 0.0;
 
-    	for (var i = 0; i < list.length; i++) {
-    		var item = list[i];
-    		var quantity = (item.quantity != undefined && item.quantity != null) ? item.quantity : 1.0;
-    		var value = (item.value != undefined && item.value != null) ? item.value : 0.0;
+    	for (let i = 0; i < list.length; i++) {
+    		let item = list[i];
+    		let quantity = (item.quantity != undefined && item.quantity != null) ? item.quantity : 1.0;
+    		let value = (item.value != undefined && item.value != null) ? item.value : 0.0;
     		item.valueItem = Math.floor(quantity * value * 100.0) / 100.0;
     		sum += item.valueItem;
     	}
@@ -20,13 +20,13 @@ export class RequestController extends CrudController {
     }
 
     enableRequestProduct() {
-        var onProductsChanged = (list) => {
+        const onProductsChanged = (list) => {
         	this.instance.productsValue = this.getSumValues(list);
         	this.instance.sumValue = this.instance.productsValue + this.instance.servicesValue + this.instance.transportValue;
         }
         
-        var onProductSelected = (id) => {
-        	var item = this.serverConnection.services.stock.findOne({product:id});
+        const onProductSelected = (id) => {
+        	const item = this.serverConnection.services.stock.findOne({product:id});
     		this.crudItemProduct.instance.value = (item != null) ? item.value : 0.0;
         }
         
@@ -36,11 +36,11 @@ export class RequestController extends CrudController {
     
     enableRequestPayment() {
 		if (this.serverConnection.services.requestPayment != undefined && this.serverConnection.services.requestPayment.params.access.update != false) {
-		    var onPaymentsChanged = (list) => {
+		    const onPaymentsChanged = (list) => {
 		    	this.instance.paymentsValue = this.getSumValues(list);
 		    }
 		    
-		    var onAccountSelected = (id) => {
+		    const onAccountSelected = (id) => {
 				this.crudItemPayment.instance.value = this.instance.sumValue - this.instance.paymentsValue;
 		    }
 		    
@@ -51,7 +51,7 @@ export class RequestController extends CrudController {
     
     enableRequestFreight() {
 		if (this.serverConnection.services.requestFreight != undefined && this.serverConnection.services.requestFreight.params.access.update != false) {
-		    var onTransportChanged = (list) => {
+		    const onTransportChanged = (list) => {
 		    	this.instance.transportValue = this.getSumValues(list);
 		    	this.instance.sumValue = this.instance.productsValue + this.instance.servicesValue + this.instance.transportValue;
 		    }
@@ -68,16 +68,16 @@ export class RequestController extends CrudController {
     }
 
 	filterRequestState() {
-		var filterResults = [];
-		var list = this.fields.state.crudService.list;
+		const filterResults = [];
+		const list = this.fields.state.crudService.list;
 
-		for (var j = 0; j < list.length; j++) {
-			var itemRef = list[j];
+		for (let j = 0; j < list.length; j++) {
+			let itemRef = list[j];
 
 			if (itemRef.id == this.instance.state) {
 
-				for (var i = 0; i < list.length; i++) {
-					var item = list[i];
+				for (let i = 0; i < list.length; i++) {
+					let item = list[i];
 
 					if ((item.next == itemRef.id) ||
 						(item.id == itemRef.prev) ||
@@ -95,10 +95,21 @@ export class RequestController extends CrudController {
 		this.setFieldOptions("state", filterResults);
 	}
 
+	generateNFE(request) {
+		const ide = {};
+		const company = {};
+		const nfe = {};
+		nfe.nfeProc = {};
+		nfe.nfeProc.NFe = {};
+		nfe.nfeProc.NFe.infNFe = {};
+		nfe.nfeProc.NFe.infNFe.ide = ide;
+	}
+	
 	update() {
     	return super.update().then(response => {
 	    	this.filterRequestState();
-    		this.$scope.$apply();
+    		this.generateNFE(response.data);
+//    		this.$scope.$apply();
         	return response;
     	});
 	}
@@ -123,7 +134,7 @@ export class RequestController extends CrudController {
 		}
 
 		this.fields.type.readOnly = true;
-		var count = 3;
+		let count = 3;
 
 		if (this.serverConnection.services.requestFreight == undefined) {
 			this.fields.transportValue.hiden = true;

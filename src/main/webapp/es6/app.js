@@ -41,7 +41,7 @@ class LoginController {
 }
 
 app.controller('LoginController', function(ServerConnectionService, $window) {
-    	var params = ServerConnectionService.$location.search();
+    	const params = ServerConnectionService.$location.search();
     	return new LoginController(ServerConnectionService, params.server, $window);
 });
 

@@ -183,11 +183,11 @@ export class CrudServiceUI extends CrudService {
     	return super.queryRemote(params).then(list => {
     		this.listStr = this.buildListStr(this.list);
             // também atualiza a lista de nomes de todos os serviços que dependem deste
-			for (var serviceName in this.serverConnection.services) {
-				var service = this.serverConnection.services[serviceName];
+			for (let serviceName in this.serverConnection.services) {
+				let service = this.serverConnection.services[serviceName];
 
-				for (var fieldName in service.databaseUiAdapter.fields) {
-					var field = service.databaseUiAdapter.fields[fieldName];
+				for (let fieldName in service.databaseUiAdapter.fields) {
+					let field = service.databaseUiAdapter.fields[fieldName];
 
 					if (field.service == this.params.name) {
 				        console.log("[CrudServiceUI] queryRemote, update listStr from", service.label, service.list.length, "by", this.label, this.list.length);
@@ -234,11 +234,11 @@ export class ServerConnectionUI extends ServerConnection {
         this.menu = {user:[{path:"login", label:"Exit"}]};
         // user menu
 		if (this.user.menu != undefined && this.user.menu.length > 0) {
-			var menus = JSON.parse(this.user.menu);
+			const menus = JSON.parse(this.user.menu);
 
 			for (var menuId in menus) {
-				var menuItem = menus[menuId];
-				var menuName = menuItem.menu;
+				let menuItem = menus[menuId];
+				let menuName = menuItem.menu;
 
 				if (this.menu[menuName] == undefined) {
 					this.menu[menuName] = [];
@@ -249,16 +249,16 @@ export class ServerConnectionUI extends ServerConnection {
 		}
 		// system menu
 		if (this.user.showSystemMenu == true) {
-			for (var serviceName in this.services) {
-				var service = this.services[serviceName];
-	    		var menuName = service.params.menu;
+			for (let serviceName in this.services) {
+				let service = this.services[serviceName];
+	    		let menuName = service.params.menu;
 
 	    		if (menuName != undefined && menuName != null && menuName.length > 0) {
 	    			if (this.menu[menuName] == undefined) {
 	    				this.menu[menuName] = [];
 	    			}
 
-	    			var menuItem = {path: service.path + "/search", label: service.label};
+	    			let menuItem = {path: service.path + "/search", label: service.label};
 	    			this.menu[menuName].unshift(menuItem);
 	    		}
 			}
@@ -266,8 +266,8 @@ export class ServerConnectionUI extends ServerConnection {
     	// tradução
 		if (this.services.crudTranslation != undefined) {
 	    	for (var fieldName in this.translation) {
-	    		var str = this.translation[fieldName];
-		    	var item = this.services.crudTranslation.findOne({name:str,locale:this.localeId});
+	    		const str = this.translation[fieldName];
+		    	const item = this.services.crudTranslation.findOne({name:str,locale:this.localeId});
 
 	    		if (item != null && item.translation != undefined) {
 	        		this.translation[fieldName] = item.translation;
@@ -276,11 +276,11 @@ export class ServerConnectionUI extends ServerConnection {
 		}
         // routes and modules
 //		var config = JSON.parse(this.user.config);
-		var promises = [];
+		const promises = [];
 		globalRouteProvider.when('/app/login',{templateUrl:'templates/login.html', controller:'LoginController', controllerAs: "vm"});
 
 		if (this.user.routes != undefined && this.user.routes != null) {
-			var routes = null;
+			let routes = null;
 
 			if (Array.isArray(this.user.routes) == true) {
 				routes = this.user.routes;
@@ -290,24 +290,27 @@ export class ServerConnectionUI extends ServerConnection {
 				console.err("invalid routes");
 			}
 
-			for (var route of routes) {
+			for (let route of routes) {
 				if (route.templateUrl == undefined) {
 					route.templateUrl = "templates/crud.html";
 				}
 				// consider http://devdocs.io/dom-fetch/
-				var promise = import("./" + route.controller + ".js").then(module => {
-					console.log("loaded :", module.name);
+				let promise = import("./" + route.controller + ".js").then(module => {
+					console.log("loaded:", module.name, "route:", route);
 
 					globalControllerProvider.register(module.name, function(ServerConnectionService, $scope) {
 						return new module.Controller(ServerConnectionService, $scope);
 					});
+
+					globalRouteProvider.when(route.path, {"templateUrl":route.templateUrl, "controller": route.controller, controllerAs: "vm"});
 				});
+				
 				promises.push(promise);
-				globalRouteProvider.when(route.path, {"templateUrl":route.templateUrl, "controller": route.controller, controllerAs: "vm"});
 			}
 		}
 
 		return Promise.all(promises).then(() => {
+			console.log("Promise.all:", promises);
 			globalRouteProvider.when("/app/:name/:action", {templateUrl: "templates/crud.html", controller: "CrudController", controllerAs: "vm"});
 			globalRouteProvider.otherwise({redirectTo: '/app/login'});
 
@@ -322,7 +325,7 @@ export class ServerConnectionUI extends ServerConnection {
     	if (server == null || server.length == 0) {
     		server = this.$location.absUrl();
     		// remove o /#/xxx no final do path
-			var pos = server.indexOf("/#");
+    		const pos = server.indexOf("/#");
 
 			if (pos >= 0) {
 				server = server.substring(0, pos);

@@ -55,10 +55,10 @@ export class CrudItem extends CrudCommom {
 		this.foreignKey = foreignKeyRefNew;
 
 		if (this.isClonable == true) {
-			var count = 0;
+			let count = 0;
 
 			for (var item of this.filterResults) {
-				var newItem = angular.copy(item);
+				let newItem = angular.copy(item);
 				newItem[this.fieldName] = this.foreignKey;
 				this.crudService.save({}, newItem).then(response => {
 					count++;

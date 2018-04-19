@@ -53,14 +53,14 @@ class CrudBase extends CrudCommom {
 			this.setValues(this.instance);
 			// monta a lista dos CrudItem
 			for (let serviceName in this.serverConnection.services) {
-				var service = this.serverConnection.services[serviceName];
+				let service = this.serverConnection.services[serviceName];
 
 				for (let fieldName in service.params.fields) {
-					var field = service.params.fields[fieldName];
+					let field = service.params.fields[fieldName];
 
 					if (field.service == this.crudService.path) {
 						if (field.title != undefined && field.title.length > 0) {
-							var isClonable = field.isClonable == undefined ? false : field.isClonable;
+							let isClonable = field.isClonable == undefined ? false : field.isClonable;
 					    	this.listItemCrud.push(new CrudItem(this.serverConnection, serviceName, fieldName, this.primaryKey, isClonable, field.title));
 						}
 					}
@@ -76,11 +76,11 @@ class CrudBase extends CrudCommom {
 export class CrudController extends CrudBase {
 
     constructor(serverConnection, $scope) {
-    	var params = serverConnection.$location.search();
-		var path = serverConnection.$location.path();
-		var list = path.split('/');
-		var action = list[list.length-1];
-		var serviceName = CaseConvert.underscoreToCamel(list[list.length-2]);
+    	const params = serverConnection.$location.search();
+    	const path = serverConnection.$location.path();
+		const list = path.split('/');
+		const action = list[list.length-1];
+		const serviceName = CaseConvert.underscoreToCamel(list[list.length-2]);
     	super(serverConnection, serviceName, params, action, $scope);
     }
     
@@ -116,7 +116,7 @@ export class CrudController extends CrudBase {
 		return super.save().then(response => {
 			var primaryKey = this.crudService.getPrimaryKey(response.data);
 
-			for (var item of this.listItemCrud) {
+			for (let item of this.listItemCrud) {
 				item.clone(primaryKey);
 			}
 			

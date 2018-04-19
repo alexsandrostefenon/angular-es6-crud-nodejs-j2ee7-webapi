@@ -173,7 +173,7 @@ class RequestFilter {
 	}
 	// public
 	processCreate(login, req, service, obj) {
-		let response = this.checkObjectAccess(login, service, obj);
+		const response = this.checkObjectAccess(login, service, obj);
 
 		if (response != null) Promise.resolve(response);
 
@@ -220,13 +220,13 @@ class RequestFilter {
 	// public processUpdate
 	processUpdate(login, req, service, obj) {
 		return this.getObject(login, req, service).then(oldObj => {
-			let response = this.checkObjectAccess(login, service, obj);
+			const response = this.checkObjectAccess(login, service, obj);
 
 			if (response != null) return Promise.resolve(response);
 
 			if (oldObj["id"] != undefined) {
-				let oldId = oldObj["id"];
-				let newId = obj["id"];
+				const oldId = oldObj["id"];
+				const newId = obj["id"];
 
 				if (newId == null || newId != oldId) {
 					return Promise.resolve(Response.status(Response.Status.UNAUTHORIZED).entity("changed id").build());
@@ -250,8 +250,8 @@ class RequestFilter {
 	}
 	// public
 	processQuery(login, req, service) {
-		var fields = {};
-		var company = login.user.company;
+		const fields = {};
+		const company = login.user.company;
 
 		if (company != 1) {
 			if (service.jsonFields["company"] != undefined) {
@@ -262,7 +262,7 @@ class RequestFilter {
 			}
 		}
 
-		var orderBy;
+		let orderBy;
 
 		if (service.orderBy != undefined && service.orderBy != null) {
 			orderBy = service.orderBy.split(",");
@@ -279,7 +279,7 @@ class RequestFilter {
 	// access : create,read,update,delete,query or custom method
 	processRequest(req, res, next, resource, access) {
 		let crudProcess = (login) => {
-			let service = login.crudServices.find(item => item.name == req.serviceName);
+			const service = login.crudServices.find(item => item.name == req.serviceName);
 
 			req.primaryKey = {};
 
@@ -292,13 +292,13 @@ class RequestFilter {
 			console.log('Client IP:', req.connection.remoteAddress);
 			console.log("URL:", req.originalUrl);
 
-			var obj = null;
+			let obj = null;
 
 			if (access == "create" || access == "update") {
 				obj = req.body;
 			}
 
-			var cf;
+			let cf;
 
 			if (access == "create") {
 				cf = this.processCreate(login, req, service, obj);
@@ -378,13 +378,13 @@ class RequestFilter {
 	}
 	// public
 	authenticateByUserAndPassword(req) {
-		let userQuery = {"name":req.body.userId, "password":req.body.password};
+		const userQuery = {"name":req.body.userId, "password":req.body.password};
 		return this.dbClient.findOne("crud_user", userQuery)
 		.then(user => {
-			var token = guid();
+			const token = guid();
 			user.authctoken = token;
 			return this.dbClient.update("crud_user", userQuery, {"authctoken": user.authctoken}).then(userAfterUpdate => {
-				var loginResponse = new LoginResponse(userAfterUpdate);
+				const loginResponse = new LoginResponse(userAfterUpdate);
 				return loginResponse.load(this.dbClient).then(() => {
 					console.log("[authenticateByUserAndPassword] Sucessful login : user = ", userAfterUpdate.name, ", roles = ", userAfterUpdate.roles, ", token = ", userAfterUpdate.authctoken);
 					RequestFilter.logins.set(token, loginResponse);
@@ -469,20 +469,20 @@ class RequestFilter {
 
 }
 
-var privateKey  = fs.readFileSync(fileNamePrivateKey, 'utf8');
-var certificate = fs.readFileSync(fileNameCertificate, 'utf8');
-var credentials = {key: privateKey, cert: certificate};
-var server = https.createServer(credentials, app);
+const privateKey  = fs.readFileSync(fileNamePrivateKey, 'utf8');
+const certificate = fs.readFileSync(fileNameCertificate, 'utf8');
+const credentials = {key: privateKey, cert: certificate};
+const server = https.createServer(credentials, app);
 
 RequestFilter.logins = new Map();
-var requestFilter = new RequestFilter(dbName, app);
+const requestFilter = new RequestFilter(dbName, app);
 requestFilter.start().then(() => {
 	server.listen(portListen, () => {
-		  var host = server.address().address;
-		  var port = server.address().port;
-
-		  console.log('Example app listening at http://%s:%s', host, port);
-		});
+		const host = server.address().address;
+		const port = server.address().port;
+		
+		console.log('Example app listening at http://%s:%s', host, port);
+	});
 });
 
 var wsServer = new WebSocketServer({httpServer: server, autoAcceptConnections: true});

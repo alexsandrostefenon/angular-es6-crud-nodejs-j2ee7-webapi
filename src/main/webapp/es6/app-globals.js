@@ -1,4 +1,4 @@
-export var app = angular.module("app", ['ngRoute', 'ui.bootstrap']);
+export const app = angular.module("app", ['ngRoute', 'ui.bootstrap']);
 
 export var globalCompileProvider;
 export var globalControllerProvider;

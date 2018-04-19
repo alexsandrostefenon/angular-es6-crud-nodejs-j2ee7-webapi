@@ -104,21 +104,21 @@ export class DbClientPostgres {
 			strValues = strValues.substring(0, strValues.length - 1);
 		}
 
-		var sql = "INSERT INTO " + tableName + " (" + strFields + ") VALUES (" + strValues + ") RETURNING *";
+		const sql = "INSERT INTO " + tableName + " (" + strFields + ") VALUES (" + strValues + ") RETURNING *";
 		return this.client.query(sql, params).then(result => result.rows[0]);
 	}
 
 	find(tableName, fields, orderBy) {
 		tableName = CaseConvert.camelToUnderscore(tableName);
-		var params = [];
-		var sql = "SELECT * FROM " + tableName + DbClientPostgres.buildQuery(fields, params, orderBy);
+		const params = [];
+		const sql = "SELECT * FROM " + tableName + DbClientPostgres.buildQuery(fields, params, orderBy);
 		return this.client.query(sql, params).then(result => result.rows);
 	}
 
 	findOne(tableName, fields) {
 		tableName = CaseConvert.camelToUnderscore(tableName);
-		var params = [];
-		var sql = "SELECT * FROM " + tableName + DbClientPostgres.buildQuery(fields, params);
+		const params = [];
+		const sql = "SELECT * FROM " + tableName + DbClientPostgres.buildQuery(fields, params);
 		return this.client.query(sql, params).then(result => {
 			if (result.rowCount == 0) {
 				throw new Error("NoResultException");
@@ -130,8 +130,8 @@ export class DbClientPostgres {
 
 	findMax(tableName, fieldName, fields) {
 		tableName = CaseConvert.camelToUnderscore(tableName);
-		var params = [];
-		var sql = "SELECT MAX(" + fieldName + ") FROM " + tableName + DbClientPostgres.buildQuery(fields, params);
+		const params = [];
+		const sql = "SELECT MAX(" + fieldName + ") FROM " + tableName + DbClientPostgres.buildQuery(fields, params);
 		return this.client.query(sql, params).then(result => {
 			if (result.rowCount == 0) {
 				throw new Error("NoResultException");
@@ -179,8 +179,8 @@ export class DbClientPostgres {
 
 	deleteOne(tableName, primaryKey) {
 		tableName = CaseConvert.camelToUnderscore(tableName);
-		var params = [];
-		var sql = "DELETE FROM " + tableName + DbClientPostgres.buildQuery(primaryKey, params) + " RETURNING *";
+		const params = [];
+		const sql = "DELETE FROM " + tableName + DbClientPostgres.buildQuery(primaryKey, params) + " RETURNING *";
 		return this.client.query(sql, params).then(result => {
 			if (result.rowCount == 0) {
 				throw new Error("NoResultException");

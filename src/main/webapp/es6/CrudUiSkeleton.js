@@ -10,13 +10,18 @@ export class CrudUiSkeleton {
 		this.selectCallback = selectCallback;
 		this.fields = angular.copy(databaseUiAdapter.fields);
 		// faz uma referencia local a field.filterResultsStr, para permitir opção filtrada, sem alterar a referencia global
-		for (var fieldName in this.fields) {
-			var field = this.fields[fieldName];
+		for (let fieldName in this.fields) {
+			let field = this.fields[fieldName];
 
 			if (field.service != undefined) {
 				field.crudService = this.serverConnection.services[field.service];
-				console.log("updating listStr from ", field.service);
-				field.filterResultsStr = field.crudService.listStr;
+
+				if (field.crudService != undefined) {
+					field.filterResultsStr = field.crudService.listStr;
+				} else {
+					console.warn("don't have acess to service ", field.service);
+					field.filterResultsStr = [];
+				}
 			} else {
 				field.filterResultsStr = [];
 			}

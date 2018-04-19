@@ -189,13 +189,13 @@ Body.bodyUsed Read only Stores a Boolean that declares whether the body has been
 	requestXHR(path, method, params, objSend) {
 //        console.log("[HttpRestRequest] getRemote : successCallback :", scope.path, params, "response :", JSON.stringify(item));
 		return new Promise((resolve, reject) => {
-			var httpRequest = new XMLHttpRequest();
+			const httpRequest = new XMLHttpRequest();
 	
 			if (!httpRequest) {
 		    	reject(new Error("Cannot create an XMLHTTP instance"));
 			}
 	
-			var alertContents = function() {
+			const alertContents = function() {
 			    if (httpRequest.readyState === XMLHttpRequest.DONE) {
 			      if (httpRequest.status >= 200 && httpRequest.status < 300) {
 		    		  var objReceive = null;
@@ -244,7 +244,7 @@ Body.bodyUsed Read only Stores a Boolean that declares whether the body has been
 	}
 	// private
 	requestAngularHttp(path, method, params, objSend) {
-		var req = {};
+		const req = {};
 		req.method = method;
 		req.url = this.url + "/" + path;
 		req.params = params;
@@ -273,7 +273,7 @@ xhrStatus – {string} – Status of the XMLHttpRequest (complete, error,  timeo
 	}
 	// private
 	request(path, method, params, objSend) {
-		var promise;
+		let promise;
 		this.message = "Processando...";
 		
 		if (HttpRestRequest.$http) {
@@ -575,13 +575,13 @@ export class ServerConnection {
     		this.title = loginResponse.title;
     		this.user = loginResponse.user;
     		this.httpRest.setToken(this.user.authctoken);
-    		var acess = JSON.parse(this.user.roles);
-        	var listQueryRemote = [];
+    		const acess = JSON.parse(this.user.roles);
+    		const listQueryRemote = [];
             // depois carrega os serviços autorizados
-            for (var params of loginResponse.crudServices) {
+            for (let params of loginResponse.crudServices) {
     			params.access = acess[params.name];
     			params.name = CaseConvert.camelUpToCamelLower(params.name);
-    			var service = new CrudServiceClass(this, params, this.httpRest);
+    			let service = new CrudServiceClass(this, params, this.httpRest);
     			this.services[service.params.name] = service;
 
     			if (service.isOnLine != true && service.params.access.query != false) {
@@ -592,7 +592,7 @@ export class ServerConnection {
             return new Promise((resolve, reject) => {
             	var queryRemoteServices = () => {
             		if (listQueryRemote.length > 0) {
-                		var service = listQueryRemote.shift();
+            			let service = listQueryRemote.shift();
                 		console.log("[ServerConnection] loading", service.label, "...");
                 		callbackPartial("loading... " + service.label);
 

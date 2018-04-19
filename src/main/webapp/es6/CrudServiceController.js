@@ -16,7 +16,7 @@ export class Controller extends CrudController {
     		// params.fields = {"field": {"flags": ["label 1", "label 2", ...], "type": "text"}}
         	var serviceOptions = [];
 
-        	for (var item of this.serverConnection.services.crudService.list) {
+        	for (let item of this.serverConnection.services.crudService.list) {
         		serviceOptions.push(item.name);
         	}
 
