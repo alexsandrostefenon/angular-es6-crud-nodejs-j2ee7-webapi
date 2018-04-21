@@ -60,7 +60,9 @@ export class CrudCommom extends CrudUiSkeleton {
 	goToSearch() {
 //		this.serverConnection.$location.path(this.buildUrl(this.crudService, {}, "search"));
 //		this.serverConnection.$location.path("/app/" + this.crudService.path + "/search").search({});
-		window.history.back();
+		if (this.serverConnection.$location.path().endsWith("/search") == false) {
+			window.history.back();
+		}
 	}
 	// fieldName, 'view', item, false
     goToField(fieldName, action, obj, isGoNow) {
