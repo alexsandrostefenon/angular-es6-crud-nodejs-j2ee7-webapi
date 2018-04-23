@@ -9,13 +9,11 @@ import javax.persistence.Id;
 import javax.persistence.IdClass;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
-import javax.persistence.UniqueConstraint;
 import javax.validation.constraints.NotNull;
 
 @IdClass(CompanyIdPK.class)
 @Entity
-@Table(name = "request_product", uniqueConstraints = @UniqueConstraint(columnNames = {
-		"company", "request", "product", "serial"}))
+@Table(name = "request_product")
 public class RequestProduct implements java.io.Serializable {
 
 	/**
@@ -31,27 +29,14 @@ public class RequestProduct implements java.io.Serializable {
 	@NotNull
 	private Integer product;
 	private Integer request;
-	@Column(name = "serial", length = 64)
+	@Column(name = "serials", length = 64)
 	private String serial;
 	@Column(name = "quantity", nullable = false, precision = 9, scale = 3)
 	private BigDecimal quantity;
-	@Column(name = "weight", precision = 9, scale = 3)
-	private BigDecimal weight;
-	private Integer containers;
-	@Column(name = "weight_final", precision = 9, scale = 3)
-	private BigDecimal weightFinal;
-	@Column(name = "space", precision = 9, scale = 3)
-	private BigDecimal space;
 	@Column(name = "value", nullable = false, precision = 9, scale = 3)
 	private BigDecimal value;
 	@Column(name = "value_item", nullable = false, precision = 9, scale = 3)
 	private BigDecimal valueItem;
-	@Column(name = "tax_ipi", precision = 9, scale = 3)
-	private BigDecimal taxIpi = new BigDecimal(0.0);
-	@Column(name = "tax_icms", precision = 9, scale = 3)
-	private BigDecimal taxIcms = new BigDecimal(0.0);
-	@Column(name = "tax_upper_lower", precision = 9, scale = 3)
-	private BigDecimal taxUpperLower = new BigDecimal(1.0);
 
 	public Integer getCompany() {
 		return company;
@@ -89,30 +74,6 @@ public class RequestProduct implements java.io.Serializable {
 	public void setQuantity(BigDecimal quantity) {
 		this.quantity = quantity;
 	}
-	public BigDecimal getWeight() {
-		return weight;
-	}
-	public void setWeight(BigDecimal weight) {
-		this.weight = weight;
-	}
-	public Integer getContainers() {
-		return containers;
-	}
-	public void setContainers(Integer containers) {
-		this.containers = containers;
-	}
-	public BigDecimal getWeightFinal() {
-		return weightFinal;
-	}
-	public void setWeightFinal(BigDecimal weightFinal) {
-		this.weightFinal = weightFinal;
-	}
-	public BigDecimal getSpace() {
-		return space;
-	}
-	public void setSpace(BigDecimal space) {
-		this.space = space;
-	}
 	public BigDecimal getValue() {
 		return value;
 	}
@@ -124,24 +85,6 @@ public class RequestProduct implements java.io.Serializable {
 	}
 	public void setValueItem(BigDecimal valueItem) {
 		this.valueItem = valueItem;
-	}
-	public BigDecimal getTaxIpi() {
-		return taxIpi;
-	}
-	public void setTaxIpi(BigDecimal taxIpi) {
-		this.taxIpi = taxIpi;
-	}
-	public BigDecimal getTaxIcms() {
-		return taxIcms;
-	}
-	public void setTaxIcms(BigDecimal taxIcms) {
-		this.taxIcms = taxIcms;
-	}
-	public BigDecimal getTaxUpperLower() {
-		return taxUpperLower;
-	}
-	public void setTaxUpperLower(BigDecimal taxUpperLower) {
-		this.taxUpperLower = taxUpperLower;
 	}
 
 }

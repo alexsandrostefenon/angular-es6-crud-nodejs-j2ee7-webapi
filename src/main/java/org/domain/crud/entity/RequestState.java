@@ -27,6 +27,7 @@ public class RequestState implements java.io.Serializable {
 	@GeneratedValue(strategy=GenerationType.SEQUENCE, generator="request_state_id_seq")
 	@Column(columnDefinition="serial")
 	private Integer id;
+	@Column(name = "stock_action")
 	private Integer stockAction;
 	private Integer type;
 	private Integer prev;
@@ -50,7 +51,6 @@ public class RequestState implements java.io.Serializable {
 		this.id = id;
 	}
 
-	@Column(name = "stock_action")
 	public Integer getStockAction() {
 		return stockAction;
 	}
