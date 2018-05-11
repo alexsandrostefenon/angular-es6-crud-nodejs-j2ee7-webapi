@@ -1,0 +1,93 @@
+<h4>{{vm.title}}</h4>
+
+<form id="Form" name="Form">
+	<div ng-show="displayError" class="alert alert-danger">
+	    <strong>Error!</strong> Something broke. Retry, or cancel and start afresh.
+	</div>
+
+  <div class="form-group btn-group" role="group" ng-show="false">
+    <button id="btnLogOnOff" class="btn btn-primary" ng-click="vm.logOnOff()"><span class="glyphicon glyphicon-ok-sign"></span> Logon</button>
+    <button id="btnLoadTablesDb" class="btn btn-primary" ng-click="vm.loadTables(false)"><span class="glyphicon glyphicon-ok-sign"></span> Carregar Tabelas do Banco de Dados</button>
+    <button id="btnLoadTablesHct" class="btn btn-primary" ng-click="vm.loadTables(true)"><span class="glyphicon glyphicon-ok-sign"></span> Carregar Tabelas do HCT</button>
+  </div>
+  
+	<div class="form-group big" ng-show="vm.options == undefined || vm.options.length == 0">
+    <label for="inputText" class="control-label big">{{vm.label}}</label>
+    <div class="big">
+        <input id="inputText" ng-pattern="vm.inputPattern" name="inputText" class="form-control" type="text" ng-model="vm.inputText" placeholder="Enter data"></input>
+    </div>
+	</div>
+
+	<div class="form-group big" ng-show="vm.options != undefined && vm.options.length > 0">
+    <label for="dinamicSelect" class="control-label big">{{vm.label}}</label>
+    <div class="big">
+        <select id="dinamicSelect" name="dinamicSelect" class="form-control" ng-options="value for value in vm.options" ng-model="vm.inputText"></select>
+    </div>
+	</div>
+
+  <div class="form-group btn-group" role="group">
+    <button id="cancel" class="btn btn-default" ng-click="vm.cancel()"><span class="glyphicon glyphicon-trash"></span> Cancelar</button>
+    <button id="next" class="btn btn-primary" ng-click="vm.next()"><span class="glyphicon glyphicon-ok-sign"></span> Proximo</button>
+    <button id="queryValues" class="btn btn-default" ng-click="vm.queryValues()"><span class="glyphicon glyphicon-ok-sign"></span> Consulta Valores</button>
+    <button id="pinpadOpen" class="btn btn-default" ng-click="vm.pinpadOpen()" ng-show="vm.pinpad == undefined || vm.pinpad.getIsOpened() == false"><span class="glyphicon glyphicon-ok-sign"></span> Pinpad Open</button>
+    <button id="pinpadTest" class="btn btn-default" ng-click="vm.pinpadTest()" ng-show="vm.pinpad != undefined && vm.pinpad.getIsOpened() == true"><span class="glyphicon glyphicon-ok-sign"></span> Pinpad Test</button>
+    <button id="pinpadClose" class="btn btn-default" ng-click="vm.pinpadClose()" ng-show="vm.pinpad != undefined && vm.pinpad.getIsOpened() == true"><span class="glyphicon glyphicon-ok-sign"></span> Pinpad Close</button>
+    <button id="btnStartConnector" class="btn btn-default" ng-show="vm.connector.state == false" ng-click="vm.connector.setState(true)"><span class="glyphicon glyphicon-ok-sign"></span> Iniciar Servidor</button>
+    <button id="btnStopConnector" class="btn btn-default" ng-show="vm.connector.state == true" ng-click="vm.connector.setState(false)"><span class="glyphicon glyphicon-ok-sign"></span> Parar Servidor</button>
+    <button id="btnLogConnector" class="btn btn-default" ng-show="vm.connector.state == true" ng-click="vm.connector.popLogs()"><span class="glyphicon glyphicon-ok-sign"></span> Atualizar Log do Servidor</button>
+  </div>
+  
+	<div class="panel panel-default" ng-show="vm.textOut.length > 0">
+		<div class="panel-heading" role="tab" id="headingTwo">
+		    <a class="small" role="button" ng-click="vm.isCollapsedPanelOut = !vm.isCollapsedPanelOut">
+		      Saida
+		    </a>
+		</div>
+		<div id="collapseTextOut" class="panel-collapse collapse in" role="tabpanel" uib-collapse="vm.isCollapsedPanelOut">
+		  <div class="panel-body">
+		  	<pre id="textOut" class="small">{{vm.textOut}}</pre>
+	  		<pre id="logs" class="small" ng-show="vm.connector.logs.length > 0">{{vm.connector.logs}}</pre>
+		  </div>
+		</div>
+	</div>
+  
+	<div class="form-group big" ng-class="{'has-error': Form.ec.$invalid}">
+    <label for="captureEc" class="control-label big">C&oacute;digo do Estabelecimento</label>
+    <div class="big">
+        <input id="captureEc" name="captureEc" class="form-control" type="text" ng-pattern="/^[0-9]{1,15}$/" ng-model="vm.captureEc" placeholder="000000000873011"></input>
+        <span class="help-block error" ng-show="Form.captureEc.$error.pattern">Campo num&eacute;rico de no m&aacute;ximo 15 d&iacute;gitos</span>
+    </div>
+	</div>
+
+	<div class="form-group big" ng-class="{'has-error': Form.equipamentId.$invalid}">
+    <label for="equipamentId" class="control-label big">C&oacute;digo do Terminal</label>
+    <div class="big">
+        <input id="equipamentId" name="equipamentId" class="form-control" type="text" ng-pattern="/^[0-9]{1,8}$/" ng-model="vm.equipamentId" placeholder="39536880"></input>
+        <span class="help-block error" ng-show="Form.equipamentId.$error.pattern">Campo num&eacute;rico de no m&aacute;ximo 8 d&iacute;gitos</span>
+    </div>
+	</div>
+
+	<div class="form-group big" ng-class="{'has-error': Form.softwareProvider.$invalid}">
+    <label for="softwareProvider" class="control-label big">Provedor da solucao de Automacao (GetNet,LNX,VBI,...)</label>
+    <div class="big">
+			<select name="softwareProvider" id="softwareProvider" ng-model="vm.softwareProvider"
+				 ng-change="vm.changeSoftwareProvider()" ng-options="option.name for option in vm.softwareProviders">
+			</select>
+		</div>
+	</div>
+
+	<div class="form-group big" ng-class="{'has-error': Form.masterKeySlot.$invalid}">
+    <label for="masterKeySlot" class="control-label big">Slot da Master Key</label>
+    <div class="big">
+			<select name="masterKeySlot" id="masterKeySlot" ng-model="vm.masterKeySlot"	ng-options="value for value in vm.masterKeySlots"></select>
+		</div>
+	</div>
+
+	<div class="form-group big" ng-class="{'has-error': Form.comPort.$invalid}">
+    <label for="comPort" class="control-label big">Porta COM do Pinpad</label>
+    <div class="big">
+			<select name="comPort" id="comPort" ng-model="vm.comPort" ng-options="value for value in vm.comPorts"></select>
+		</div>
+	</div>
+
+</form>

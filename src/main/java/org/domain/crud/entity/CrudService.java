@@ -1,7 +1,5 @@
 package org.domain.crud.entity;
 
-import java.util.ArrayList;
-
 import javax.json.JsonObject;
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -12,8 +10,6 @@ import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import javax.persistence.Transient;
 import javax.xml.bind.annotation.XmlRootElement;
-
-import org.domain.crud.admin.Utils;
 
 @Entity
 @Table(name = "crud_service")
@@ -59,51 +55,13 @@ public class CrudService implements java.io.Serializable {
 
 	@Transient
 	private JsonObject jsonFields;
-
-	private static String generateFieldsStr(String name) {
-		String domain = CrudService.class.getName();
-		domain = domain.substring(0, domain.lastIndexOf("."));
-		String fields = Utils.getClassFieldsTypesJson(domain + "." + name);
-
-		if (fields == null) {
-			fields = Utils.getClassFieldsTypesJson("org.domain.financial.entity" + "." + name);
-		}
-
-		return fields;
-	}
-
-	private static String generateFilterFieldsStr(String name) {
-		String domain = CrudService.class.getName();
-		domain = domain.substring(0, domain.lastIndexOf("."));
-		String fields = Utils.getClassFieldsNames(domain + "." + name);
-
-		if (fields == null) {
-			fields = Utils.getClassFieldsNames("org.domain.financial.entity" + "." + name);
-		}
-
-		return fields;
-	}
-
+	
 	public String getName() {
-		if (this.name != null) {
-			if (this.fields == null || this.fields.startsWith("{") == false) {
-				this.fields = generateFieldsStr(this.name);
-				this.filterFields = generateFilterFieldsStr(this.name);
-			}
-		}
-
 		return this.name;
 	}
 
 	public void setName(String name) {
 		this.name = name;
-
-		if (this.name != null) {
-			if (this.fields == null || this.fields.startsWith("{") == false) {
-				this.fields = generateFieldsStr(this.name);
-				this.filterFields = generateFilterFieldsStr(this.name);
-			}
-		}
 	}
 
 	public CrudService() {
@@ -187,20 +145,6 @@ public class CrudService implements java.io.Serializable {
 
 	public void setJsonFields(JsonObject jsonFields) {
 		this.jsonFields = jsonFields;
-	}
-
-	public String[] extractPrimaryKeys() {
-		ArrayList<String> primaryKeys = new ArrayList<String>();
-
-		for (String key : this.jsonFields.keySet()) {
-			JsonObject field = this.jsonFields.getJsonObject(key);
-			// verfica a permissao de aviso de alterações via websocket
-			if (field.getBoolean("primaryKey", false) == true) {
-				primaryKeys.add(key);
-			}
-		}
-
-		return primaryKeys.toArray(new String[] {});
 	}
 
 }

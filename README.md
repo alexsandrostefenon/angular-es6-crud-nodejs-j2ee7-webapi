@@ -18,17 +18,21 @@ execute psql terminal :
 
 in psql terminal execute configurations commands :
 
-`CREATE USER development LOGIN PASSWORD '123456';`
+`CREATE USER development WITH CREATEDB LOGIN PASSWORD '123456';`
 `CREATE DATABASE crud WITH OWNER development;`
 
 exit psql terminal and import default configuration data with commands :
 
-`psql -U development -h localhost crud < ./sql/database_first_run.sql;`
-`psql -U development -h localhost crud < ./sql/database_first_run_data.sql;`
-`psql -U development -h localhost crud < ./sql/database_nfe.sql;`
-`psql -U development -h localhost crud < ./sql/database_nfe_data.sql;`
-`psql -U development -h localhost crud < ./sql/database_erp.sql;`
-`psql -U development -h localhost crud < ./sql/database_erp_data.sql;`
+`
+psql -U development -h localhost crud < ./sql/database_schema.sql;
+psql -U development -h localhost crud < ./sql/database_first_data.sql;
+psql -U development -h localhost crud < ./sql/nfe/database_schema.sql;
+psql -U development -h localhost crud < ./sql/nfe/database_first_data.sql;
+psql -U development -h localhost crud < ./sql/erp/database_schema.sql;
+psql -U development -h localhost crud < ./sql/erp/database_first_data.sql;
+psql -U development -h localhost crud < ./sql/iso8583router/database_schema.sql;
+psql -U development -h localhost crud < ./sql/iso8583router/database_first_data.sql;
+`
 
 ## NodeJs based server
 
@@ -84,9 +88,9 @@ Clone this repository and then `mvn clean wildfly:deploy` to build and deploy.
 
 ## Web application
 
-In ES6 compliance browser open url `https://localhost:9443/crud` for nodejs server and `https://localhost:8443/angular-es6-crud-nodejs-j2ee7` for WildFly server.
+In ES6 compliance browser open url `https://localhost:9443/crud` for nodejs server and `https://localhost:8443/crud` for WildFly server.
 
-For already configured input and output requests, use user 'spending' with password '123456'.
+For already configured services, use user 'user' with password '123456'.
 
 For custom service configuration or user edition, use user 'admin' with password 'admin'.
  

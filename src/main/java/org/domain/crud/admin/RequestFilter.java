@@ -1,8 +1,12 @@
 package org.domain.crud.admin;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.StringReader;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.security.Principal;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -25,6 +29,7 @@ import javax.json.JsonObjectBuilder;
 import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
+import javax.persistence.TypedQuery;
 import javax.servlet.http.HttpServletRequest;
 import javax.transaction.Transactional;
 import javax.transaction.UserTransaction;
@@ -46,11 +51,13 @@ import javax.ws.rs.core.SecurityContext;
 import javax.ws.rs.core.UriInfo;
 import javax.ws.rs.ext.Provider;
 
-import org.domain.crud.admin.Utils.QueryMap;
+import org.domain.crud.admin.RequestFilter.QueryMap;
 import org.domain.crud.entity.CategoryCompany;
 import org.domain.crud.entity.CrudCompany;
 import org.domain.crud.entity.CrudService;
 import org.domain.crud.entity.CrudUser;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 @ServerEndpoint(value = "/websocket")
 @Provider
@@ -73,6 +80,248 @@ public class RequestFilter implements ContainerRequestFilter, ContainerResponseF
 
 	@Inject
 	private RequestFilter webSocket;
+	// Utils
+	private static boolean haveField(Class<?> objectClass, String name) {
+		boolean ret = true;
+
+		try {
+			objectClass.getDeclaredField(name);
+		} catch (NoSuchFieldException e1) {
+			ret = false;
+		}
+
+		return ret;
+	}
+	// Utils
+	private static boolean haveMethodName(Class<?> objectClass, String name) {
+		if (objectClass == null) {
+			return false;
+		}
+
+		boolean found = false;
+		Method[] methods = objectClass.getDeclaredMethods();
+
+		for (Method method : methods) {
+			if (method.getName().equals(name)) {
+				found = true;
+			}
+		}
+
+		return found;
+	}
+	// Utils
+	private static Object readField(Object obj, String name) {
+		if (obj == null) {
+			return null;
+		}
+
+		Object data;
+
+		try {
+			Field field = obj.getClass().getDeclaredField(name);
+			field.setAccessible(true);
+			data = field.get(obj);
+		} catch (Exception e) {
+			e.printStackTrace();
+			data = null;
+		}
+
+		return data;
+	}
+	// Utils
+	private static void writeField(Object obj, String name, Object value) {
+		try {
+			Field field = obj.getClass().getDeclaredField(name);
+			field.setAccessible(true);
+			field.set(obj, value);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+	// Utils
+	static class QueryMap extends HashMap<String, Object> {
+		/**
+		 *
+		 */
+		private static final long serialVersionUID = 9045195406428349166L;
+
+		private static QueryMap create() {
+			return new QueryMap();
+		}
+
+		private QueryMap add(String name, Object value) {
+			this.put(name, value);
+			return this;
+		}
+	}
+	// Utils
+	private static boolean findInSet(Set<String> set, String item) {
+		boolean found = false;
+
+		for (String key : set) {
+			if (key.equals(item)) {
+				found = true;
+				break;
+			}
+		}
+
+		return found;
+	}
+	// Utils
+	static String convertCaseUnderscoreToCamel(String str, boolean isFirstUpper) {
+		String ret = "";
+		boolean nextIsUpper = false;
+
+		if (isFirstUpper == true) {
+			nextIsUpper = true;
+		} else if (str.length() > 1) {
+			char ch = str.charAt(0);
+			str = Character.toLowerCase(ch) + str.substring(1);
+		}
+
+		for (int i = 0; i < str.length(); i++) {
+			char ch = str.charAt(i);
+
+			if (nextIsUpper == true) {
+				ch = Character.toUpperCase(ch);
+				nextIsUpper = false;
+			}
+
+			if (ch == '_') {
+				nextIsUpper = true;
+			} else {
+				ret = ret + ch;
+			}
+		}
+
+		return ret;
+	}
+	// Utils
+	private static Integer parseInt(String str) {
+		Integer ret = null;
+
+		if (str != null) {
+			ret = Integer.parseInt(str);
+		}
+
+		return ret;
+	}
+	// Utils
+	private static Object loadObjectFromJson(Class<?> objectClass, InputStream inputStream) throws Exception {
+		ObjectMapper mapper = new ObjectMapper();
+		byte[] buffer = new byte[100*1024];
+		int partialRead = 0;
+		int totalRead = 0;
+
+		do {
+			totalRead += partialRead;
+			partialRead = inputStream.read(buffer, totalRead, buffer.length - partialRead);
+		} while (partialRead > 0);
+
+
+		if (totalRead >= buffer.length) {
+			throw new Exception("loadObjectFromJson : invalid data size");
+		}
+
+		ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(buffer, 0, totalRead);
+		inputStream = byteArrayInputStream;
+		InputStreamReader inputStreamReader = new InputStreamReader(inputStream);
+		Object obj;
+
+		try {
+			obj = mapper.readValue(inputStreamReader, objectClass);
+		} catch (Exception e) {
+			String string = new String(buffer, 0, totalRead);
+			throw new Exception(String.format("loadObjectFromJson : %s : %s", e.getMessage(), string));
+		}
+
+		return obj;
+	}
+	// Utils
+	private static <T> TypedQuery<T> buildQuery(EntityManager entityManager, Class<T> resultClass, QueryMap fields, String[] orderBy) {
+		StringBuilder sql = new StringBuilder(1024);
+		sql.append("from " + resultClass.getName() + " o");
+
+		if (fields.isEmpty() == false) {
+			sql.append(" where ");
+
+			fields.forEach((name, value) -> {
+				if (value instanceof List) {
+					sql.append(String.format("o.%s IN (:%s) and ", name, name));
+				} else {
+					sql.append(String.format("o.%s = :%s and ", name, name));
+				}
+			});
+
+			sql.setLength(sql.length()-5);
+		}
+
+		if (orderBy != null && orderBy.length > 0) {
+			sql.append(" order by ");
+
+			for (String field : orderBy) {
+				sql.append("o." + RequestFilter.convertCaseUnderscoreToCamel(field, false) + ",");
+			}
+
+			sql.setLength(sql.length()-1);
+		}
+
+		TypedQuery<T> query = entityManager.createQuery(sql.toString(), resultClass);
+		fields.forEach((name, value) -> query.setParameter(name, value));
+		return query;
+	}
+	// Utils
+	private static <T> CompletableFuture<List<T>> find(EntityManager entityManager, Class<T> resultClass, QueryMap fields, String[] orderBy, Integer startPosition, Integer maxResult) {
+		return CompletableFuture.supplyAsync(() -> {
+			TypedQuery<T> query = RequestFilter.buildQuery(entityManager, resultClass, fields, orderBy);
+
+			if (startPosition != null) {
+				query.setFirstResult(startPosition);
+			}
+
+			if (maxResult != null) {
+				query.setMaxResults(maxResult);
+			}
+
+			return query.getResultList();
+		});
+	}
+	// Utils
+	private static <T> CompletableFuture<T> findOne(EntityManager entityManager, Class<T> resultClass, QueryMap fields) {
+		return CompletableFuture.supplyAsync(() -> buildQuery(entityManager, resultClass, fields, null).getSingleResult());
+	}
+	// Utils
+	private static <T> CompletableFuture<T> insert(UserTransaction userTransaction, EntityManager entityManager, T obj) {
+		return CompletableFuture.supplyAsync(() -> {
+			try {
+				if (userTransaction != null) userTransaction.begin();
+				entityManager.persist(obj);
+				if (userTransaction != null) userTransaction.commit();
+				return obj;
+			} catch (Exception e) {
+				throw new RuntimeException(e);
+			}
+		});
+	}
+	// Utils
+	private static <T> CompletableFuture<T> update(UserTransaction userTransaction, EntityManager entityManager, T obj) {
+		return CompletableFuture.supplyAsync(() -> {
+			try {
+				if (userTransaction != null) userTransaction.begin();
+				entityManager.merge(obj);
+				if (userTransaction != null) userTransaction.commit();
+				return obj;
+			} catch (Exception e) {
+				throw new RuntimeException(e);
+			}
+		});
+	}
+	// Utils
+	private static <T> CompletableFuture<Void> deleteOne(EntityManager entityManager, T obj) {
+		return CompletableFuture.runAsync(() -> {
+			entityManager.remove(obj);
+		});
+	}
 
 	public class LoginResponse implements java.security.Principal {
 		private CrudUser user;
@@ -83,7 +332,7 @@ public class RequestFilter implements ContainerRequestFilter, ContainerResponseF
 		private List<Integer> categories;
 
 		public CompletableFuture<Void> load() {
-			return Utils.findOne(entityManager, CrudCompany.class, Utils.QueryMap.create().add("id", this.user.getCompany()))
+			return RequestFilter.findOne(entityManager, CrudCompany.class, RequestFilter.QueryMap.create().add("id", this.user.getCompany()))
 			.exceptionally(error -> {
 				throw new RuntimeException("don't get user company : " + error.getMessage());
 			})
@@ -91,7 +340,7 @@ public class RequestFilter implements ContainerRequestFilter, ContainerResponseF
 				this.setTitle(company.getName() + " - " + user.getName());
 				// TODO : código temporário para caber o na tela do celular
 				this.setTitle(user.getName());
-				return Utils.find(entityManager, CrudService.class, Utils.QueryMap.create().add("name", this.servicesNames), new String[] {"id"}, null, null)
+				return RequestFilter.find(entityManager, CrudService.class, RequestFilter.QueryMap.create().add("name", this.servicesNames), new String[] {"id"}, null, null)
 				.exceptionally(error -> {
 					throw new RuntimeException("don't get user services : " + error.getMessage());
 				})
@@ -102,7 +351,7 @@ public class RequestFilter implements ContainerRequestFilter, ContainerResponseF
 						service.setJsonFields(Json.createReader(new StringReader(service.getFields())).readObject());
 					}
 
-					return Utils.find(entityManager, CategoryCompany.class, Utils.QueryMap.create().add("company", this.user.getCompany()), null, null, null)
+					return RequestFilter.find(entityManager, CategoryCompany.class, RequestFilter.QueryMap.create().add("company", this.user.getCompany()), null, null, null)
 					.exceptionally(error -> {
 						throw new RuntimeException("don't match request category for user company : " + error.getMessage());
 					})
@@ -168,17 +417,17 @@ public class RequestFilter implements ContainerRequestFilter, ContainerResponseF
 		Response response = null;
 		Integer userCompany = login.user.getCompany();
 
-		if (userCompany > 1 && Utils.haveField(obj.getClass(), "company")) {
-			Integer objCompany = (Integer) Utils.readField(obj, "company");
+		if (userCompany > 1 && RequestFilter.haveField(obj.getClass(), "company")) {
+			Integer objCompany = (Integer) RequestFilter.readField(obj, "company");
 
 			if (objCompany == null) {
-				Utils.writeField(obj, "company", userCompany);
+				RequestFilter.writeField(obj, "company", userCompany);
 				objCompany = userCompany;
 			}
 
 			if (objCompany == userCompany) {
-				if (Utils.haveField(obj.getClass(), "category")) {
-					Integer category = (Integer) Utils.readField(obj, "category");
+				if (RequestFilter.haveField(obj.getClass(), "category")) {
+					Integer category = (Integer) RequestFilter.readField(obj, "category");
 
 					if (login.categories.indexOf(category) < 0) {
 						response = Response.status(Response.Status.UNAUTHORIZED).entity("unauthorized object category").build();
@@ -197,7 +446,7 @@ public class RequestFilter implements ContainerRequestFilter, ContainerResponseF
 
 		if (response != null) CompletableFuture.completedFuture(response);
 
-		return Utils.insert(userTransaction, entityManager, obj).thenApply(newObj -> {
+		return RequestFilter.insert(userTransaction, entityManager, obj).thenApply(newObj -> {
 			webSocket.notify(newObj, false);
 			return Response.ok(newObj, MediaType.APPLICATION_JSON).build();
 		});
@@ -205,28 +454,28 @@ public class RequestFilter implements ContainerRequestFilter, ContainerResponseF
 	// public
 	static public <T> CompletableFuture<T> getObject(LoginResponse login, UriInfo uriInfo, EntityManager entityManager, Class<T> entityClass) {
 		MultivaluedMap<String, String> queryParam = uriInfo.getQueryParameters();
-		Utils.QueryMap fields = Utils.QueryMap.create();
+		RequestFilter.QueryMap fields = RequestFilter.QueryMap.create();
 
-		if (Utils.haveField(entityClass, "id")) {
-			Integer id = Utils.parseInt(queryParam.getFirst("id"));
+		if (RequestFilter.haveField(entityClass, "id")) {
+			Integer id = RequestFilter.parseInt(queryParam.getFirst("id"));
 			fields.add("id", id);
 		}
 
 		Integer company = login.user.getCompany();
 
-		if (Utils.haveField(entityClass, "company")) {
+		if (RequestFilter.haveField(entityClass, "company")) {
 			if (company == 1) {
 				// se for admin, direciona a busca para a empresa informada
-				company = Utils.parseInt(queryParam.getFirst("company"));
+				company = RequestFilter.parseInt(queryParam.getFirst("company"));
 			}
 
 			fields.add("company", company);
-		} else if (company != 1 && Utils.haveField(entityClass, "category")) {
+		} else if (company != 1 && RequestFilter.haveField(entityClass, "category")) {
 			// se não for admin, limita os resultados para as categorias vinculadas a empresa do usuário
 			fields.add("category", login.categories);
 		}
 
-		return Utils.findOne(entityManager, entityClass, fields)
+		return RequestFilter.findOne(entityManager, entityClass, fields)
 		.exceptionally(error -> {
 			throw new RuntimeException("fail to find object with company, category and query parameters related : " + error.getMessage());
 		});
@@ -242,16 +491,16 @@ public class RequestFilter implements ContainerRequestFilter, ContainerResponseF
 
 			if (response != null) return CompletableFuture.completedFuture(response);
 
-			if (Utils.haveField(obj.getClass(), "id")) {
-				Integer oldId = (Integer) Utils.readField(oldObj, "id");
-				Integer newId = (Integer) Utils.readField(obj, "id");
+			if (RequestFilter.haveField(obj.getClass(), "id")) {
+				Integer oldId = (Integer) RequestFilter.readField(oldObj, "id");
+				Integer newId = (Integer) RequestFilter.readField(obj, "id");
 
 				if (newId == null || newId.intValue() != oldId.intValue()) {
 					return CompletableFuture.completedFuture(Response.status(Response.Status.UNAUTHORIZED).entity("changed id").build());
 				}
 			}
 
-			return Utils.update(userTransaction, entityManager, obj).thenApply(newObj -> {
+			return RequestFilter.update(userTransaction, entityManager, obj).thenApply(newObj -> {
 				webSocket.notify(newObj, false);
 				return Response.ok(newObj, MediaType.APPLICATION_JSON).build();
 			});
@@ -260,7 +509,7 @@ public class RequestFilter implements ContainerRequestFilter, ContainerResponseF
 	// public processDelete
 	static public CompletableFuture<Response> processDelete(LoginResponse login, UriInfo uriInfo, EntityManager entityManager, RequestFilter webSocket, Class<?> objectClass) {
 		return RequestFilter.getObject(login, uriInfo, entityManager, objectClass).thenCompose(obj -> {
-			return Utils.deleteOne(entityManager, obj).thenApply((objDeleted) -> {
+			return RequestFilter.deleteOne(entityManager, obj).thenApply((objDeleted) -> {
 				webSocket.notify(objDeleted, true);
 				return Response.ok().build();
 			});
@@ -269,36 +518,34 @@ public class RequestFilter implements ContainerRequestFilter, ContainerResponseF
 	// public
 	static public <T> CompletableFuture<Response> processQuery(LoginResponse login, UriInfo uriInfo, EntityManager entityManager, Class<T> entityClass) {
 		MultivaluedMap<String, String> queryParam = uriInfo.getQueryParameters();
-		Utils.QueryMap fields = Utils.QueryMap.create();
+		RequestFilter.QueryMap fields = RequestFilter.QueryMap.create();
 		Integer company = login.user.getCompany();
 
 		if (company != 1) {
-			if (Utils.haveField(entityClass, "company")) {
+			if (RequestFilter.haveField(entityClass, "company")) {
 				fields.add("company", company);
-			} else if (Utils.haveField(entityClass, "category")) {
+			} else if (RequestFilter.haveField(entityClass, "category")) {
 				// se não for admin, limita os resultados para as categorias vinculadas a empresa do usuário
 				fields.add("category", login.categories);
 			}
 		}
 
-		String serviceName = Utils.convertCaseUnderscoreToCamel(entityClass.getSimpleName(), false);
+		String serviceName = RequestFilter.convertCaseUnderscoreToCamel(entityClass.getSimpleName(), false);
 		CrudService service = login.getCrudServices().stream().filter(item -> item.getName().equals(serviceName)).findFirst().get();
-		String[] orderBy;
+		String[] orderBy = null;
 
 		if (service.getOrderBy() != null) {
 			orderBy = service.getOrderBy().split(",");
-		} else {
-			orderBy = service.extractPrimaryKeys();
 		}
 
-		Integer startPosition = Utils.parseInt(queryParam.getFirst("start"));
-		Integer maxResult = Utils.parseInt(queryParam.getFirst("max"));
-		return Utils.find(entityManager, entityClass, fields, orderBy, startPosition, maxResult).thenApply(results -> Response.ok(results, MediaType.APPLICATION_JSON).build());
+		Integer startPosition = RequestFilter.parseInt(queryParam.getFirst("start"));
+		Integer maxResult = RequestFilter.parseInt(queryParam.getFirst("max"));
+		return RequestFilter.find(entityManager, entityClass, fields, orderBy, startPosition, maxResult).thenApply(results -> Response.ok(results, MediaType.APPLICATION_JSON).build());
 	}
 
 	private void processRequest(ContainerRequestContext requestContext, String ip, String resource, final String access) {
 		Supplier<Response> crudProcess = () -> {
-				String className = Utils.convertCaseUnderscoreToCamel(resource, true);
+				String className = RequestFilter.convertCaseUnderscoreToCamel(resource, true);
 				Class<?> restClass;
 				String domain = this.getClass().getName();
 				domain = domain.substring(0, domain.lastIndexOf(".admin"));
@@ -309,15 +556,15 @@ public class RequestFilter implements ContainerRequestFilter, ContainerResponseF
 					restClass = null;
 				}
 
-				if (access.equals("create") && Utils.haveMethodName(restClass, "create")) {
+				if (access.equals("create") && RequestFilter.haveMethodName(restClass, "create")) {
 					return null;
-				} else if (access.equals("read") && Utils.haveMethodName(restClass, "read")) {
+				} else if (access.equals("read") && RequestFilter.haveMethodName(restClass, "read")) {
 					return null;
-				} else if (access.equals("query") && Utils.haveMethodName(restClass, "query")) {
+				} else if (access.equals("query") && RequestFilter.haveMethodName(restClass, "query")) {
 					return null;
-				} else if (access.equals("delete") && Utils.haveMethodName(restClass, "remove")) {
+				} else if (access.equals("delete") && RequestFilter.haveMethodName(restClass, "remove")) {
 					return null;
-				} else if (access.equals("update") && Utils.haveMethodName(restClass, "update")) {
+				} else if (access.equals("update") && RequestFilter.haveMethodName(restClass, "update")) {
 					return null;
 				}
 
@@ -337,7 +584,7 @@ public class RequestFilter implements ContainerRequestFilter, ContainerResponseF
 				if (access.equals("create") || access.equals("update")) {
 					try {
 						InputStream inputStream = requestContext.getEntityStream();
-						obj = Utils.loadObjectFromJson(objectClass, inputStream);
+						obj = RequestFilter.loadObjectFromJson(objectClass, inputStream);
 					} catch (Exception e) {
 						return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(e.getMessage()).build();
 					}
@@ -368,9 +615,9 @@ public class RequestFilter implements ContainerRequestFilter, ContainerResponseF
 
 				if (roles != null) {
 					JsonObject json = Json.createReader(new StringReader(roles)).readObject();
-					String serviceName = Utils.convertCaseUnderscoreToCamel(resource, false);
+					String serviceName = RequestFilter.convertCaseUnderscoreToCamel(resource, false);
 
-					if (Utils.findInSet(json.keySet(), serviceName) == true) {
+					if (RequestFilter.findInSet(json.keySet(), serviceName) == true) {
 						JsonObject serviceAuth = json.getJsonObject(serviceName);
 						// verfica a permissao de acesso
 						if (serviceAuth.getString(access, "true").equals("true")) {
@@ -476,12 +723,12 @@ public class RequestFilter implements ContainerRequestFilter, ContainerResponseF
 		String userId = json.getString("userId");
 		QueryMap userQuery = QueryMap.create().add("name", userId).add("password", json.getString("password"));
 
-		return Utils.findOne(entityManager, CrudUser.class, userQuery)
+		return RequestFilter.findOne(entityManager, CrudUser.class, userQuery)
 		.thenCompose(user -> {
 			String token = UUID.randomUUID().toString();
 			user.setAuthctoken(token);
 			user.setIp(ip);
-			return Utils.update(userTransaction, entityManager, user).thenCompose(userAfterUpdate -> {
+			return RequestFilter.update(userTransaction, entityManager, user).thenCompose(userAfterUpdate -> {
 				LoginResponse loginResponse = new LoginResponse(userAfterUpdate);
 				return loginResponse.load().thenApply((arg) -> {
 					log.info(String.format("[authenticateByUserAndPassword] Sucessful login : user = %s, roles = %s, token = %s", userAfterUpdate.getName(), userAfterUpdate.getRoles(), userAfterUpdate.getAuthctoken()));
@@ -579,12 +826,12 @@ public class RequestFilter implements ContainerRequestFilter, ContainerResponseF
     private JsonObject getPrimaryKey(Object obj) {
 		JsonObjectBuilder primaryKey = Json.createObjectBuilder();
 
-		if (Utils.haveField(obj.getClass(), "company")) {
-			primaryKey.add("company", (Integer) Utils.readField(obj, "company"));
+		if (RequestFilter.haveField(obj.getClass(), "company")) {
+			primaryKey.add("company", (Integer) RequestFilter.readField(obj, "company"));
 		}
 
-		if (Utils.haveField(obj.getClass(), "id")) {
-			primaryKey.add("id", (Integer) Utils.readField(obj, "id"));
+		if (RequestFilter.haveField(obj.getClass(), "id")) {
+			primaryKey.add("id", (Integer) RequestFilter.readField(obj, "id"));
 		}
 
 		return primaryKey.build();
@@ -592,7 +839,7 @@ public class RequestFilter implements ContainerRequestFilter, ContainerResponseF
     // This method sends the same Bidding object to all opened sessions
     public void notify(Object obj, boolean isRemove) {
     	JsonObject primaryKey = getPrimaryKey(obj);
-		String serviceName = Utils.convertCaseUnderscoreToCamel(obj.getClass().getSimpleName(), false);
+		String serviceName = RequestFilter.convertCaseUnderscoreToCamel(obj.getClass().getSimpleName(), false);
 		JsonObjectBuilder msg = Json.createObjectBuilder();
 		msg.add("service", serviceName);
 		msg.add("primaryKey", primaryKey);
@@ -607,8 +854,8 @@ public class RequestFilter implements ContainerRequestFilter, ContainerResponseF
     	Integer objCompany = primaryKey.containsKey("company") ? primaryKey.getInt("company") : null;
     	Integer category = null;
 
-		if (Utils.haveField(obj.getClass(), "category")) {
-			category = (Integer) Utils.readField(obj, "company");
+		if (RequestFilter.haveField(obj.getClass(), "category")) {
+			category = (Integer) RequestFilter.readField(obj, "company");
 		}
 
 		for (Session session : clients) {
