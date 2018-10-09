@@ -1,14 +1,14 @@
-CREATE TABLE iso8583router_message_adapter (
+CREATE TABLE iso8583_router_message_adapter (
     name character varying(64) primary key,
-    parent character varying(64) references iso8583router_message_adapter, -- iso8583default
+    parent character varying(64) references iso8583_router_message_adapter, -- iso8583default
     adapter_class character varying(255) NOT NULL, -- MessageAdapterISO8583
     compress boolean,
     tag_prefix character varying(32)
 );
 
-CREATE TABLE iso8583router_message_adapter_item (
+CREATE TABLE iso8583_router_message_adapter_item (
     id SERIAL primary key,
-    message_adapter character varying(64) references iso8583router_message_adapter, -- iso8583default
+    message_adapter character varying(64) references iso8583_router_message_adapter, -- iso8583default
     alignment integer,  -- ZERO_LEFT
     data_format character varying(255), -- 
     data_type integer NOT NULL, -- Utils.DATA_TYPE_DECIMAL | Utils.DATA_TYPE_ALPHA | Utils.DATA_TYPE_SPECIAL;
@@ -20,7 +20,7 @@ CREATE TABLE iso8583router_message_adapter_item (
     tag character varying(255) NOT NULL
 );
 
-CREATE TABLE iso8583router_comm (
+CREATE TABLE iso8583_router_comm (
     session character varying(64),
     name character varying(64) primary key,
     enabled boolean,
@@ -37,7 +37,7 @@ CREATE TABLE iso8583router_comm (
     message_adapter character varying(255)
 );
 
-CREATE TABLE iso8583router_transaction (
+CREATE TABLE iso8583_router_transaction (
     id SERIAL primary key,
     auth_nsu character varying(20),
     capture_ec character varying(15),
@@ -98,9 +98,9 @@ CREATE TABLE iso8583router_transaction (
     unique_capture_nsu character varying(64)
 );
 
-CREATE TABLE iso8583router_log (
+CREATE TABLE iso8583_router_log (
     time_id char(19) primary key, -- yyyyMMdd-HHmmss.SSS
-    transaction_id integer references iso8583router_transaction,
+    transaction_id integer references iso8583_router_transaction,
     log_level character varying(64) NOT NULL,
     modules character varying(128) NOT NULL,
     root character varying(128),
@@ -109,7 +109,7 @@ CREATE TABLE iso8583router_log (
     transaction character varying(10240)
 );
 
-CREATE TABLE public.iso8583router_chip_application_identifier (
+CREATE TABLE iso8583_router_chip_application_identifier (
     application_identifier_code_tag_9f06 character varying(32) primary key,
     dynamic_data_authentication_data_object_list character varying(40),
     max_target_percentage integer,
@@ -138,17 +138,15 @@ CREATE TABLE public.iso8583router_chip_application_identifier (
     transaction_currency_exponent_tag_5f36 integer,
     version_iii_tag_9f09 integer,
     version_ii_tag_9f09 integer,
-    version_i_tag_9f09 integer,
-    CONSTRAINT iso8583router_chip_application_ide_terminal_type_tag_9f35_check CHECK (((terminal_type_tag_9f35 <= 26) AND (terminal_type_tag_9f35 >= 21)))
+    version_i_tag_9f09 integer
 );
 
-CREATE TABLE public.iso8583router_chip_public_key (
+CREATE TABLE iso8583_router_chip_public_key (
     public_key_check_sum character varying(40) primary key,
     exp_size integer,
     hash_status integer,
     public_key_check_exponent_tag_9f2e character varying(6),
     public_key_index_tag_9f22 character varying(2),
     public_key_modulus_tag_9f2d character varying(496),
-    registered_application_provider_identifier character varying(10),
-    CONSTRAINT iso8583router_chip_public_key_exp_size_check CHECK (((exp_size <= 3) AND (exp_size >= 1)))
+    registered_application_provider_identifier character varying(10)
 );

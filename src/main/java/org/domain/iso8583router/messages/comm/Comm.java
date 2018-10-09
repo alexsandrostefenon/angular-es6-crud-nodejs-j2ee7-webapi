@@ -13,17 +13,17 @@ import javax.persistence.EntityManager;
 
 import org.domain.commom.Logger;
 import org.domain.commom.RefInt;
-import org.domain.iso8583router.entity.ISO8583RouterCommConf;
-import org.domain.iso8583router.entity.ISO8583RouterMessageAdapterConf;
-import org.domain.iso8583router.entity.ISO8583RouterMessageAdapterConfItem;
+import org.domain.iso8583router.entity.Iso8583RouterComm;
+import org.domain.iso8583router.entity.Iso8583RouterMessageAdapter;
+import org.domain.iso8583router.entity.Iso8583RouterMessageAdapterItem;
 import org.domain.iso8583router.messages.Message;
 import org.domain.iso8583router.messages.MessageAdapter;
 
 public class Comm {
-	private static Map<String, ISO8583RouterMessageAdapterConf> mapConf = new Hashtable<String, ISO8583RouterMessageAdapterConf>(100);// key adapterConfName
+	private static Map<String, Iso8583RouterMessageAdapter> mapConf = new Hashtable<String, Iso8583RouterMessageAdapter>(100);// key adapterConfName
 	private static Map<String, MessageAdapter> mapAdapters = new Hashtable<String, MessageAdapter>(100);// key className
 	// atributos
-	public ISO8583RouterCommConf conf;
+	public Iso8583RouterComm conf;
 	public byte[] bufferReceive;
 	byte[] bufferSend;
 	private Logger logger;
@@ -36,24 +36,24 @@ public class Comm {
 
 	@SuppressWarnings("unchecked")
 	public static void loadConfs(EntityManager entityManager, Logger logger) {
-		List<ISO8583RouterMessageAdapterConf> listMessageAdapterConf = entityManager.createQuery("from MessageAdapterConf").getResultList();
+		List<Iso8583RouterMessageAdapter> listMessageAdapterConf = entityManager.createQuery("from MessageAdapterConf").getResultList();
 		
 		if (listMessageAdapterConf.size() == 0) {
 			entityManager.getTransaction().begin();
-			entityManager.persist(new ISO8583RouterMessageAdapterConf("iso8583default", null));
-			entityManager.persist(new ISO8583RouterMessageAdapterConfItem(1, "msgType", "0", 4, 4, 0, "\\d\\d\\d\\d_\\d\\d\\d\\d\\d\\d", "iso8583default", 0x00000001));
-			entityManager.persist(new ISO8583RouterMessageAdapterConfItem(2, "pan", "2", 12, 16, 0, "\\d\\d\\d\\d_\\d\\d\\d\\d\\d\\d", "iso8583default", 0x00000001));
-			entityManager.persist(new ISO8583RouterMessageAdapterConfItem(3, "codeProcess", "3", 6, 6, 0, "\\d\\d\\d\\d_\\d\\d\\d\\d\\d\\d", "iso8583default", 0x00000001));
-			entityManager.persist(new ISO8583RouterMessageAdapterConfItem(4, "transactionValue", "4", 12, 12, 0, "\\d\\d\\d\\d_\\d\\d\\d\\d\\d\\d", "iso8583default", 0x00000001));
-			entityManager.persist(new ISO8583RouterMessageAdapterConfItem(11, "captureNsu", "11", 6, 6, 0, "\\d\\d\\d\\d_\\d\\d\\d\\d\\d\\d", "iso8583default", 0x00000001));
-			entityManager.persist(new ISO8583RouterMessageAdapterConfItem(42, "captureEc", "42", 15, 15, 0, "\\d\\d\\d\\d_\\d\\d\\d\\d\\d\\d", "iso8583default", 0x00000001));
-			entityManager.persist(new ISO8583RouterMessageAdapterConfItem(41, "equipamentId", "41", 8, 8, 0, "\\d\\d\\d\\d_\\d\\d\\d\\d\\d\\d", "iso8583default", 0x00000001));
-			entityManager.persist(new ISO8583RouterMessageAdapterConfItem(67, "numPayments", "67", 2, 2, 0, "\\d\\d\\d\\d_\\d\\d\\d\\d\\d\\d", "iso8583default", 0x00000001));
+			entityManager.persist(new Iso8583RouterMessageAdapter("iso8583default", null));
+			entityManager.persist(new Iso8583RouterMessageAdapterItem(1, "msgType", "0", 4, 4, 0, "\\d\\d\\d\\d_\\d\\d\\d\\d\\d\\d", "iso8583default", 0x00000001));
+			entityManager.persist(new Iso8583RouterMessageAdapterItem(2, "pan", "2", 12, 16, 0, "\\d\\d\\d\\d_\\d\\d\\d\\d\\d\\d", "iso8583default", 0x00000001));
+			entityManager.persist(new Iso8583RouterMessageAdapterItem(3, "codeProcess", "3", 6, 6, 0, "\\d\\d\\d\\d_\\d\\d\\d\\d\\d\\d", "iso8583default", 0x00000001));
+			entityManager.persist(new Iso8583RouterMessageAdapterItem(4, "transactionValue", "4", 12, 12, 0, "\\d\\d\\d\\d_\\d\\d\\d\\d\\d\\d", "iso8583default", 0x00000001));
+			entityManager.persist(new Iso8583RouterMessageAdapterItem(11, "captureNsu", "11", 6, 6, 0, "\\d\\d\\d\\d_\\d\\d\\d\\d\\d\\d", "iso8583default", 0x00000001));
+			entityManager.persist(new Iso8583RouterMessageAdapterItem(42, "captureEc", "42", 15, 15, 0, "\\d\\d\\d\\d_\\d\\d\\d\\d\\d\\d", "iso8583default", 0x00000001));
+			entityManager.persist(new Iso8583RouterMessageAdapterItem(41, "equipamentId", "41", 8, 8, 0, "\\d\\d\\d\\d_\\d\\d\\d\\d\\d\\d", "iso8583default", 0x00000001));
+			entityManager.persist(new Iso8583RouterMessageAdapterItem(67, "numPayments", "67", 2, 2, 0, "\\d\\d\\d\\d_\\d\\d\\d\\d\\d\\d", "iso8583default", 0x00000001));
 			entityManager.getTransaction().commit();
 			listMessageAdapterConf = entityManager.createQuery("from MessageAdapterConf").getResultList();
 		}
 		
-		for (ISO8583RouterMessageAdapterConf messageAdapterConf : listMessageAdapterConf) {
+		for (Iso8583RouterMessageAdapter messageAdapterConf : listMessageAdapterConf) {
 			messageAdapterConf.setItems(entityManager.createQuery("from MessageAdapterConfItem o where o.messageAdapterConfName='" + messageAdapterConf.getName() + "'").getResultList());
 			Comm.mapConf.put(messageAdapterConf.getName(), messageAdapterConf);
 			String className = messageAdapterConf.getAdapterClass();
@@ -157,7 +157,7 @@ public class Comm {
 		try {
 			message.bufferParseGenerateDebug.setLength(0);
 			ret = message.rawData;
-			ISO8583RouterMessageAdapterConf adapterConf = Comm.mapConf.get(messageAdapterConfName);
+			Iso8583RouterMessageAdapter adapterConf = Comm.mapConf.get(messageAdapterConfName);
 			
 			if (adapterConf != null) {
 				MessageAdapter adapter = Comm.mapAdapters.get(adapterConf.getAdapterClass());
@@ -229,7 +229,7 @@ public class Comm {
 		}
 		
 		message.bufferParseGenerateDebug.setLength(0);
-		ISO8583RouterMessageAdapterConf adapterConf = Comm.mapConf.get(messageAdapterConfName);
+		Iso8583RouterMessageAdapter adapterConf = Comm.mapConf.get(messageAdapterConfName);
 		
 		if (adapterConf != null) {
 			MessageAdapter adapter = Comm.mapAdapters.get(adapterConf.getAdapterClass());
@@ -287,7 +287,7 @@ public class Comm {
 		return size;
 	}
 
-	private void initialize(ISO8583RouterCommConf conf, Logger logger, boolean isServer, Socket socket) throws Exception {
+	private void initialize(Iso8583RouterComm conf, Logger logger, boolean isServer, Socket socket) throws Exception {
 		this.conf = conf;
 		this.socket = socket;
 		this.bufferReceive = new byte[64 * 1024];
@@ -312,7 +312,7 @@ public class Comm {
 	}
 
 	// Conecta como servidor
-	public Comm(Socket client, ISO8583RouterCommConf conf, Logger logger) throws Exception {
+	public Comm(Socket client, Iso8583RouterComm conf, Logger logger) throws Exception {
 		initialize(conf, logger, true, client);
 		log(Logger.LOG_LEVEL_DEBUG, "Comm.Comm",
 				String.format("conexao recebida do cliente, modulo [%s]", this.conf.getName()), null);
@@ -321,7 +321,7 @@ public class Comm {
 	// Conecta como cliente
 	// este construtor fica bloqueante até que o servidor suba,
 	// ou até que a flag de cancelamento seja ativada.
-	public Comm(ISO8583RouterCommConf conf, Logger logger) throws Exception {
+	public Comm(Iso8583RouterComm conf, Logger logger) throws Exception {
 		Socket socket = null;
 
 		while (socket == null) {
@@ -349,7 +349,7 @@ public class Comm {
 			log(Logger.LOG_LEVEL_DEBUG, "Comm.close", String.format("...conexao fechada [%s - %s - %s]", this.conf.getName(), this.socket.getPort(), this.socket.getLocalPort()), null);
 		}
 	}
-	public static Map<String, ISO8583RouterMessageAdapterConf> getMapConf() {
+	public static Map<String, Iso8583RouterMessageAdapter> getMapConf() {
 		return mapConf;
 	}
 }

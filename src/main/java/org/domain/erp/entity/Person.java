@@ -17,7 +17,6 @@ import org.domain.crud.entity.CompanyIdPK;
 @Entity
 @Table(name = "person")
 public class Person implements java.io.Serializable {
-
 	/**
 	 *
 	 */
@@ -34,29 +33,45 @@ public class Person implements java.io.Serializable {
 	private String cnpjCpf;
 	@Column(name = "ie_rg", unique = true, length = 12)
 	private String ieRg;
+   @Column(name = "suframa", columnDefinition = "character varying(9)")
+   private String suframa;
+   @Column(name = "im", columnDefinition = "character varying(12)")
+   private String im;
+	@Column(name = "cnae")//][ForeignKey("IbgeCnae")
+	private Integer cnae;
+	// 1=Simples Nacional; 2=Simples Nacional, excesso sublimite de receita bruta; 3=Regime Normal. (v2.0).
+	@Column(name = "crt")//][FilterUIHint("", "", "defaultValue", "1", "options", "1 - Simples Nacional,2 - Simples Nacional (excesso sublimite de receita bruta),3 - Regime Normal")
+	private Integer crt;
 	@Column(name = "zip", length = 9, columnDefinition="bpchar(9)")
 	private String zip;
+	@Column(name = "country")//[ForeignKey("BacenCountry")
+	private Integer country;
 	private Integer uf;
 	private Integer city;
 	@Column(name = "district", length = 64)
 	private String district;
 	@Column(name = "address", length = 100)
 	private String address;
-	@Column(name = "phone", length = 16)
-	private String phone;
-	@Column(name = "fax", length = 16)
-	private String fax;
+   @Column(name = "address_number", columnDefinition = "character varying(16)")
+   private String addressNumber;
+   @Column(name = "complement", columnDefinition = "character varying(16)")
+   private String complement;
 	@Column(name = "email", length = 100)
 	private String email;
 	@Column(name = "site", length = 100)
 	private String site;
-	@Column(name = "additional_data")
-	private String additionalData;
+	@Column(name = "phone", length = 16)
+	private String phone;
+	@Column(name = "fax", length = 16)
+	private String fax;
 	@Column(name = "credit", precision = 9, scale = 3)
 	private BigDecimal credit;
+	@Column(name = "additional_data")
+	private String additionalData;
 
 	public Person() {
 	}
+
 
 	public Integer getCompany() {
 		return company;
@@ -98,12 +113,52 @@ public class Person implements java.io.Serializable {
 		this.ieRg = ieRg;
 	}
 
+	public String getSuframa() {
+		return suframa;
+	}
+
+	public void setSuframa(String suframa) {
+		this.suframa = suframa;
+	}
+
+	public String getIm() {
+		return im;
+	}
+
+	public void setIm(String im) {
+		this.im = im;
+	}
+
+	public Integer getCnae() {
+		return cnae;
+	}
+
+	public void setCnae(Integer cnae) {
+		this.cnae = cnae;
+	}
+
+	public Integer getCrt() {
+		return crt;
+	}
+
+	public void setCrt(Integer crt) {
+		this.crt = crt;
+	}
+
 	public String getZip() {
 		return zip;
 	}
 
 	public void setZip(String zip) {
 		this.zip = zip;
+	}
+
+	public Integer getCountry() {
+		return country;
+	}
+
+	public void setCountry(Integer country) {
+		this.country = country;
 	}
 
 	public Integer getUf() {
@@ -138,20 +193,20 @@ public class Person implements java.io.Serializable {
 		this.address = address;
 	}
 
-	public String getPhone() {
-		return phone;
+	public String getAddressNumber() {
+		return addressNumber;
 	}
 
-	public void setPhone(String phone) {
-		this.phone = phone;
+	public void setAddressNumber(String addressNumber) {
+		this.addressNumber = addressNumber;
 	}
 
-	public String getFax() {
-		return fax;
+	public String getComplement() {
+		return complement;
 	}
 
-	public void setFax(String fax) {
-		this.fax = fax;
+	public void setComplement(String complement) {
+		this.complement = complement;
 	}
 
 	public String getEmail() {
@@ -170,12 +225,20 @@ public class Person implements java.io.Serializable {
 		this.site = site;
 	}
 
-	public String getAdditionalData() {
-		return additionalData;
+	public String getPhone() {
+		return phone;
 	}
 
-	public void setAdditionalData(String additionalData) {
-		this.additionalData = additionalData;
+	public void setPhone(String phone) {
+		this.phone = phone;
+	}
+
+	public String getFax() {
+		return fax;
+	}
+
+	public void setFax(String fax) {
+		this.fax = fax;
 	}
 
 	public BigDecimal getCredit() {
@@ -184,6 +247,14 @@ public class Person implements java.io.Serializable {
 
 	public void setCredit(BigDecimal credit) {
 		this.credit = credit;
+	}
+
+	public String getAdditionalData() {
+		return additionalData;
+	}
+
+	public void setAdditionalData(String additionalData) {
+		this.additionalData = additionalData;
 	}
 
 }

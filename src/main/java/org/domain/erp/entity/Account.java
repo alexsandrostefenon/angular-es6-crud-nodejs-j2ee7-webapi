@@ -16,7 +16,7 @@ import org.domain.crud.entity.CompanyIdPK;
 
 @IdClass(CompanyIdPK.class)
 @Entity
-@Table(name = "account", uniqueConstraints = @UniqueConstraint(columnNames = {"bank", "agency", "account"}))
+@Table(name = "account", uniqueConstraints = @UniqueConstraint(columnNames = {"bank", "agency", "number"}))
 @XmlRootElement
 public class Account implements java.io.Serializable {
 
@@ -36,7 +36,7 @@ public class Account implements java.io.Serializable {
 	
 	private String bank;
 	private String agency;
-	private String account;
+	private String number;
 	private String description;
 
 	public Integer getCompany() {
@@ -52,15 +52,6 @@ public class Account implements java.io.Serializable {
 
 	public Account(int id) {
 		this.id = id;
-	}
-
-	public Account(int id, String bank, String agency, String account,
-			String description) {
-		this.id = id;
-		this.bank = bank;
-		this.agency = agency;
-		this.account = account;
-		this.description = description;
 	}
 
 	public Integer getId() {
@@ -89,13 +80,13 @@ public class Account implements java.io.Serializable {
 		this.agency = agency;
 	}
 
-	@Column(name = "account", length = 20)
-	public String getAccount() {
-		return this.account;
+	@Column(name = "number", length = 20)
+	public String getNumber() {
+		return this.number;
 	}
 
-	public void setAccount(String account) {
-		this.account = account;
+	public void setNumber(String number) {
+		this.number = number;
 	}
 
 	@Column(name = "description")

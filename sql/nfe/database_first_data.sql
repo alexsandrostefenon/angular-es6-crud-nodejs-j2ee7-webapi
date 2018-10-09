@@ -1,4 +1,16 @@
-﻿INSERT INTO payment_type (id,name) VALUES
+﻿INSERT INTO crud_service (name, menu, template, save_and_exit, filter_fields, order_by, is_on_line, title, fields) VALUES ('nfeStCofins', NULL, NULL, NULL, NULL, NULL, NULL, NULL, '{"id":{"type":"i","primaryKey":true,"hiden":true},"name":{"type":"s"}}');
+INSERT INTO crud_service (name, menu, template, save_and_exit, filter_fields, order_by, is_on_line, title, fields) VALUES ('nfeStCsosn', NULL, NULL, NULL, NULL, NULL, NULL, NULL, '{"id":{"type":"i","primaryKey":true,"hiden":true},"name":{"type":"s"},"description":{"type":"s"}}');
+INSERT INTO crud_service (name, menu, template, save_and_exit, filter_fields, order_by, is_on_line, title, fields) VALUES ('nfeStIcms', NULL, NULL, NULL, NULL, NULL, NULL, NULL, '{"id":{"type":"i","primaryKey":true,"hiden":true},"name":{"type":"s"}}');
+INSERT INTO crud_service (name, menu, template, save_and_exit, filter_fields, order_by, is_on_line, title, fields) VALUES ('nfeStIcmsDesoneracao', NULL, NULL, NULL, NULL, NULL, NULL, NULL, '{"id":{"type":"i","primaryKey":true,"hiden":true},"name":{"type":"s"}}');
+INSERT INTO crud_service (name, menu, template, save_and_exit, filter_fields, order_by, is_on_line, title, fields) VALUES ('nfeStIcmsModalidadeBc', NULL, NULL, NULL, NULL, NULL, NULL, NULL, '{"id":{"type":"i","primaryKey":true,"hiden":true},"name":{"type":"s"}}');
+INSERT INTO crud_service (name, menu, template, save_and_exit, filter_fields, order_by, is_on_line, title, fields) VALUES ('nfeStIcmsModalidadeSt', NULL, NULL, NULL, NULL, NULL, NULL, NULL, '{"id":{"type":"i","primaryKey":true,"hiden":true},"name":{"type":"s"}}');
+INSERT INTO crud_service (name, menu, template, save_and_exit, filter_fields, order_by, is_on_line, title, fields) VALUES ('nfeStIcmsOrigem', NULL, NULL, NULL, NULL, NULL, NULL, NULL, '{"id":{"type":"i","primaryKey":true,"hiden":true},"name":{"type":"s"}}');
+INSERT INTO crud_service (name, menu, template, save_and_exit, filter_fields, order_by, is_on_line, title, fields) VALUES ('nfeStIpi', NULL, NULL, NULL, NULL, NULL, NULL, NULL, '{"id":{"type":"i","primaryKey":true,"hiden":true},"name":{"type":"s"}}');
+INSERT INTO crud_service (name, menu, template, save_and_exit, filter_fields, order_by, is_on_line, title, fields) VALUES ('nfeStIpiEnquadramento', NULL, NULL, NULL, NULL, NULL, NULL, NULL, '{"id":{"type":"i","primaryKey":true,"hiden":true},"name":{"type":"s"},"ipiOperacao":{"type":"i"}}');
+INSERT INTO crud_service (name, menu, template, save_and_exit, filter_fields, order_by, is_on_line, title, fields) VALUES ('nfeStIpiOperacao', NULL, NULL, NULL, NULL, NULL, NULL, NULL, '{"id":{"type":"i","primaryKey":true,"hiden":true},"name":{"type":"s"}}');
+INSERT INTO crud_service (name, menu, template, save_and_exit, filter_fields, order_by, is_on_line, title, fields) VALUES ('nfeStPis', NULL, NULL, NULL, NULL, NULL, NULL, NULL, '{"id":{"type":"i","primaryKey":true,"hiden":true},"name":{"type":"s"}}');
+
+INSERT INTO payment_type (id,name) VALUES
 (1, 'Dinheiro'),
 (2, 'Cheque'),
 (3, 'Cartão de Crédito'),
@@ -8,8 +20,10 @@
 (11, 'Vale Refeição'),
 (12, 'Vale Presente'),
 (13, 'Vale Combustível'),
-(99, 'Outros'),
-(50, 'Boleto');
+(14, 'Duplicata Mercantil'),
+(15, 'Boleto Bancario'),
+(90, 'Sem Pagamento'),
+(99, 'Outros');
 
 INSERT INTO bacen_country (id, name, name_pt, abr) VALUES
 (1058, 'Brazil', 'Brasil', 'BR'),

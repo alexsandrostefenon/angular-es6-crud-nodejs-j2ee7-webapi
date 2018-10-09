@@ -2,15 +2,24 @@ export class CaseConvert {
 
     static camelToUnderscore(str) {
 		var ret = "";
+		var lastIsUpper = true;
 
 		for (var i = 0; i < str.length; i++) {
 			var ch = str[i];
 
 			if (ch >= 'A' && ch <= 'Z') {
 				ch = ch.toLowerCase();
-				ret = ret + '_' + ch;
+
+				if (lastIsUpper == false) {
+					ret = ret + '_' + ch;
+				} else {
+					ret = ret + ch;
+				}
+
+				lastIsUpper = true;
 			} else {
 				ret = ret + ch;
+				lastIsUpper = false;
 			}
 		}
 

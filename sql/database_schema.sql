@@ -1,14 +1,13 @@
 CREATE TABLE crud_service (
-    id SERIAL PRIMARY KEY,
-    is_on_line boolean,
+    name character varying(512) PRIMARY KEY,
     menu character varying(255),
-    name character varying(255),
+    template character varying(512), -- html
     save_and_exit boolean,
-    template character varying(255),
-    title character varying(255),
     filter_fields character varying(10240),
-    fields character varying(10240),
-    order_by character varying(512)
+    order_by character varying(512),
+    is_on_line boolean,
+    title character varying(255),
+    fields character varying(10240)
 );
 
 CREATE TABLE crud_company (

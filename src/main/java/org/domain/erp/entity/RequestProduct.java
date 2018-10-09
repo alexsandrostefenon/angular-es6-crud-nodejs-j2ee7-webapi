@@ -23,6 +23,7 @@ public class RequestProduct implements java.io.Serializable {
 	 */
 	private static final long serialVersionUID = 5749645992706339825L;
 	@Id private Integer company;
+	private Integer request;
 	@Id
 	@SequenceGenerator(name="request_product_id_seq", sequenceName="request_product_id_seq", allocationSize=1)
 	@GeneratedValue(strategy=GenerationType.SEQUENCE, generator="request_product_id_seq")
@@ -30,21 +31,36 @@ public class RequestProduct implements java.io.Serializable {
 	private Integer id;
 	@NotNull
 	private Integer product;
-	private Integer request;
-	@Column(name = "serials", length = 64)
-	private String serial;
 	@Column(name = "quantity", nullable = false, precision = 9, scale = 3)
 	private BigDecimal quantity;
 	@Column(name = "value", nullable = false, precision = 9, scale = 3)
 	private BigDecimal value;
 	@Column(name = "value_item", nullable = false, precision = 9, scale = 3)
 	private BigDecimal valueItem;
-
+	@Column(name = "value_desc", columnDefinition = "numeric(9,2)")//][Required][FilterUIHint("", "", "defaultValue", "0.0")]
+	private BigDecimal valueDesc;
+	@Column(name = "value_freight", columnDefinition = "numeric(9,2)")//][Required][FilterUIHint("", "", "defaultValue", "0.0")]
+	private BigDecimal valueFreight;
+	@Column(name = "cfop")//][ForeignKey("NfeCfop")]
+	private Integer cfop;
+	@Column(name = "tax")//][ForeignKey("NfeTaxGroup")]
+	private Integer tax;
+	@Column(name = "value_all_tax", columnDefinition = "numeric(9,2)")//][Required][FilterUIHint("", "", "defaultValue", "0.0")][Editable(false)]
+	private BigDecimal valueAllTax;
+	@Column(name = "serials", length = 64)
+	private String serial;
+	
 	public Integer getCompany() {
 		return company;
 	}
 	public void setCompany(Integer company) {
 		this.company = company;
+	}
+	public Integer getRequest() {
+		return request;
+	}
+	public void setRequest(Integer request) {
+		this.request = request;
 	}
 	public Integer getId() {
 		return id;
@@ -57,18 +73,6 @@ public class RequestProduct implements java.io.Serializable {
 	}
 	public void setProduct(Integer product) {
 		this.product = product;
-	}
-	public Integer getRequest() {
-		return request;
-	}
-	public void setRequest(Integer request) {
-		this.request = request;
-	}
-	public String getSerial() {
-		return serial;
-	}
-	public void setSerial(String serial) {
-		this.serial = serial;
 	}
 	public BigDecimal getQuantity() {
 		return quantity;
@@ -88,5 +92,40 @@ public class RequestProduct implements java.io.Serializable {
 	public void setValueItem(BigDecimal valueItem) {
 		this.valueItem = valueItem;
 	}
-
+	public BigDecimal getValueDesc() {
+		return valueDesc;
+	}
+	public void setValueDesc(BigDecimal valueDesc) {
+		this.valueDesc = valueDesc;
+	}
+	public BigDecimal getValueFreight() {
+		return valueFreight;
+	}
+	public void setValueFreight(BigDecimal valueFreight) {
+		this.valueFreight = valueFreight;
+	}
+	public Integer getCfop() {
+		return cfop;
+	}
+	public void setCfop(Integer cfop) {
+		this.cfop = cfop;
+	}
+	public Integer getTax() {
+		return tax;
+	}
+	public void setTax(Integer tax) {
+		this.tax = tax;
+	}
+	public BigDecimal getValueAllTax() {
+		return valueAllTax;
+	}
+	public void setValueAllTax(BigDecimal valueAllTax) {
+		this.valueAllTax = valueAllTax;
+	}
+	public String getSerial() {
+		return serial;
+	}
+	public void setSerial(String serial) {
+		this.serial = serial;
+	}
 }

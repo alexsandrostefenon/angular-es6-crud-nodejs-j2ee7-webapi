@@ -17,6 +17,7 @@ public class CrudCompany {
 	@GeneratedValue(strategy=GenerationType.SEQUENCE, generator="crud_company_id_seq")
 	@Column(columnDefinition="serial")
 	private Integer id;
+	@Column(unique = true, nullable = false)
 	private String name;
 
 	public Integer getId() {
@@ -27,7 +28,6 @@ public class CrudCompany {
 		this.id = id;
 	}
 
-	@Column(unique = true, nullable = false)
 	public String getName() {
 		return name;
 	}

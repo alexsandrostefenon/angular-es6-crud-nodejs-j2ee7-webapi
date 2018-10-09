@@ -14,6 +14,7 @@ public class Category {
 	@GeneratedValue(strategy=GenerationType.SEQUENCE, generator="category_id_seq")
 	@Column(columnDefinition="serial")
 	private Integer id;
+	@Column(name = "name", length = 100, unique = true, nullable = false)
 	private String name;
 
 	public Category() {
@@ -27,7 +28,6 @@ public class Category {
 		this.id = id;
 	}
 
-	@Column(name = "name", length = 100, unique = true, nullable = false)
 	public String getName() {
 		return this.name;
 	}

@@ -25,28 +25,25 @@ public class RequestPayment implements java.io.Serializable {
 	 *
 	 */
 	private static final long serialVersionUID = -8921880901269127764L;
+	@Id private Integer company;
+	private Integer request;
 	@Id
 	@SequenceGenerator(name="request_payment_id_seq", sequenceName="request_payment_id_seq", allocationSize=1)
 	@GeneratedValue(strategy=GenerationType.SEQUENCE, generator="request_payment_id_seq")
 	@Column(columnDefinition="serial")
 	private Integer id;
-	@Id private Integer company;
-	private Integer account;
-	private Integer request;
-	@Column(length = 16)
-	private String number;
 	private Integer type;
 	@Column(precision = 9, scale = 3)
 	private BigDecimal value;
-	@Temporal(TemporalType.TIMESTAMP)
-	@Column(name = "due_date", length = 29)
+	private Integer account;
+	@Column(length = 16)
+	private String number;
+	@Column(name = "due_date", length = 29)@Temporal(TemporalType.TIMESTAMP)
 	private Date dueDate;
-	@Temporal(TemporalType.TIMESTAMP)
-	@Column(name = "payday", length = 29)
+	@Column(name = "payday", length = 29)@Temporal(TemporalType.TIMESTAMP)
 	private Date payday;
 	@Column(precision = 9, scale = 3)
-	private BigDecimal balance;
-
+	private BigDecimal balance = new BigDecimal(0.0);
 
 	public Integer getCompany() {
 		return company;

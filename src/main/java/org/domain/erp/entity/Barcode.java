@@ -12,7 +12,7 @@ import javax.persistence.*;
 @NamedQuery(name="Barcode.findAll", query="SELECT b FROM Barcode b")
 public class Barcode implements Serializable {
 	private static final long serialVersionUID = 1L;
-	private String barcode;
+	private String number;
 	private String manufacturer;
 	private Integer product;
 
@@ -21,13 +21,12 @@ public class Barcode implements Serializable {
 
 
 	@Id
-	@GeneratedValue(strategy=GenerationType.AUTO)
-	public String getBarcode() {
-		return this.barcode;
+	public String getNumber() {
+		return this.number;
 	}
 
-	public void setBarcode(String barcode) {
-		this.barcode = barcode;
+	public void setNumber(String number) {
+		this.number = number;
 	}
 
 

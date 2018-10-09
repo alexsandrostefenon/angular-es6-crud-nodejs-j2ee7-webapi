@@ -1,7 +1,7 @@
 <div ng-if="vm.crudService.params.access.create != false" class="form-horizontal">
     <div class="form-group">
         <div class="col-md-offset-2 col-sm-2">
-            <button id="{{vm.formId}}-create" name="create" class="btn btn-primary" ng-click="vm.goToNew()"><span class="glyphicon glyphicon-plus"></span> {{vm.translation.create}}</button>
+            <a href="{{vm.buildLocationHash('new')}}" id="{{vm.formId}}-create" name="create" class="btn btn-primary"><span class="glyphicon glyphicon-plus"></span> {{vm.translation.create}}</a>
         </div>
     </div>
 </div>

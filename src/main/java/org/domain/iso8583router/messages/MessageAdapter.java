@@ -8,17 +8,17 @@ import java.util.function.Supplier;
 import java.util.regex.Pattern;
 
 import org.domain.commom.Utils;
-import org.domain.iso8583router.entity.ISO8583RouterMessageAdapterConf;
-import org.domain.iso8583router.entity.ISO8583RouterMessageAdapterConfItem;
+import org.domain.iso8583router.entity.Iso8583RouterMessageAdapter;
+import org.domain.iso8583router.entity.Iso8583RouterMessageAdapterItem;
 
 public interface MessageAdapter {
-	public void parse(Message message, ISO8583RouterMessageAdapterConf adapterConf, String root, String data, String directionSuffix) throws Exception;
+	public void parse(Message message, Iso8583RouterMessageAdapter adapterConf, String root, String data, String directionSuffix) throws Exception;
 
-	public String generate(Message message, ISO8583RouterMessageAdapterConf adapterConf, String root) throws Exception;
+	public String generate(Message message, Iso8583RouterMessageAdapter adapterConf, String root) throws Exception;
 
 	public String getTagName(String root, String tagPrefix, String tagName);
 
-	static String getFieldDataWithAlign(ISO8583RouterMessageAdapterConfItem conf, Message message) {
+	static String getFieldDataWithAlign(Iso8583RouterMessageAdapterItem conf, Message message) {
 		String fieldName = conf.getFieldName();
 		Integer minLength = conf.getMinLength();
 		Integer maxLength = conf.getMaxLength();
@@ -92,7 +92,7 @@ public interface MessageAdapter {
 		return data;
 	}
 
-	static void setFieldData(ISO8583RouterMessageAdapterConfItem conf, Message message, String data) throws Exception {
+	static void setFieldData(Iso8583RouterMessageAdapterItem conf, Message message, String data) throws Exception {
 			if (data == null || data.length() == 0) {
 				return;
 			}
@@ -186,10 +186,10 @@ public interface MessageAdapter {
 			}
 		}
 
-	static List<ISO8583RouterMessageAdapterConfItem> getMessageAdapterConfItems(ISO8583RouterMessageAdapterConf adapterConf, String root) throws Exception {
-		ArrayList<ISO8583RouterMessageAdapterConfItem> ret = new ArrayList<ISO8583RouterMessageAdapterConfItem>();
+	static List<Iso8583RouterMessageAdapterItem> getMessageAdapterConfItems(Iso8583RouterMessageAdapter adapterConf, String root) throws Exception {
+		ArrayList<Iso8583RouterMessageAdapterItem> ret = new ArrayList<Iso8583RouterMessageAdapterItem>();
 		
-		for (ISO8583RouterMessageAdapterConfItem item : adapterConf.getItems()) {
+		for (Iso8583RouterMessageAdapterItem item : adapterConf.getItems()) {
 			String regex = item.getRootPattern();
 			
 			if (regex == null || Pattern.matches(regex, root)) {
@@ -203,10 +203,10 @@ public interface MessageAdapter {
 	/**
 	 * 
 	 */
-	static ISO8583RouterMessageAdapterConfItem getMessageAdapterConfItemFromTag(List<ISO8583RouterMessageAdapterConfItem> confs, String tagName) {
-		ISO8583RouterMessageAdapterConfItem ret = null;
+	static Iso8583RouterMessageAdapterItem getMessageAdapterConfItemFromTag(List<Iso8583RouterMessageAdapterItem> confs, String tagName) {
+		Iso8583RouterMessageAdapterItem ret = null;
 		
-		for (ISO8583RouterMessageAdapterConfItem conf : confs) {
+		for (Iso8583RouterMessageAdapterItem conf : confs) {
 			if (tagName.equals(conf.getTag())) {
 				ret = conf;
 			}

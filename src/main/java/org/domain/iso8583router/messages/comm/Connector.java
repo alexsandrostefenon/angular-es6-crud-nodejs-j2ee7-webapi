@@ -22,8 +22,8 @@ import org.domain.commom.Module;
 import org.domain.commom.ModuleInfo;
 import org.domain.commom.ModuleManager;
 import org.domain.commom.Utils;
-import org.domain.iso8583router.entity.ISO8583RouterCommConf;
-import org.domain.iso8583router.entity.ISO8583RouterLog;
+import org.domain.iso8583router.entity.Iso8583RouterComm;
+import org.domain.iso8583router.entity.Iso8583RouterLog;
 import org.domain.iso8583router.messages.Message;
 
 public class Connector implements Logger, ModuleManager {
@@ -33,7 +33,7 @@ public class Connector implements Logger, ModuleManager {
 	private ArrayList<ConnectorServer> servers = new ArrayList<ConnectorServer>(256);
 	private ArrayList<SessionClientToServerUnidirecional> clients = new ArrayList<SessionClientToServerUnidirecional>(256);
 	private ArrayList<SessionClientToServerBidirecional> bidirecionals = new ArrayList<SessionClientToServerBidirecional>(256);
-	private List<ISO8583RouterCommConf> confs;
+	private List<Iso8583RouterComm> confs;
 	// route
 	public List<Message> messagesRouteRef = new ArrayList<Message>(256);
 	public static String[] fieldsRouteMask = "moduleIn,msgType,codeProcess,root,codeCountry,providerId".split(",");
@@ -63,7 +63,7 @@ public class Connector implements Logger, ModuleManager {
 		return messagesRouteRef;
 	}
 
-	public List<ISO8583RouterCommConf> getConfs() {
+	public List<Iso8583RouterComm> getConfs() {
 		return confs;
 	}
 
@@ -139,7 +139,7 @@ public class Connector implements Logger, ModuleManager {
 					}
 				}
 
-				ISO8583RouterLog log = new ISO8583RouterLog(timeStamp, logLevelName, transactionId, header, root, modules, text, objStr);
+				Iso8583RouterLog log = new Iso8583RouterLog(timeStamp, logLevelName, transactionId, header, root, modules, text, objStr);
 				System.out.println(log);
 				entityManager.getTransaction().begin();
 				this.entityManager.persist(log);
@@ -232,7 +232,7 @@ public class Connector implements Logger, ModuleManager {
 		return rc;
 	}
 
-	public long route(Message messageIn, ISO8583RouterCommConf conf) throws Exception {
+	public long route(Message messageIn, Iso8583RouterComm conf) throws Exception {
 		long rc = -1;
 		messageIn.setSendResponse(false);
 		Calendar rightNow = Calendar.getInstance();
@@ -270,7 +270,7 @@ public class Connector implements Logger, ModuleManager {
 	}
 	
 	class ConnectorServer extends Thread {
-		private ISO8583RouterCommConf conf;
+		private Iso8583RouterComm conf;
 		private boolean stopThread = false;
 		private ServerSocket server;
 		
@@ -325,7 +325,7 @@ public class Connector implements Logger, ModuleManager {
 					processRequest(comm, message);
 				}
 
-				public ServerPermanentProcessRequest(ISO8583RouterCommConf conf, Comm comm,
+				public ServerPermanentProcessRequest(Iso8583RouterComm conf, Comm comm,
 						Message message) {
 					this.comm = comm;
 					this.message = message;
@@ -407,7 +407,7 @@ public class Connector implements Logger, ModuleManager {
 			}
 		}
 
-		public ConnectorServer(ISO8583RouterCommConf conf) throws Exception {
+		public ConnectorServer(Iso8583RouterComm conf) throws Exception {
 			this.server = new ServerSocket(conf.getPort(), conf.getBacklog());
 			this.conf = conf;
 		}
@@ -420,7 +420,7 @@ public class Connector implements Logger, ModuleManager {
 	// acesso aos servidores que não mandam sonda e ou outras solicitações na ordem inversa da conexão
 	class SessionClientToServerUnidirecional implements SessionClient {
 		private Comm poolComm[];
-		private ISO8583RouterCommConf conf;
+		private Iso8583RouterComm conf;
 		Logger logger;
 		
 		private Comm newComm(int pool) {
@@ -549,7 +549,7 @@ public class Connector implements Logger, ModuleManager {
 			return rc;
 		}
 
-		public SessionClientToServerUnidirecional(ISO8583RouterCommConf conf, Logger logger) throws Exception {
+		public SessionClientToServerUnidirecional(Iso8583RouterComm conf, Logger logger) throws Exception {
 			this.conf = conf;
 			this.logger = logger;
 			this.poolComm = new Comm[conf.getMaxOpenedConnections()];
@@ -559,7 +559,7 @@ public class Connector implements Logger, ModuleManager {
 	// acesso aos servidores mandam sonda e ou outras solicitações na ordem inversa da conexão (ex.: OI. Claro, Bancos, etc...)
 	class SessionClientToServerBidirecional extends Thread implements SessionClient {
 		private Comm comm;
-		private ISO8583RouterCommConf conf;
+		private Iso8583RouterComm conf;
 		private ArrayList<Message> listSend;
 		private ArrayList<Message> listReceive;
 		private String[] fieldsCompare;
@@ -726,7 +726,7 @@ public class Connector implements Logger, ModuleManager {
 			return rc;
 		}
 
-		public SessionClientToServerBidirecional(ISO8583RouterCommConf conf, String[] fieldsCompare)	throws Exception {
+		public SessionClientToServerBidirecional(Iso8583RouterComm conf, String[] fieldsCompare)	throws Exception {
 			this.conf = conf;
 			this.fieldsCompare = fieldsCompare;
 			this.comm = null;
@@ -752,7 +752,7 @@ public class Connector implements Logger, ModuleManager {
 		Comm.loadConfs(entityManager, this);
 		this.confs = entityManager.createQuery("from CommConf").getResultList();
 
-		for (ISO8583RouterCommConf conf : this.confs) {
+		for (Iso8583RouterComm conf : this.confs) {
 			if (conf.getEnabled() == false) {
 				continue;
 			}

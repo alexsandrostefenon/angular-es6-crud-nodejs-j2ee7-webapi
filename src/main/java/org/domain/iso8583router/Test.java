@@ -5,14 +5,14 @@ import java.sql.DriverManager;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.domain.iso8583router.entity.ISO8583RouterCommConf;
+import org.domain.iso8583router.entity.Iso8583RouterComm;
 import org.domain.iso8583router.messages.Message;
 import org.domain.iso8583router.messages.comm.Comm;
 import org.domain.iso8583router.messages.comm.Connector;
 
 public class Test {
 	public static void sendRequest(Connector manager, String connName, Message message) throws Exception {
-		ISO8583RouterCommConf commConf = (ISO8583RouterCommConf) manager.getEntityManager().createQuery("from CommConf o where o.name='" + connName + "'").getSingleResult();
+		Iso8583RouterComm commConf = (Iso8583RouterComm) manager.getEntityManager().createQuery("from CommConf o where o.name='" + connName + "'").getSingleResult();
 		Comm comm = new Comm(commConf, manager);
 		comm.send(message);
 		Message messageIn = new Message();

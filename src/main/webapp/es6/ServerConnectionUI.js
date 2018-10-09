@@ -29,8 +29,6 @@ export class DatabaseUiAdapter {
 			} else if (type == "n3") {
 				field.htmlType = "number";
 				field.htmlStep = "0.001";
-			} else if (type == "p") {
-				field.htmlType = "password";
 			} else if (type == "date") {
 				field.htmlType = "date";
 			} else if (type == "time") {
@@ -167,8 +165,8 @@ export class CrudServiceUI extends CrudService {
     	return super.getRemote(primaryKey).then(response => this.processListUi(response));
 	}
 
-	save(primaryKey, itemSend) {
-    	return super.save(primaryKey, itemSend).then(response => this.processListUi(response));
+	save(itemSend) {
+    	return super.save(itemSend).then(response => this.processListUi(response));
 	}
 
 	update(primaryKey, itemSend) {
@@ -176,7 +174,8 @@ export class CrudServiceUI extends CrudService {
 	}
 
 	remove(primaryKey) {
-    	return super.remove(primaryKey);//.then(response => this.processListUi(response));
+        // data may be null
+    	return super.remove(primaryKey);//.then(data => this.processListUi(data));
 	}
 
 	queryRemote(params) {
@@ -205,15 +204,33 @@ export class CrudServiceUI extends CrudService {
 
 export class ServerConnectionUI extends ServerConnection {
 
-	constructor($location, $locale, $route, $rootScope) {
+	static buildLocationHash(hashPath, hashSearchObj) {
+		let hash = "#!/app/" + hashPath;
+
+		if (hashSearchObj != undefined) {
+			let searchParams = new URLSearchParams(hashSearchObj);
+			hash = hash + "?" + searchParams.toString();
+		}
+		
+		return hash;
+	}
+
+	static changeLocationHash(hashPath, hashSearchObj) {
+		const hash = ServerConnectionUI.buildLocationHash(hashPath, hashSearchObj);
+		console.log(`ServerConnectionUI.changeLocationHash(${hashPath}, ${hashSearchObj}) : ${hash}`);
+		window.location.assign(hash);
+	}
+
+	constructor($locale, $route, $rootScope, $q, $timeout) {
 		super();
-    	this.$location = $location;
     	this.localeId = $locale.id;
     	this.$route = $route;
     	this.$rootScope = $rootScope;
+    	this.$q = $q;
+    	this.$timeout = $timeout;
     	// força o browser a iniciar sempre da página de login
-    	if ($location.path().indexOf("/app/login") < 0) {
-    		$location.path("/app/login").search({});
+    	if (window.location.hash.indexOf("/login") < 0) {
+			ServerConnectionUI.changeLocationHash("login");
     	}
 
 		this.translation = {};
@@ -296,13 +313,15 @@ export class ServerConnectionUI extends ServerConnection {
 				}
 				// consider http://devdocs.io/dom-fetch/
 				let promise = import("./" + route.controller + ".js").then(module => {
-					console.log("loaded:", module.name, "route:", route);
+					const controllerName = route.controller.substring(route.controller.lastIndexOf("/")+1);
+					console.log("loaded:", controllerName, "route:", route);
 
-					globalControllerProvider.register(module.name, function(ServerConnectionService, $scope) {
-						return new module.Controller(ServerConnectionService, $scope);
+					globalControllerProvider.register(controllerName, function(ServerConnectionService, $scope) {
+						const _class = module[controllerName];
+						return new _class(ServerConnectionService, $scope);
 					});
 
-					globalRouteProvider.when(route.path, {"templateUrl":route.templateUrl, "controller": route.controller, controllerAs: "vm"});
+					globalRouteProvider.when(route.path, {"templateUrl":route.templateUrl, "controller": controllerName, controllerAs: "vm"});
 				});
 				
 				promises.push(promise);
@@ -316,20 +335,14 @@ export class ServerConnectionUI extends ServerConnection {
 
 	        if (this.user.path != undefined && this.user.path != null && this.user.path.length > 0) {
 	        	this.$route.reload();
-	        	this.$location.path(this.user.path);
+	        	ServerConnectionUI.changeLocationHash(this.user.path);
 	        }
 		});
     }
     // public
     login(server, user, password, CrudServiceClass, callbackPartial) {
     	if (server == null || server.length == 0) {
-    		server = this.$location.absUrl();
-    		// remove o /#/xxx no final do path
-    		const pos = server.indexOf("/#");
-
-			if (pos >= 0) {
-				server = server.substring(0, pos);
-			}
+    		server = window.location.origin + window.location.pathname;
     	}
 
         super.login(server, user, password, CrudServiceClass, callbackPartial).then(loginResponse => this.loginDone(loginResponse));
@@ -338,7 +351,7 @@ export class ServerConnectionUI extends ServerConnection {
     logout() {
     	super.logout();
         this.menu = {};
-        this.$location.path("/app/login").search({"server":this.url});
+		ServerConnectionUI.changeLocationHash("login", {"server":this.url});
     }
 
 	convertCaseAnyToLabel(str) {

@@ -8,7 +8,6 @@ import javax.ejb.EJBContext;
 import javax.ejb.Stateless;
 import javax.ejb.TransactionManagement;
 import javax.ejb.TransactionManagementType;
-import javax.inject.Inject;
 import javax.inject.Named;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
@@ -28,7 +27,6 @@ import javax.ws.rs.core.SecurityContext;
 import javax.ws.rs.core.UriInfo;
 
 import org.domain.crud.admin.RequestFilter;
-import org.domain.crud.admin.RequestFilter.LoginResponse;
 import org.domain.erp.entity.Request;
 import org.domain.erp.entity.RequestProduct;
 import org.domain.erp.entity.RequestState;
@@ -47,20 +45,6 @@ public class RequestEndpoint {
 	@PersistenceContext(unitName = "primary")
 	private EntityManager entityManager;
 
-	@Inject
-	private RequestFilter webSocket;
-
-	/*
-		The @Context annotation allows you to inject instances of
-		javax.ws.rs.core.HttpHeaders,
-		javax.ws.rs.core.UriInfo,
-		javax.ws.rs.core.Request,
-		javax.servlet.SecurityContext,
-		javax.servlet.HttpServletResponse,
-		javax.servlet.ServletConfig,
-		javax.servlet.ServletContext,
-		javax.ws.rs.core.SecurityContext
-	 */
 	@POST
 	@Path("/create")
 	@Consumes("application/json")
@@ -70,7 +54,7 @@ public class RequestEndpoint {
 			obj.setDate(new Timestamp(System.currentTimeMillis()));
 		}
 
-		RequestFilter.processCreate(securityContext.getUserPrincipal(), this.context.getUserTransaction(), this.entityManager, this.webSocket, obj)
+		RequestFilter.processCreate(securityContext.getUserPrincipal(), this.context.getUserTransaction(), this.entityManager, "request", obj)
 		.exceptionally(error -> Response.status(Response.Status.BAD_REQUEST).entity(error.getMessage()).build())
 		.thenAccept(response -> ar.resume(response));
 	}
@@ -80,9 +64,9 @@ public class RequestEndpoint {
 	@Consumes("application/json")
 	public void update(@Context SecurityContext securityContext, @Context UriInfo uriInfo, Request newObj, @Suspended AsyncResponse ar) {
 		// TODO : validar se entity.getState() é um State com antecessor e precedente validos.
-		RequestFilter.getObject((LoginResponse) securityContext.getUserPrincipal(), uriInfo, this.entityManager, Request.class)
+		RequestFilter.<Request>getObject(securityContext.getUserPrincipal(), uriInfo, this.entityManager, "request")
 		.thenAccept(oldObj -> {
-			RequestFilter.processUpdate((LoginResponse) securityContext.getUserPrincipal(), uriInfo, this.context.getUserTransaction(), this.entityManager, this.webSocket, newObj)
+			RequestFilter.processUpdate(securityContext.getUserPrincipal(), uriInfo, this.context.getUserTransaction(), this.entityManager, "request", newObj)
 			.exceptionally(error -> Response.status(Response.Status.BAD_REQUEST).entity(error.getMessage()).build())
 			.thenAccept(response -> {
 				ar.resume(response);
@@ -110,9 +94,9 @@ public class RequestEndpoint {
 	@Path("/delete")
 	public void remove(@Context SecurityContext securityContext, @Context UriInfo uriInfo, @Suspended AsyncResponse ar) {
 		// TODO : validar se entity.getState() é um State de status iniciais que permite exclusão.
-		RequestFilter.getObject((LoginResponse) securityContext.getUserPrincipal(), uriInfo, this.entityManager, Request.class)
+		RequestFilter.<Request>getObject(securityContext.getUserPrincipal(), uriInfo, this.entityManager, "request")
 		.thenAccept(obj -> {
-			RequestFilter.processDelete((LoginResponse) securityContext.getUserPrincipal(), uriInfo, this.entityManager, this.webSocket, Request.class)
+			RequestFilter.processDelete(securityContext.getUserPrincipal(), uriInfo, this.context.getUserTransaction(), this.entityManager, "request")
 			.exceptionally(error -> Response.status(Response.Status.BAD_REQUEST).entity(error.getMessage()).build())
 			.thenAccept(response -> {
 				ar.resume(response);
@@ -140,7 +124,7 @@ public class RequestEndpoint {
 	@Produces("application/json")
 	public void query(@Context SecurityContext context, @Context UriInfo uriInfo, @Suspended AsyncResponse ar) {
 		// TODO : verificar as condições para carregar as requests encerradas
-		RequestFilter.processQuery((LoginResponse) context.getUserPrincipal(), uriInfo, this.entityManager, Request.class)
+		RequestFilter.processQuery(context.getUserPrincipal(), uriInfo, this.entityManager, "request")
 		.exceptionally(error -> Response.status(Response.Status.BAD_REQUEST).entity(error.getMessage()).build())
 		.thenAccept(response -> {
 			ar.resume(response);

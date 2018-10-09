@@ -1,8 +1,6 @@
 package org.domain.crud.entity;
 
-import javax.json.JsonStructure;
 import javax.persistence.Column;
-import javax.persistence.Convert;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
@@ -21,7 +19,8 @@ public class CrudUser {
 	/**
 	 *
 	 */
-	@Id private Integer company;
+	@Id
+	private Integer company;
 	@Id
 	@SequenceGenerator(name="crud_user_id_seq", sequenceName="crud_user_id_seq", allocationSize=1)
 	@GeneratedValue(strategy=GenerationType.SEQUENCE, generator="crud_user_id_seq")
@@ -30,11 +29,13 @@ public class CrudUser {
 	private String name;
 	private String password;
 	private String roles;
+	@Column(length=10240)
 	private String menu;
 
 //	@Column(name = "routes_character_varying", columnDefinition = "character varying")@Convert(converter=org.domain.crud.admin.JsonConverter.class)
 //	@Column(name = "routes_jsonb", columnDefinition = "jsonb")@Convert(converter=org.domain.crud.admin.JsonPGobjectConverter.class)
 //	private JsonStructure routes;
+	@Column(length=10240)
 	private String routes;
 	@Column(name = "show_system_menu")
 	private Boolean showSystemMenu;
@@ -61,7 +62,6 @@ public class CrudUser {
 		this.company = company;
 	}
 
-	@Column(length=10240)
 	public String getRoles() {
 		return roles;
 	}
@@ -70,7 +70,6 @@ public class CrudUser {
 		this.roles = roles;
 	}
 
-	@Column(length=10240)
 	public String getMenu() {
 		return menu;
 	}

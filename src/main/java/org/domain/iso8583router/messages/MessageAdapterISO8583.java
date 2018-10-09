@@ -5,8 +5,8 @@ import java.util.List;
 
 import org.domain.commom.ByteArrayUtils;
 import org.domain.commom.Utils;
-import org.domain.iso8583router.entity.ISO8583RouterMessageAdapterConf;
-import org.domain.iso8583router.entity.ISO8583RouterMessageAdapterConfItem;
+import org.domain.iso8583router.entity.Iso8583RouterMessageAdapter;
+import org.domain.iso8583router.entity.Iso8583RouterMessageAdapterItem;
 
 public class MessageAdapterISO8583 implements MessageAdapter {
 	
@@ -124,7 +124,7 @@ public class MessageAdapterISO8583 implements MessageAdapter {
 	}
 	
 	// se enableCompress == true, esta funcao deve rececer 'src' jah convertida com Utils.convertToHexAscii
-	private int parseData(Message message, ISO8583RouterMessageAdapterConfItem conf, String src, int offset, int sizeToRead) throws Exception {
+	private int parseData(Message message, Iso8583RouterMessageAdapterItem conf, String src, int offset, int sizeToRead) throws Exception {
 		boolean oddRightAlign = false;
 		String tag = conf.getTag();
 		// TODO : verificar o motivo desta excessão
@@ -175,7 +175,7 @@ public class MessageAdapterISO8583 implements MessageAdapter {
 	}
 	
 	// se enableCompress == true, esta funcao deve rececer 'src' jah convertida com Utils.convertToHexAscii
-	private int parse(Message message, ISO8583RouterMessageAdapterConfItem conf, String src, int offset) throws Exception {
+	private int parse(Message message, Iso8583RouterMessageAdapterItem conf, String src, int offset) throws Exception {
 		int srcSize = src.length();
 
 		if (offset > srcSize) {
@@ -213,7 +213,7 @@ public class MessageAdapterISO8583 implements MessageAdapter {
 	}
 
 	// se enableCompress == true, esta funcao deve rececer 'data' jah convertida com Utils.convertToHexAscii
-	public void parse(Message message, ISO8583RouterMessageAdapterConf adapterConf, String root, String data, String directionSuffix) throws Exception {
+	public void parse(Message message, Iso8583RouterMessageAdapter adapterConf, String root, String data, String directionSuffix) throws Exception {
 		int dataLength = data.length();
 
 		if (dataLength < (4+16)) {
@@ -226,7 +226,7 @@ public class MessageAdapterISO8583 implements MessageAdapter {
 		}
 		
 		root = getRootISO8583(message, data);
-		List<ISO8583RouterMessageAdapterConfItem> confs = MessageAdapter.getMessageAdapterConfItems(adapterConf, root);
+		List<Iso8583RouterMessageAdapterItem> confs = MessageAdapter.getMessageAdapterConfItems(adapterConf, root);
 		message.setRoot(root);
 		int offset = 4;
 		int mapSize = 16;
@@ -260,7 +260,7 @@ public class MessageAdapterISO8583 implements MessageAdapter {
 		for (int bit = 2, numBits = mapSize*4; bit <= numBits; bit++) {
 			if (bitMask[bit]) {
 				try {
-					ISO8583RouterMessageAdapterConfItem conf = MessageAdapter.getMessageAdapterConfItemFromTag(confs, Integer.toString(bit));
+					Iso8583RouterMessageAdapterItem conf = MessageAdapter.getMessageAdapterConfItemFromTag(confs, Integer.toString(bit));
 					offset = parse(message, conf, data, offset);
 				} catch (Exception e) {
 					throw new Exception(String.format("MessageAdapterISO8583.parse - error in bit %d : %s", bit, e.getMessage()));
@@ -314,7 +314,7 @@ public class MessageAdapterISO8583 implements MessageAdapter {
 		buffer.append(String.format(fmt, value));
 	}
 	
-	private void addField(StringBuilder buffer, Message message, ISO8583RouterMessageAdapterConfItem conf, String value) {
+	private void addField(StringBuilder buffer, Message message, Iso8583RouterMessageAdapterItem conf, String value) {
 		boolean mayBeAlpha = (conf.getDataType() & Utils.DATA_TYPE_ALPHA) > 0;
 		boolean mayBeSpecial = (conf.getDataType() & Utils.DATA_TYPE_SPECIAL) > 0;
 		boolean expandedData = message.isAsciiHexExpanded();
@@ -354,19 +354,19 @@ public class MessageAdapterISO8583 implements MessageAdapter {
 		}
 	}
 
-	public String generate(Message message, ISO8583RouterMessageAdapterConf adapterConf, String root) throws Exception {
+	public String generate(Message message, Iso8583RouterMessageAdapter adapterConf, String root) throws Exception {
 		root = getRoot(message);
-		List<ISO8583RouterMessageAdapterConfItem> confs = MessageAdapter.getMessageAdapterConfItems(adapterConf, root);
+		List<Iso8583RouterMessageAdapterItem> confs = MessageAdapter.getMessageAdapterConfItems(adapterConf, root);
 		StringBuilder buffer = new StringBuilder(2048);
 		String msgType = message.getMsgType();
 		buffer.append(msgType);
 		int sizeMap = 16;
 		String[] values = new String[128+1];
-		ISO8583RouterMessageAdapterConfItem[] usedConfs = new ISO8583RouterMessageAdapterConfItem[128];
+		Iso8583RouterMessageAdapterItem[] usedConfs = new Iso8583RouterMessageAdapterItem[128];
 		int lastField = 0;
 		//verifica se usa o segundo mapa de Bits
 		for (int field = 0; field < 128; field++) {
-			ISO8583RouterMessageAdapterConfItem conf = MessageAdapter.getMessageAdapterConfItemFromTag(confs, Integer.toString(field));
+			Iso8583RouterMessageAdapterItem conf = MessageAdapter.getMessageAdapterConfItemFromTag(confs, Integer.toString(field));
 			
 			if (conf != null) {
 				String value = MessageAdapter.getFieldDataWithAlign(conf, message);

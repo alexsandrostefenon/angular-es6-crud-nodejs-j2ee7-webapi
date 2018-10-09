@@ -4,12 +4,12 @@ import java.util.List;
 
 import org.domain.commom.ByteArrayUtils;
 import org.domain.commom.Utils;
-import org.domain.iso8583router.entity.ISO8583RouterMessageAdapterConf;
-import org.domain.iso8583router.entity.ISO8583RouterMessageAdapterConfItem;
+import org.domain.iso8583router.entity.Iso8583RouterMessageAdapter;
+import org.domain.iso8583router.entity.Iso8583RouterMessageAdapterItem;
 
 public class MessageAdapterTag implements MessageAdapter {
 	
-	private void parse(Message message, ISO8583RouterMessageAdapterConfItem conf, String value) throws Exception {
+	private void parse(Message message, Iso8583RouterMessageAdapterItem conf, String value) throws Exception {
 		if (value != null && value.length() > 0) {
 			boolean mayBeSpecial = (conf.getDataType() == Utils.DATA_TYPE_SPECIAL);
 			
@@ -23,8 +23,8 @@ public class MessageAdapterTag implements MessageAdapter {
 		}
 	}
 	
-	public void parse(Message message, ISO8583RouterMessageAdapterConf adapterConf, String root, String data, String directionSuffix) throws Exception {
-		List<ISO8583RouterMessageAdapterConfItem> confs = MessageAdapter.getMessageAdapterConfItems(adapterConf, root);
+	public void parse(Message message, Iso8583RouterMessageAdapter adapterConf, String root, String data, String directionSuffix) throws Exception {
+		List<Iso8583RouterMessageAdapterItem> confs = MessageAdapter.getMessageAdapterConfItems(adapterConf, root);
 		// capture_0910_032=00000000007|capture_0910_060=0@@|capture_0910_100=00000000001
 		String[] nodes = data.split("\\|");
 
@@ -35,7 +35,7 @@ public class MessageAdapterTag implements MessageAdapter {
 			if (pos > 0) {
 				String name = node.substring(0, pos);
 				String value = node.substring(pos+1);
-				ISO8583RouterMessageAdapterConfItem conf = MessageAdapter.getMessageAdapterConfItemFromTag(confs, name);
+				Iso8583RouterMessageAdapterItem conf = MessageAdapter.getMessageAdapterConfItemFromTag(confs, name);
 
 				if (conf == null) {
 					conf = MessageAdapter.getMessageAdapterConfItemFromTag(confs, name);
@@ -50,14 +50,14 @@ public class MessageAdapterTag implements MessageAdapter {
 		}
 	}
 
-	public String generate(Message message, ISO8583RouterMessageAdapterConf adapterConf, String root) throws Exception {
+	public String generate(Message message, Iso8583RouterMessageAdapter adapterConf, String root) throws Exception {
 		StringBuilder buffer = new StringBuilder(2048);
-		List<ISO8583RouterMessageAdapterConfItem> confs = MessageAdapter.getMessageAdapterConfItems(adapterConf, root);
+		List<Iso8583RouterMessageAdapterItem> confs = MessageAdapter.getMessageAdapterConfItems(adapterConf, root);
 		buffer.append("root=");
 		buffer.append(root);
 		buffer.append("|");
 		
-		for (ISO8583RouterMessageAdapterConfItem conf : confs) {
+		for (Iso8583RouterMessageAdapterItem conf : confs) {
 			String str = MessageAdapter.getFieldDataWithAlign(conf, message);
 			
 			if (str != null) {

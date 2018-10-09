@@ -18,8 +18,7 @@ import org.domain.commom.Module;
 import org.domain.commom.ModuleInfo;
 import org.domain.commom.ModuleManager;
 import org.domain.commom.Utils;
-import org.domain.commom.Utils.CommRequestDirection;
-import org.domain.iso8583router.entity.ISO8583RouterCommConf;
+import org.domain.iso8583router.entity.Iso8583RouterComm;
 import org.domain.iso8583router.messages.Message;
 import org.domain.iso8583router.messages.comm.Connector;
 
@@ -49,7 +48,7 @@ public class Emulator implements Module {
 	// REVISADO
 	class Session implements Runnable {
 		private int count;
-		private ISO8583RouterCommConf conf;
+		private Iso8583RouterComm conf;
 		private Queue<Message> queue;
 
 		// REVISADO
@@ -172,7 +171,7 @@ public class Emulator implements Module {
 		}
 
 		// REVISADO
-		public Session(ISO8583RouterCommConf conf) throws Exception {
+		public Session(Iso8583RouterComm conf) throws Exception {
 			this.conf = conf;
 			this.count = 0;
 			this.queue = new ConcurrentLinkedQueue<Message>();
@@ -181,7 +180,7 @@ public class Emulator implements Module {
 
 	// REVISADO
 	class EmulatorClientDirClientToServer extends Thread {
-		private ISO8583RouterCommConf conf;
+		private Iso8583RouterComm conf;
 		List<Message> list;
 
 		@Override
@@ -223,7 +222,7 @@ public class Emulator implements Module {
 			}
 		}
 
-		public EmulatorClientDirClientToServer(ISO8583RouterCommConf conf, List<Message> list) throws Exception {
+		public EmulatorClientDirClientToServer(Iso8583RouterComm conf, List<Message> list) throws Exception {
 			this.conf = conf;
 			this.list = list;
 		}
@@ -247,10 +246,10 @@ public class Emulator implements Module {
 
 		List<?> listAux = entityManager.createQuery(sql).getResultList();
 		@SuppressWarnings("unchecked")
-		List<org.domain.iso8583router.entity.ISO8583RouterTransaction> listStorage = (List<org.domain.iso8583router.entity.ISO8583RouterTransaction>) listAux;
+		List<org.domain.iso8583router.entity.Iso8583RouterTransaction> listStorage = (List<org.domain.iso8583router.entity.Iso8583RouterTransaction>) listAux;
 		List<Message> list = new ArrayList<Message>(listStorage.size());
 
-		for (org.domain.iso8583router.entity.ISO8583RouterTransaction messageStore : listStorage) {
+		for (org.domain.iso8583router.entity.Iso8583RouterTransaction messageStore : listStorage) {
 			String dataEscaped = messageStore.getData();
 			String dataUnEscaped = ByteArrayUtils.unEscapeBinaryData(dataEscaped, "(0x", ")", 2);
 			messageStore.setData(dataUnEscaped);
@@ -262,7 +261,7 @@ public class Emulator implements Module {
 		return list;
 	}
 	
-	private String getEmulatorMode(ISO8583RouterCommConf conf, Message message) {
+	private String getEmulatorMode(Iso8583RouterComm conf, Message message) {
 		// TODO : verificar se a modificação abaixo é suficiente para a mudança de CommConf.emulator para CommConf.session
 		String emulatorMode = conf.getDirection() == Utils.CommRequestDirection.CLIENT_TO_SERVER ? "client" : "server";
 		
@@ -287,9 +286,9 @@ public class Emulator implements Module {
 	}
 
 	private void startAsynchronous() throws Exception {
-		List<ISO8583RouterCommConf> confs = this.manager.getConfs();
+		List<Iso8583RouterComm> confs = this.manager.getConfs();
 
-		for (ISO8583RouterCommConf conf : confs) {
+		for (Iso8583RouterComm conf : confs) {
 			if (conf.getEnabled() == true) {
 				String emulatorMode = getEmulatorMode(conf, null);
 				String sql = String.format("from Message m where m.module='%s' order by m.id", conf.getName());
@@ -311,14 +310,14 @@ public class Emulator implements Module {
 	}
 
 	private void startSynchronous() throws Exception {
-		List<ISO8583RouterCommConf> confs = this.manager.getConfs();
+		List<Iso8583RouterComm> confs = this.manager.getConfs();
 		List<Message> list = getMessages("from Message m order by m.id");
 
 		for (Message message : list) {
 //			message.setLogger(manager);
 			String moduleName = message.getModule();
 
-			for (ISO8583RouterCommConf conf : confs) {
+			for (Iso8583RouterComm conf : confs) {
 				if (conf.getEnabled() == true && conf.getName().equals(moduleName)) {
 					String emulatorMode = getEmulatorMode(conf, message);
 					

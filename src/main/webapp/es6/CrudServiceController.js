@@ -2,9 +2,7 @@ import {CrudController} from "./CrudController.js";
 import {CrudItemJson} from "./CrudItemJson.js";
 import {Utils} from "./Utils.js";
 
-export const name = "CrudServiceController";
-
-export class Controller extends CrudController {
+export class CrudServiceController extends CrudController {
 
     constructor(serverConnection, $scope) {
     	super(serverConnection, $scope);
@@ -19,19 +17,23 @@ export class Controller extends CrudController {
         	for (let item of this.serverConnection.services.crudService.list) {
         		serviceOptions.push(item.name);
         	}
-
+			// type (columnDefinition), readOnly, hiden, primaryKey, required (insertable), updatable, defaultValue, length, precision, scale 
         	var fields = {
         			"type":{"options": types},
-        			"primaryKey":{"options": [true, false]},
         			"service":{"options": serviceOptions},
-        			"defaultValue": {},
-        			"options": {},
+        			"primaryKey":{"options": [true, false]},
+        			"readOnly":{"options": [true, false]},
         			"hiden":{"options": [true, false]},
         			"required":{"options": [true, false]},
+        			"isClonable":{"options": [true, false]},
+        			"defaultValue": {},
+        			"updatable":{"options": [true, false]},
+        			"length": {},
+        			"precision": {},
+        			"scale": {},
+        			"options": {},
         			"flags":{},
-        			"readOnly":{"options": [true, false]},
         			"title":{},
-        			"isClonable":{"options": [true, false]}
         			};
 
         	this.listItemCrudJson.push(new CrudItemJson(fields, this.instance, "fields", "Campos dos formulários", this.serverConnection));

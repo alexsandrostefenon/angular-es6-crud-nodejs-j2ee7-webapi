@@ -18,119 +18,108 @@ public class Product implements Serializable {
 	@GeneratedValue(strategy=GenerationType.SEQUENCE, generator="product_id_seq")
 	@Column(columnDefinition="serial")
 	private Integer id;
-	@Column(name="additional_data")
-	private String additionalData;
 	private Integer category;
-	private String departament;
-	private String description;
-	@Column(name="image_url")
-	private String imageUrl;
-	private String model;
-	private String name;
 	private Integer ncm;
 	private Integer orig;
+	private String name;
+	private String departament;
+	private String model;
+	private String description;
 	private BigDecimal weight;
+	@Column(name="image_url")
+	private String imageUrl;
+	@Column(name="additional_data")
+	private String additionalData;
 
 	public Product() {
 	}
 
-
 	public Integer getId() {
-		return this.id;
+		return id;
 	}
 
 	public void setId(Integer id) {
 		this.id = id;
 	}
 
-
-	public String getAdditionalData() {
-		return this.additionalData;
-	}
-
-	public void setAdditionalData(String additionalData) {
-		this.additionalData = additionalData;
-	}
-
-
 	public Integer getCategory() {
-		return this.category;
+		return category;
 	}
 
 	public void setCategory(Integer category) {
 		this.category = category;
 	}
 
-
-	public String getDepartament() {
-		return this.departament;
-	}
-
-	public void setDepartament(String departament) {
-		this.departament = departament;
-	}
-
-
-	public String getDescription() {
-		return this.description;
-	}
-
-	public void setDescription(String description) {
-		this.description = description;
-	}
-
-
-	public String getImageUrl() {
-		return this.imageUrl;
-	}
-
-	public void setImageUrl(String imageUrl) {
-		this.imageUrl = imageUrl;
-	}
-
-
-	public String getModel() {
-		return this.model;
-	}
-
-	public void setModel(String model) {
-		this.model = model;
-	}
-
-
-	public String getName() {
-		return this.name;
-	}
-
-	public void setName(String name) {
-		this.name = name;
-	}
-
-
 	public Integer getNcm() {
-		return this.ncm;
+		return ncm;
 	}
 
 	public void setNcm(Integer ncm) {
 		this.ncm = ncm;
 	}
 
-
 	public Integer getOrig() {
-		return this.orig;
+		return orig;
 	}
 
 	public void setOrig(Integer orig) {
 		this.orig = orig;
 	}
 
+	public String getName() {
+		return name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
+	}
+
+	public String getDepartament() {
+		return departament;
+	}
+
+	public void setDepartament(String departament) {
+		this.departament = departament;
+	}
+
+	public String getModel() {
+		return model;
+	}
+
+	public void setModel(String model) {
+		this.model = model;
+	}
+
+	public String getDescription() {
+		return description;
+	}
+
+	public void setDescription(String description) {
+		this.description = description;
+	}
 
 	public BigDecimal getWeight() {
-		return this.weight;
+		return weight;
 	}
 
 	public void setWeight(BigDecimal weight) {
 		this.weight = weight;
+	}
+
+	public String getImageUrl() {
+		return imageUrl;
+	}
+
+	public void setImageUrl(String imageUrl) {
+		this.imageUrl = imageUrl;
+	}
+
+	public String getAdditionalData() {
+		return additionalData;
+	}
+
+	public void setAdditionalData(String additionalData) {
+		this.additionalData = additionalData;
 	}
 
 }

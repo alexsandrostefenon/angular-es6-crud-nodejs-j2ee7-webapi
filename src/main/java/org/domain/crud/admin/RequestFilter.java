@@ -1,35 +1,29 @@
 package org.domain.crud.admin;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.io.StringReader;
 import java.lang.reflect.Field;
-import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.security.Principal;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.logging.Logger;
 
 import javax.annotation.Resource;
-import javax.inject.Inject;
 import javax.json.Json;
 import javax.json.JsonObject;
 import javax.json.JsonObjectBuilder;
 import javax.persistence.EntityManager;
-import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
-import javax.persistence.TypedQuery;
+import javax.persistence.metamodel.EntityType;
 import javax.servlet.http.HttpServletRequest;
 import javax.transaction.Transactional;
 import javax.transaction.UserTransaction;
@@ -51,279 +45,39 @@ import javax.ws.rs.core.SecurityContext;
 import javax.ws.rs.core.UriInfo;
 import javax.ws.rs.ext.Provider;
 
-import org.domain.crud.admin.RequestFilter.QueryMap;
+import org.domain.commom.CaseConvert;
+import org.domain.commom.DbUtils;
+import org.domain.commom.ReflectionUtils;
+import org.domain.commom.Utils;
 import org.domain.crud.entity.CategoryCompany;
 import org.domain.crud.entity.CrudCompany;
 import org.domain.crud.entity.CrudService;
 import org.domain.crud.entity.CrudUser;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 @ServerEndpoint(value = "/websocket")
 @Provider
 @PreMatching
 @Transactional
 public class RequestFilter implements ContainerRequestFilter, ContainerResponseFilter {
-
+// RequestFilter static members
+	private final static Map<String, Class<?>> mapClass = new HashMap<String, Class<?>>(256);
+	private final static Map<String, CrudService> mapService = new HashMap<String, CrudService>(256);
+	private final static Map<String, LoginResponse> logins = new HashMap<String, LoginResponse>(1024);
+	private final static Map<String, Session> clients = new HashMap<String, Session>(1024);
 	private final static Logger log = Logger.getLogger("CRUD");
-
-	private static Map<String, LoginResponse> logins = new HashMap<String, LoginResponse>(1024);
 
 	@Context
 	HttpServletRequest httpRequest;
 
 	@Resource
-	private UserTransaction userTransaction;
+	private UserTransaction userTransaction = null;
 
 	@PersistenceContext(unitName = "primary")
 	private EntityManager entityManager;
 
-	@Inject
-	private RequestFilter webSocket;
-	// Utils
-	private static boolean haveField(Class<?> objectClass, String name) {
-		boolean ret = true;
-
-		try {
-			objectClass.getDeclaredField(name);
-		} catch (NoSuchFieldException e1) {
-			ret = false;
-		}
-
-		return ret;
-	}
-	// Utils
-	private static boolean haveMethodName(Class<?> objectClass, String name) {
-		if (objectClass == null) {
-			return false;
-		}
-
-		boolean found = false;
-		Method[] methods = objectClass.getDeclaredMethods();
-
-		for (Method method : methods) {
-			if (method.getName().equals(name)) {
-				found = true;
-			}
-		}
-
-		return found;
-	}
-	// Utils
-	private static Object readField(Object obj, String name) {
-		if (obj == null) {
-			return null;
-		}
-
-		Object data;
-
-		try {
-			Field field = obj.getClass().getDeclaredField(name);
-			field.setAccessible(true);
-			data = field.get(obj);
-		} catch (Exception e) {
-			e.printStackTrace();
-			data = null;
-		}
-
-		return data;
-	}
-	// Utils
-	private static void writeField(Object obj, String name, Object value) {
-		try {
-			Field field = obj.getClass().getDeclaredField(name);
-			field.setAccessible(true);
-			field.set(obj, value);
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-	}
-	// Utils
-	static class QueryMap extends HashMap<String, Object> {
-		/**
-		 *
-		 */
-		private static final long serialVersionUID = 9045195406428349166L;
-
-		private static QueryMap create() {
-			return new QueryMap();
-		}
-
-		private QueryMap add(String name, Object value) {
-			this.put(name, value);
-			return this;
-		}
-	}
-	// Utils
-	private static boolean findInSet(Set<String> set, String item) {
-		boolean found = false;
-
-		for (String key : set) {
-			if (key.equals(item)) {
-				found = true;
-				break;
-			}
-		}
-
-		return found;
-	}
-	// Utils
-	static String convertCaseUnderscoreToCamel(String str, boolean isFirstUpper) {
-		String ret = "";
-		boolean nextIsUpper = false;
-
-		if (isFirstUpper == true) {
-			nextIsUpper = true;
-		} else if (str.length() > 1) {
-			char ch = str.charAt(0);
-			str = Character.toLowerCase(ch) + str.substring(1);
-		}
-
-		for (int i = 0; i < str.length(); i++) {
-			char ch = str.charAt(i);
-
-			if (nextIsUpper == true) {
-				ch = Character.toUpperCase(ch);
-				nextIsUpper = false;
-			}
-
-			if (ch == '_') {
-				nextIsUpper = true;
-			} else {
-				ret = ret + ch;
-			}
-		}
-
-		return ret;
-	}
-	// Utils
-	private static Integer parseInt(String str) {
-		Integer ret = null;
-
-		if (str != null) {
-			ret = Integer.parseInt(str);
-		}
-
-		return ret;
-	}
-	// Utils
-	private static Object loadObjectFromJson(Class<?> objectClass, InputStream inputStream) throws Exception {
-		ObjectMapper mapper = new ObjectMapper();
-		byte[] buffer = new byte[100*1024];
-		int partialRead = 0;
-		int totalRead = 0;
-
-		do {
-			totalRead += partialRead;
-			partialRead = inputStream.read(buffer, totalRead, buffer.length - partialRead);
-		} while (partialRead > 0);
-
-
-		if (totalRead >= buffer.length) {
-			throw new Exception("loadObjectFromJson : invalid data size");
-		}
-
-		ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(buffer, 0, totalRead);
-		inputStream = byteArrayInputStream;
-		InputStreamReader inputStreamReader = new InputStreamReader(inputStream);
-		Object obj;
-
-		try {
-			obj = mapper.readValue(inputStreamReader, objectClass);
-		} catch (Exception e) {
-			String string = new String(buffer, 0, totalRead);
-			throw new Exception(String.format("loadObjectFromJson : %s : %s", e.getMessage(), string));
-		}
-
-		return obj;
-	}
-	// Utils
-	private static <T> TypedQuery<T> buildQuery(EntityManager entityManager, Class<T> resultClass, QueryMap fields, String[] orderBy) {
-		StringBuilder sql = new StringBuilder(1024);
-		sql.append("from " + resultClass.getName() + " o");
-
-		if (fields.isEmpty() == false) {
-			sql.append(" where ");
-
-			fields.forEach((name, value) -> {
-				if (value instanceof List) {
-					sql.append(String.format("o.%s IN (:%s) and ", name, name));
-				} else {
-					sql.append(String.format("o.%s = :%s and ", name, name));
-				}
-			});
-
-			sql.setLength(sql.length()-5);
-		}
-
-		if (orderBy != null && orderBy.length > 0) {
-			sql.append(" order by ");
-
-			for (String field : orderBy) {
-				sql.append("o." + RequestFilter.convertCaseUnderscoreToCamel(field, false) + ",");
-			}
-
-			sql.setLength(sql.length()-1);
-		}
-
-		TypedQuery<T> query = entityManager.createQuery(sql.toString(), resultClass);
-		fields.forEach((name, value) -> query.setParameter(name, value));
-		return query;
-	}
-	// Utils
-	private static <T> CompletableFuture<List<T>> find(EntityManager entityManager, Class<T> resultClass, QueryMap fields, String[] orderBy, Integer startPosition, Integer maxResult) {
-		return CompletableFuture.supplyAsync(() -> {
-			TypedQuery<T> query = RequestFilter.buildQuery(entityManager, resultClass, fields, orderBy);
-
-			if (startPosition != null) {
-				query.setFirstResult(startPosition);
-			}
-
-			if (maxResult != null) {
-				query.setMaxResults(maxResult);
-			}
-
-			return query.getResultList();
-		});
-	}
-	// Utils
-	private static <T> CompletableFuture<T> findOne(EntityManager entityManager, Class<T> resultClass, QueryMap fields) {
-		return CompletableFuture.supplyAsync(() -> buildQuery(entityManager, resultClass, fields, null).getSingleResult());
-	}
-	// Utils
-	private static <T> CompletableFuture<T> insert(UserTransaction userTransaction, EntityManager entityManager, T obj) {
-		return CompletableFuture.supplyAsync(() -> {
-			try {
-				if (userTransaction != null) userTransaction.begin();
-				entityManager.persist(obj);
-				if (userTransaction != null) userTransaction.commit();
-				return obj;
-			} catch (Exception e) {
-				throw new RuntimeException(e);
-			}
-		});
-	}
-	// Utils
-	private static <T> CompletableFuture<T> update(UserTransaction userTransaction, EntityManager entityManager, T obj) {
-		return CompletableFuture.supplyAsync(() -> {
-			try {
-				if (userTransaction != null) userTransaction.begin();
-				entityManager.merge(obj);
-				if (userTransaction != null) userTransaction.commit();
-				return obj;
-			} catch (Exception e) {
-				throw new RuntimeException(e);
-			}
-		});
-	}
-	// Utils
-	private static <T> CompletableFuture<Void> deleteOne(EntityManager entityManager, T obj) {
-		return CompletableFuture.runAsync(() -> {
-			entityManager.remove(obj);
-		});
-	}
-
-	public class LoginResponse implements java.security.Principal {
+// Class LoginResponse
+// Response with login data access to client
+	public static class LoginResponse implements java.security.Principal {
 		private CrudUser user;
 		private String title;
 		private List<CrudService> crudServices;
@@ -331,37 +85,40 @@ public class RequestFilter implements ContainerRequestFilter, ContainerResponseF
 		private List<String> servicesNames;
 		private List<Integer> categories;
 
-		public CompletableFuture<Void> load() {
-			return RequestFilter.findOne(entityManager, CrudCompany.class, RequestFilter.QueryMap.create().add("id", this.user.getCompany()))
+		@Override
+		public String getName() {
+			return this.user.getName();
+		}
+
+// Load Company, Services and Categories
+		public static CompletableFuture<LoginResponse> load(CrudUser user, EntityManager entityManager) {
+			LoginResponse loginResponse = new LoginResponse (user);
+			return DbUtils.findOne(entityManager, CrudCompany.class, DbUtils.QueryMap.create().add("id", user.getCompany()))
 			.exceptionally(error -> {
 				throw new RuntimeException("don't get user company : " + error.getMessage());
 			})
 			.thenCompose(company -> {
-				this.setTitle(company.getName() + " - " + user.getName());
+				loginResponse.setTitle(company.getName() + " - " + user.getName());
 				// TODO : código temporário para caber o na tela do celular
-				this.setTitle(user.getName());
-				return RequestFilter.find(entityManager, CrudService.class, RequestFilter.QueryMap.create().add("name", this.servicesNames), new String[] {"id"}, null, null)
+				loginResponse.setTitle(user.getName());
+
+				for(String serviceName : loginResponse.servicesNames) {
+					loginResponse.crudServices.add (RequestFilter.mapService.get(serviceName));
+				}
+// Add Categories
+				DbUtils.QueryMap queryCat = DbUtils.QueryMap.create().add("company", user.getCompany());
+				return DbUtils.find(entityManager, CategoryCompany.class, queryCat, null, null, null)
 				.exceptionally(error -> {
-					throw new RuntimeException("don't get user services : " + error.getMessage());
+					throw new RuntimeException("don't match request category for user company : " + error.getMessage());
 				})
-				.thenCompose(services -> {
-					this.crudServices = services;
-					// TODO : temporary code, until hibernate persist postgresql jsonb type
-					for (CrudService service :this.crudServices) {
-						service.setJsonFields(Json.createReader(new StringReader(service.getFields())).readObject());
+				.thenApply(categories -> {
+					loginResponse.categories = new ArrayList<Integer>(categories.size());
+
+					for (CategoryCompany categoryCompany : categories) {
+						loginResponse.categories.add(categoryCompany.getId());
 					}
 
-					return RequestFilter.find(entityManager, CategoryCompany.class, RequestFilter.QueryMap.create().add("company", this.user.getCompany()), null, null, null)
-					.exceptionally(error -> {
-						throw new RuntimeException("don't match request category for user company : " + error.getMessage());
-					})
-					.thenAccept(categories -> {
-						this.categories = new ArrayList<Integer>(categories.size());
-
-						for (CategoryCompany categoryCompany : categories) {
-							this.categories.add(categoryCompany.getId());
-						}
-					});
+					return loginResponse;
 				});
 			});
 		}
@@ -369,6 +126,7 @@ public class RequestFilter implements ContainerRequestFilter, ContainerResponseF
 		private LoginResponse(CrudUser user) {
 			this.user = user;
 			this.servicesNames = new ArrayList<String>(256);
+			this.crudServices = new ArrayList<CrudService>(256);
 			this.websocketServices = new ArrayList<String>(256);
 			JsonObject roles = Json.createReader(new StringReader(user.getRoles())).readObject();
 
@@ -398,11 +156,6 @@ public class RequestFilter implements ContainerRequestFilter, ContainerResponseF
 			this.title = title;
 		}
 
-		@Override
-		public String getName() {
-			return this.user.getName();
-		}
-
 		public CrudUser getUser() {
 			return user;
 		}
@@ -412,22 +165,30 @@ public class RequestFilter implements ContainerRequestFilter, ContainerResponseF
 		}
 
 	}
-	// private to create,update,delete,read
-	static private Response checkObjectAccess(LoginResponse login, EntityManager entityManager, Object obj) {
+// private to create,update,delete,read
+	static private Response checkObjectAccess(Principal user, EntityManager entityManager, String serviceName, Object obj) {
+		CrudService service = RequestFilter.getService (user, serviceName);
+		
+		if (service == null) {
+			return Response.status(Response.Status.UNAUTHORIZED).entity("Unauthorized service Access").build();
+		}
+
+		LoginResponse login = (LoginResponse) user;
+		JsonObject serviceFields = Json.createReader(new StringReader(service.getFields())).readObject();
 		Response response = null;
 		Integer userCompany = login.user.getCompany();
 
-		if (userCompany > 1 && RequestFilter.haveField(obj.getClass(), "company")) {
-			Integer objCompany = (Integer) RequestFilter.readField(obj, "company");
+		if (userCompany > 1 && serviceFields.containsKey("company")) {
+			Integer objCompany = (Integer) ReflectionUtils.readField(obj, "company");
 
 			if (objCompany == null) {
-				RequestFilter.writeField(obj, "company", userCompany);
+				ReflectionUtils.writeField(obj, "company", userCompany);
 				objCompany = userCompany;
 			}
 
 			if (objCompany == userCompany) {
-				if (RequestFilter.haveField(obj.getClass(), "category")) {
-					Integer category = (Integer) RequestFilter.readField(obj, "category");
+				if (serviceFields.containsKey("category")) {
+					Integer category = (Integer) ReflectionUtils.readField(obj, "category");
 
 					if (login.categories.indexOf(category) < 0) {
 						response = Response.status(Response.Status.UNAUTHORIZED).entity("unauthorized object category").build();
@@ -440,151 +201,167 @@ public class RequestFilter implements ContainerRequestFilter, ContainerResponseF
 
 		return response;
 	}
+	//
+	static public CrudService getService(Principal user, String serviceName) {
+		serviceName = CaseConvert.convertCaseUnderscoreToCamel (serviceName, false);
+		LoginResponse login = (LoginResponse)user;
+
+		if (login.servicesNames.contains (serviceName) == false) {
+			return null;
+		}
+
+		CrudService service = RequestFilter.mapService.get(serviceName);
+		return service;
+	}
 	// public
-	static public CompletableFuture<Response> processCreate(Principal login, UserTransaction userTransaction, EntityManager entityManager, RequestFilter webSocket, Object obj) {
-		Response response = checkObjectAccess((LoginResponse) login, entityManager, obj);
+	static public CompletableFuture<Response> processCreate(Principal user, UserTransaction userTransaction, EntityManager entityManager, String serviceName, Object obj) {
+		Response response = checkObjectAccess((LoginResponse) user, entityManager, serviceName, obj);
 
 		if (response != null) CompletableFuture.completedFuture(response);
 
-		return RequestFilter.insert(userTransaction, entityManager, obj).thenApply(newObj -> {
-			webSocket.notify(newObj, false);
+		return DbUtils.insert(userTransaction, entityManager, obj).thenApply(newObj -> {
+			RequestFilter.notify(newObj, serviceName, false);
 			return Response.ok(newObj, MediaType.APPLICATION_JSON).build();
 		});
 	}
 	// public
-	static public <T> CompletableFuture<T> getObject(LoginResponse login, UriInfo uriInfo, EntityManager entityManager, Class<T> entityClass) {
-		MultivaluedMap<String, String> queryParam = uriInfo.getQueryParameters();
-		RequestFilter.QueryMap fields = RequestFilter.QueryMap.create();
-
-		if (RequestFilter.haveField(entityClass, "id")) {
-			Integer id = RequestFilter.parseInt(queryParam.getFirst("id"));
-			fields.add("id", id);
-		}
-
-		Integer company = login.user.getCompany();
-
-		if (RequestFilter.haveField(entityClass, "company")) {
-			if (company == 1) {
-				// se for admin, direciona a busca para a empresa informada
-				company = RequestFilter.parseInt(queryParam.getFirst("company"));
-			}
-
-			fields.add("company", company);
-		} else if (company != 1 && RequestFilter.haveField(entityClass, "category")) {
-			// se não for admin, limita os resultados para as categorias vinculadas a empresa do usuário
-			fields.add("category", login.categories);
-		}
-
-		return RequestFilter.findOne(entityManager, entityClass, fields)
+	static public <T> CompletableFuture<T> getObject(Principal user, UriInfo uriInfo, EntityManager entityManager, String serviceName) {
+		@SuppressWarnings("unchecked")
+		Class<T> entityClass = (Class<T>) RequestFilter.mapClass.get(CaseConvert.convertCaseUnderscoreToCamel (serviceName, false));
+		return DbUtils.findOne(entityManager, entityClass, parseQueryParameters((LoginResponse)user, serviceName, uriInfo.getQueryParameters()))
 		.exceptionally(error -> {
 			throw new RuntimeException("fail to find object with company, category and query parameters related : " + error.getMessage());
 		});
 	}
 	// public processRead
-	static public <T> CompletableFuture<Response> processRead(LoginResponse login, UriInfo uriInfo, EntityManager entityManager, Class<T> objectClass) {
-		return RequestFilter.getObject(login, uriInfo, entityManager, objectClass).thenApply(obj -> Response.ok(obj, MediaType.APPLICATION_JSON).build());
+	static public <T> CompletableFuture<Response> processRead(Principal user, UriInfo uriInfo, EntityManager entityManager, String serviceName) {
+		return RequestFilter.getObject(user, uriInfo, entityManager, serviceName).thenApply(obj -> Response.ok(obj, MediaType.APPLICATION_JSON).build());
 	}
 	// public processUpdate
-	static public CompletableFuture<Response> processUpdate(LoginResponse login, UriInfo uriInfo, UserTransaction userTransaction, EntityManager entityManager, RequestFilter webSocket, Object obj) {
-		return RequestFilter.getObject(login, uriInfo, entityManager, obj.getClass()).thenCompose(oldObj -> {
-			Response response = checkObjectAccess(login, entityManager, obj);
+	static public CompletableFuture<Response> processUpdate(Principal user, UriInfo uriInfo, UserTransaction userTransaction, EntityManager entityManager, String serviceName, Object obj) {
+		return RequestFilter.getObject(user, uriInfo, entityManager, serviceName).thenCompose(oldObj -> {
+			Response response = checkObjectAccess(user, entityManager, serviceName, obj);
 
 			if (response != null) return CompletableFuture.completedFuture(response);
 
-			if (RequestFilter.haveField(obj.getClass(), "id")) {
-				Integer oldId = (Integer) RequestFilter.readField(oldObj, "id");
-				Integer newId = (Integer) RequestFilter.readField(obj, "id");
-
-				if (newId == null || newId.intValue() != oldId.intValue()) {
-					return CompletableFuture.completedFuture(Response.status(Response.Status.UNAUTHORIZED).entity("changed id").build());
-				}
-			}
-
-			return RequestFilter.update(userTransaction, entityManager, obj).thenApply(newObj -> {
-				webSocket.notify(newObj, false);
+			return DbUtils.update(userTransaction, entityManager, obj).thenApply(newObj -> {
+				RequestFilter.notify(newObj, serviceName, false);
 				return Response.ok(newObj, MediaType.APPLICATION_JSON).build();
 			});
 		});
 	}
 	// public processDelete
-	static public CompletableFuture<Response> processDelete(LoginResponse login, UriInfo uriInfo, EntityManager entityManager, RequestFilter webSocket, Class<?> objectClass) {
-		return RequestFilter.getObject(login, uriInfo, entityManager, objectClass).thenCompose(obj -> {
-			return RequestFilter.deleteOne(entityManager, obj).thenApply((objDeleted) -> {
-				webSocket.notify(objDeleted, true);
+	static public CompletableFuture<Response> processDelete(Principal user, UriInfo uriInfo, UserTransaction userTransaction, EntityManager entityManager, String serviceName) {
+		return RequestFilter.getObject(user, uriInfo, entityManager, serviceName).thenCompose(oldObj -> {
+			return DbUtils.deleteOne(userTransaction, entityManager, oldObj).thenApply(objDeleted -> {
+				RequestFilter.notify(objDeleted, serviceName, true);
 				return Response.ok().build();
 			});
 		});
 	}
-	// public
-	static public <T> CompletableFuture<Response> processQuery(LoginResponse login, UriInfo uriInfo, EntityManager entityManager, Class<T> entityClass) {
-		MultivaluedMap<String, String> queryParam = uriInfo.getQueryParameters();
-		RequestFilter.QueryMap fields = RequestFilter.QueryMap.create();
-		Integer company = login.user.getCompany();
+	// private
+    static private DbUtils.QueryMap parseQueryParameters(LoginResponse login, String serviceName, MultivaluedMap<String, String> queryParameters) {
+		DbUtils.QueryMap queryFields = DbUtils.QueryMap.create();
+		CrudService service = RequestFilter.getService (login, serviceName);
+		
+		if (service != null) {
+			JsonObject serviceFields = Json.createReader(new StringReader(service.getFields())).readObject();
+			
+			for (String fieldName : serviceFields.keySet()) {
+				JsonObject field = serviceFields.getJsonObject(fieldName);
 
-		if (company != 1) {
-			if (RequestFilter.haveField(entityClass, "company")) {
-				fields.add("company", company);
-			} else if (RequestFilter.haveField(entityClass, "category")) {
-				// se não for admin, limita os resultados para as categorias vinculadas a empresa do usuário
-				fields.add("category", login.categories);
+				if (field.containsKey("primaryKey") && field.getBoolean("primaryKey") == true) {
+					String value = queryParameters.getFirst(fieldName);
+					
+					if (value != null) {
+						String type = field.containsKey("type") ? field.getString("type") : null;
+
+						if (type == null || type.equals("s")) {
+			    			queryFields.add(fieldName, value);
+						} else if (type.equals("n") || type.equals("i")) {
+			    			queryFields.add(fieldName, Integer.parseInt(value));
+						} else if (type.equals("b")) {
+			    			queryFields.add(fieldName, Boolean.parseBoolean(value));
+						}
+					}
+				}
+			}
+			// se não for admin, limita os resultados para as categorias vinculadas a empresa do usuário
+			Integer company = login.user.getCompany();
+			
+			if (company != 1) {
+				if (serviceFields.containsKey("company")) {
+					queryFields.put("company", company);
+				} else if (serviceFields.containsKey("category")) {
+					queryFields.put("category", login.categories);
+				}
+			}
+		}
+		
+    	return queryFields;
+    }
+	// public
+	static public <T> CompletableFuture<Response> processQuery(Principal user, UriInfo uriInfo, EntityManager entityManager, String serviceName) {
+		MultivaluedMap<String, String> queryParameters = uriInfo.getQueryParameters();
+		DbUtils.QueryMap fields = parseQueryParameters((LoginResponse)user, serviceName, queryParameters);
+		String[] orderBy = null;
+
+		{
+			CrudService service = RequestFilter.getService (user, serviceName);
+
+			if (service != null && service.getOrderBy() != null) {
+				orderBy = service.getOrderBy().split(",");
 			}
 		}
 
-		String serviceName = RequestFilter.convertCaseUnderscoreToCamel(entityClass.getSimpleName(), false);
-		CrudService service = login.getCrudServices().stream().filter(item -> item.getName().equals(serviceName)).findFirst().get();
-		String[] orderBy = null;
-
-		if (service.getOrderBy() != null) {
-			orderBy = service.getOrderBy().split(",");
-		}
-
-		Integer startPosition = RequestFilter.parseInt(queryParam.getFirst("start"));
-		Integer maxResult = RequestFilter.parseInt(queryParam.getFirst("max"));
-		return RequestFilter.find(entityManager, entityClass, fields, orderBy, startPosition, maxResult).thenApply(results -> Response.ok(results, MediaType.APPLICATION_JSON).build());
+		Integer startPosition = Utils.parseInt(queryParameters.getFirst("start"));
+		Integer maxResult = Utils.parseInt(queryParameters.getFirst("max"));
+		Class<?> entityClass = RequestFilter.mapClass.get(CaseConvert.convertCaseUnderscoreToCamel (serviceName, false));
+		return DbUtils.find(entityManager, entityClass, fields, orderBy, startPosition, maxResult).thenApply(results -> Response.ok(results, MediaType.APPLICATION_JSON).build());
 	}
 
-	private void processRequest(ContainerRequestContext requestContext, String ip, String resource, final String access) {
-		Supplier<Response> crudProcess = () -> {
-				String className = RequestFilter.convertCaseUnderscoreToCamel(resource, true);
-				Class<?> restClass;
-				String domain = this.getClass().getName();
-				domain = domain.substring(0, domain.lastIndexOf(".admin"));
+	public class ImplSecurityContext implements SecurityContext {
 
-				try {
-					restClass = Class.forName(domain + ".rest." + className + "Endpoint");
-				} catch (ClassNotFoundException e) {
-					restClass = null;
-				}
+	    private LoginResponse loginResponse;
 
-				if (access.equals("create") && RequestFilter.haveMethodName(restClass, "create")) {
-					return null;
-				} else if (access.equals("read") && RequestFilter.haveMethodName(restClass, "read")) {
-					return null;
-				} else if (access.equals("query") && RequestFilter.haveMethodName(restClass, "query")) {
-					return null;
-				} else if (access.equals("delete") && RequestFilter.haveMethodName(restClass, "remove")) {
-					return null;
-				} else if (access.equals("update") && RequestFilter.haveMethodName(restClass, "update")) {
-					return null;
-				}
+	    public ImplSecurityContext(LoginResponse loginResponse) {
+	    	this.loginResponse = loginResponse;
+	    }
 
-				Class<?> objectClass;
+	    @Override
+	    public Principal getUserPrincipal() {
+	        return this.loginResponse;
+	    }
 
-				try {
-					objectClass = Class.forName(domain + ".entity." + className);
-				} catch (ClassNotFoundException e) {
-					return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(e.getMessage()).build();
-				}
+	    @Override
+	    public boolean isUserInRole(String role) {
+	        return false;
+	    }
 
-				SecurityContext securiryContext = requestContext.getSecurityContext();
-				LoginResponse login = (LoginResponse) securiryContext.getUserPrincipal();
+	    @Override
+	    public boolean isSecure() {
+	        return false;
+	    }
+
+	    @Override
+	    public String getAuthenticationScheme() {
+	        return SecurityContext.BASIC_AUTH;
+	    }
+
+	}
+// processRequest
+// main
+	private Response  processRequest(ContainerRequestContext requestContext, EntityManager entityManager, String serviceName, String uriPath) {
+// crudProcess
+		Function<LoginResponse, Response> crudProcess = login -> {
+				Class<?> objectClass = RequestFilter.mapClass.get(serviceName);
 				UriInfo uriInfo = requestContext.getUriInfo();
 				Object obj = null;
 
-				if (access.equals("create") || access.equals("update")) {
+				if (uriPath.equals("create") || uriPath.equals("update")) {
 					try {
 						InputStream inputStream = requestContext.getEntityStream();
-						obj = RequestFilter.loadObjectFromJson(objectClass, inputStream);
+						obj = ReflectionUtils.loadObjectFromJson(objectClass, inputStream);
 					} catch (Exception e) {
 						return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(e.getMessage()).build();
 					}
@@ -592,16 +369,16 @@ public class RequestFilter implements ContainerRequestFilter, ContainerResponseF
 
 				CompletableFuture<Response> cf;
 
-				if (access.equals("create")) {
-					cf = RequestFilter.processCreate(login, userTransaction, RequestFilter.this.entityManager, RequestFilter.this.webSocket, obj);
-				} else if (access.equals("update")) {
-					cf = RequestFilter.processUpdate(login, uriInfo, userTransaction, RequestFilter.this.entityManager, RequestFilter.this.webSocket, obj);
-				} else if (access.equals("delete")) {
-					cf = RequestFilter.processDelete(login, uriInfo, RequestFilter.this.entityManager, RequestFilter.this.webSocket, objectClass);
-				} else if (access.equals("read")) {
-					cf = RequestFilter.processRead(login, uriInfo, RequestFilter.this.entityManager, objectClass);
-				} else if (access.equals("query")) {
-					cf = RequestFilter.processQuery(login, uriInfo, RequestFilter.this.entityManager, objectClass);
+				if (uriPath.equals("create")) {
+					cf = RequestFilter.processCreate(login, this.userTransaction, entityManager, serviceName, obj);
+				} else if (uriPath.equals("update")) {
+					cf = RequestFilter.processUpdate(login, uriInfo, this.userTransaction, entityManager, serviceName, obj);
+				} else if (uriPath.equals("delete")) {
+					cf = RequestFilter.processDelete(login, uriInfo, this.userTransaction, entityManager, serviceName);
+				} else if (uriPath.equals("read")) {
+					cf = RequestFilter.processRead(login, uriInfo, entityManager, serviceName);
+				} else if (uriPath.equals("query")) {
+					cf = RequestFilter.processQuery(login, uriInfo, entityManager, serviceName);
 				} else {
 					return null;
 				}
@@ -609,134 +386,132 @@ public class RequestFilter implements ContainerRequestFilter, ContainerResponseF
 				return cf.exceptionally(error -> Response.status(Response.Status.BAD_REQUEST).entity(error.getMessage()).build()).join();
 		};
 
-		Function<CrudUser, String> authorization = user -> {
-				String msgErr;
-				String roles = user.getRoles();
+		Function<CrudUser, Boolean> authorization = user -> {
+				Boolean access = null;
+				JsonObject json = Json.createReader(new StringReader(user.getRoles())).readObject();
+				// verfica a permissao de acesso
+				if (Utils.findInSet(json.keySet(), serviceName) == true) {
+					JsonObject serviceAuth = json.getJsonObject(serviceName);
 
-				if (roles != null) {
-					JsonObject json = Json.createReader(new StringReader(roles)).readObject();
-					String serviceName = RequestFilter.convertCaseUnderscoreToCamel(resource, false);
-
-					if (RequestFilter.findInSet(json.keySet(), serviceName) == true) {
-						JsonObject serviceAuth = json.getJsonObject(serviceName);
-						// verfica a permissao de acesso
-						if (serviceAuth.getString(access, "true").equals("true")) {
-							msgErr = null;
-							log.info(String.format("[authorization] Sucessful authorization : path: = %s, user = %s, roles = %s, token = %s", resource, user.getName(), roles, user.getAuthctoken()));
-						} else {
-							msgErr = "unauthorized access";
-						}
-					} else {
-						msgErr = "unauthorized resource";
+					if (serviceAuth.containsKey(uriPath) == true) {
+						access = serviceAuth.getBoolean(uriPath);
 					}
-				} else {
-					msgErr = "report to admin check";
 				}
 
-				return msgErr;
+				return access;
 		};
 
 		Supplier<Response> authWithToken = () -> {
 			Response response;
-			// headers['Authorization'] = 'Token ' + token;
 			String authorizationHeader = requestContext.getHeaderString("Authorization");
-			log.info("authorization header : " + authorizationHeader);
 
 			if (authorizationHeader != null && authorizationHeader.startsWith("Token ")) {
 				String token = authorizationHeader.substring(6);
-				LoginResponse login = RequestFilter.getLogin(token);
+				LoginResponse login = RequestFilter.logins.get(token);
 
 				if (login != null) {
-					String msgErr = authorization.apply(login.user);
+					Boolean access = authorization.apply(login.user);
 
-					if (msgErr == null) {
-						try {
-							SecurityContext securityContextOld = requestContext.getSecurityContext();
+					if (access != false) {
+						SecurityContext securityContextOld = requestContext.getSecurityContext();
 
-							if (securityContextOld == null || securityContextOld.getUserPrincipal() == null) {
-								class ImplSecurityContext implements SecurityContext {
+						if (securityContextOld == null || securityContextOld.getUserPrincipal() == null) {
+							ImplSecurityContext securityContext = new ImplSecurityContext(login);
+							requestContext.setSecurityContext(securityContext);
 
-								    private LoginResponse loginResponse;
-
-								    public ImplSecurityContext(LoginResponse loginResponse) {
-								    	this.loginResponse = loginResponse;
-								    }
-
-								    @Override
-								    public Principal getUserPrincipal() {
-								        return this.loginResponse;
-								    }
-
-								    @Override
-								    public boolean isUserInRole(String role) {
-								        return false;
-								    }
-
-								    @Override
-								    public boolean isSecure() {
-								        return false;
-								    }
-
-								    @Override
-								    public String getAuthenticationScheme() {
-								        return SecurityContext.BASIC_AUTH;
-								    }
-
-								}
-
-								ImplSecurityContext securityContext = new ImplSecurityContext(login);
-								requestContext.setSecurityContext(securityContext);
-								response = crudProcess.get();
+							if (access == true) {
+								response = crudProcess.apply(login);
 							} else {
-								response = Response.status(Response.Status.BAD_REQUEST).entity("SecurityContext").build();
+								response = null;
 							}
-						} catch (Exception e) {
-							System.err.println(e.getMessage());
-							e.printStackTrace();
-							response = Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();
+						} else {
+							response = Response.status(Response.Status.BAD_REQUEST).entity("Already Identity found").build();
 						}
 					} else {
-						response = Response.status(Response.Status.UNAUTHORIZED).entity(msgErr).build();
-						log.warning(String.format("user : %s - path : %s - msgErr : %s", login.user.getName(), resource, msgErr));
+						response = Response.status(Response.Status.UNAUTHORIZED).entity("Explicit Unauthorized").build();
 					}
 				} else {
 					response = Response.status(Response.Status.UNAUTHORIZED).entity("Authorization replaced by new login in another session").build();
-					log.warning("Authorization replaced by new login in another session");
 				}
 			} else {
 				response = Response.status(Response.Status.UNAUTHORIZED).entity("Authorization token header invalid").build();
-				log.warning("Authorization token header invalid : " + authorization);
-			}
-
-			if (response != null) {
-				requestContext.abortWith(response);
 			}
 
 			return response;
 		};
 
-		authWithToken.get();
+		return authWithToken.get();
 	}
-
+	// private
 	private CompletableFuture<Response> authenticateByUserAndPassword(ContainerRequestContext requestContext, String ip) {
 		JsonObject json = Json.createReader(requestContext.getEntityStream()).readObject();
 		String userId = json.getString("userId");
-		QueryMap userQuery = QueryMap.create().add("name", userId).add("password", json.getString("password"));
+		String password = json.getString("password");
+		DbUtils.QueryMap userQuery = DbUtils.QueryMap.create().add("name", userId).add("password", password);
 
-		return RequestFilter.findOne(entityManager, CrudUser.class, userQuery)
-		.thenCompose(user -> {
+		return DbUtils.findOne(entityManager, CrudUser.class, userQuery).thenCompose(user -> {
 			String token = UUID.randomUUID().toString();
 			user.setAuthctoken(token);
 			user.setIp(ip);
-			return RequestFilter.update(userTransaction, entityManager, user).thenCompose(userAfterUpdate -> {
-				LoginResponse loginResponse = new LoginResponse(userAfterUpdate);
-				return loginResponse.load().thenApply((arg) -> {
-					log.info(String.format("[authenticateByUserAndPassword] Sucessful login : user = %s, roles = %s, token = %s", userAfterUpdate.getName(), userAfterUpdate.getRoles(), userAfterUpdate.getAuthctoken()));
+			return DbUtils.update(userTransaction, entityManager, user).thenCompose(userAfterUpdate -> {
+				return LoginResponse.load(userAfterUpdate, entityManager).thenApply((loginResponse) -> {
 					RequestFilter.logins.put(token, loginResponse);
 					return Response.ok(loginResponse, MediaType.APPLICATION_JSON).build();
 				});
 			});
 		});
+	}
+	// filter
+	@Override
+	public void filter(ContainerRequestContext requestContext) {
+		String method = requestContext.getMethod();
+		System.out.println(String.format("method : %s", method));
+		// When HttpMethod comes as OPTIONS, just acknowledge that it accepts...
+		if (method.equals("OPTIONS")) {
+			// Just send a OK signal back to the browser
+			requestContext.abortWith(Response.status(Response.Status.OK).build());
+			return;
+		}
+
+		String ip = this.httpRequest.getRemoteAddr();
+		String uri = requestContext.getUriInfo().getPath();
+		String[] paths = requestContext.getUriInfo().getAbsolutePath().getPath().split("/"); // /crud/rest/authc
+		String root = paths[2];
+		
+		String resource = null;
+		String action = null;
+
+		if (root.equals ("rest") == true) {
+			if (paths.length > 3) {
+				resource = CaseConvert.convertCaseUnderscoreToCamel (paths[3], false);
+
+				if (paths.length > 4) {
+					action = paths[4];
+				}
+			}
+		}
+
+		System.out.println(String.format("RemoteAddr : %s", ip));
+		System.out.println(String.format("uri : %s", uri));
+		System.out.println(String.format ("root : %s", root));
+		System.out.println(String.format ("resource : %s", resource));
+		System.out.println(String.format ("action : %s", action));
+
+		// no login pede usuário e senha
+		if (root.equals("rest")) {
+			if (resource.equals("authc")) {
+				Response response = this.authenticateByUserAndPassword(requestContext, ip).join();
+				requestContext.abortWith(response);
+			// em qualquer outro método pede o token
+			} else {
+				Response response = this.processRequest(requestContext, this.entityManager, resource, action);
+				
+				if (response != null) {
+					requestContext.abortWith(response);
+				}
+
+			}
+		}
 	}
 
 	@Override
@@ -752,94 +527,60 @@ public class RequestFilter implements ContainerRequestFilter, ContainerResponseF
 		// "true" );
 	}
 
-	@Override
-	public void filter(ContainerRequestContext requestContext) {
-		String path = requestContext.getUriInfo().getPath();
-		System.out.println(String.format("uri : %s", path));
-		System.out.println(String.format("method : %s", requestContext.getMethod()));
-		System.out.println(String.format("headers : %s", requestContext.getHeaders()));
-		String ip = this.httpRequest.getRemoteAddr();
-		System.out.println(String.format("RemoteAddr : %s", ip));
-
-		String method = requestContext.getMethod();
-		// When HttpMethod comes as OPTIONS, just acknowledge that it accepts...
-		if (method.equals("OPTIONS")) {
-			// Just send a OK signal back to the browser
-			requestContext.abortWith(Response.status(Response.Status.OK).build());
-			return;
-		}
-
-		String[] paths = path.split("/");
-		String resource = paths[1];
-
-		// no login pede usuário e senha
-		if (resource.equals("authc")) {
-			Response response = authenticateByUserAndPassword(requestContext, ip)
-			.exceptionally(error -> {
-				if (error.getCause() instanceof NoResultException) {
-					log.warning("mismatched user and password");
-					return Response.status(Response.Status.UNAUTHORIZED).entity("mismatched user and password").build();
-				} else {
-					log.severe(error.getMessage());
-					return Response.status(Response.Status.BAD_REQUEST).entity(error.getMessage()).build();
-				}
-			}).join();
-			requestContext.abortWith(response);
-		// em qualquer outro método pede o token
-		} else {
-			String access = path.substring(path.indexOf(resource)+resource.length()+1);
-			processRequest(requestContext, ip, resource, access);
-		}
-	}
-
-	public static LoginResponse getLogin(String token) {
-		return RequestFilter.logins.get(token);
-	}
-
-    private Logger logger = Logger.getLogger(getClass().getName());
-
-    private static Set<Session> clients = Collections.synchronizedSet(new HashSet<Session>());
-
     @OnMessage
     public void onMessage(Session session, String token) {
-    	RequestFilter.LoginResponse login = RequestFilter.getLogin(token);
+    	RequestFilter.LoginResponse login = RequestFilter.logins.get(token);
 
 		if (login != null) {
-			session.getUserProperties().put("login", login);
-		    logger.info("New websocket session opened: token : " + token + ", id : " + session.getId());
-		    clients.add(session);
+			session.getUserProperties().put("token", token);
+		    RequestFilter.clients.put(token, session);
+		    log.info("New websocket session opened: token : " + token + ", id : " + session.getId());
 		}
     }
     // remove the session after it's closed
     @OnClose
     public void onClose(Session session) {
-    	LoginResponse login = (LoginResponse) session.getUserProperties().get("login");
-        logger.info("Websoket session closed: " + login.getUser().getAuthctoken());
-        clients.remove(session);
+    	String token = (String) session.getUserProperties().get("token");
+        LoginResponse login = RequestFilter.logins.get(token);
+
+		if (login != null) {
+		    log.info("Websoket session closed: " + token);
+		    RequestFilter.clients.remove(token);
+		    RequestFilter.logins.remove(token);
+		}
     }
     // Exception handling
     @OnError
     public void error(Session session, Throwable t) {
         t.printStackTrace();
     }
-
-    private JsonObject getPrimaryKey(Object obj) {
-		JsonObjectBuilder primaryKey = Json.createObjectBuilder();
-
-		if (RequestFilter.haveField(obj.getClass(), "company")) {
-			primaryKey.add("company", (Integer) RequestFilter.readField(obj, "company"));
-		}
-
-		if (RequestFilter.haveField(obj.getClass(), "id")) {
-			primaryKey.add("id", (Integer) RequestFilter.readField(obj, "id"));
-		}
-
-		return primaryKey.build();
-    }
     // This method sends the same Bidding object to all opened sessions
-    public void notify(Object obj, boolean isRemove) {
-    	JsonObject primaryKey = getPrimaryKey(obj);
-		String serviceName = RequestFilter.convertCaseUnderscoreToCamel(obj.getClass().getSimpleName(), false);
+    public static void notify(Object obj, String serviceName, boolean isRemove) {
+		JsonObject serviceFields = Json.createReader(new StringReader(RequestFilter.mapService.get(serviceName).getFields())).readObject();
+		
+        Supplier<JsonObject> getPrimaryKey = () -> {
+    		JsonObjectBuilder primaryKeyBuilder = Json.createObjectBuilder();
+    		
+    		for (String fieldName : serviceFields.keySet()) {
+    			JsonObject field = serviceFields.getJsonObject(fieldName);
+
+    			if (field.containsKey("primaryKey") && field.getBoolean("primaryKey") == true) {
+    				Object value = ReflectionUtils.readField(obj, fieldName);
+    				
+    				if (value instanceof String) {
+    	    			primaryKeyBuilder.add(fieldName, (String) value);
+    				} else if (value instanceof Integer) {
+    	    			primaryKeyBuilder.add(fieldName, (Integer) value);
+    				} else if (value instanceof Boolean) {
+    	    			primaryKeyBuilder.add(fieldName, (Boolean) value);
+    				}
+    			}
+    		}
+    		
+    		return primaryKeyBuilder.build();
+        };
+        
+    	JsonObject primaryKey = getPrimaryKey.get();
 		JsonObjectBuilder msg = Json.createObjectBuilder();
 		msg.add("service", serviceName);
 		msg.add("primaryKey", primaryKey);
@@ -854,12 +595,12 @@ public class RequestFilter implements ContainerRequestFilter, ContainerResponseF
     	Integer objCompany = primaryKey.containsKey("company") ? primaryKey.getInt("company") : null;
     	Integer category = null;
 
-		if (RequestFilter.haveField(obj.getClass(), "category")) {
-			category = (Integer) RequestFilter.readField(obj, "company");
+		if (serviceFields.containsKey("category")) {
+			category = (Integer) ReflectionUtils.readField(obj, "category");
 		}
-
-		for (Session session : clients) {
-			RequestFilter.LoginResponse login = (LoginResponse) session.getUserProperties().get("login");
+		
+		for (Map.Entry<String, Session> item : RequestFilter.clients.entrySet()) {
+			RequestFilter.LoginResponse login = RequestFilter.logins.get(item.getKey());
 			Integer userCompany = login.getUser().getCompany();
 			// enviar somente para os clients de "company"
 			if (objCompany == null || userCompany == 1 || objCompany == userCompany) {
@@ -867,10 +608,10 @@ public class RequestFilter implements ContainerRequestFilter, ContainerResponseF
 				if (category == null || login.categories.indexOf(category) >= 0) {
 					// envia somente para os usuários com acesso ao serviço alterado
 					if (login.getWebsocketServices().contains(serviceName)) {
-						System.out.format("notify, user %s : %s\n", login.getUser().getName(), msg);
 						CompletableFuture.runAsync(() -> {
 							try {
-								session.getBasicRemote().sendText(str);
+								item.getValue().getBasicRemote().sendText(str);
+								System.out.format("notify, user %s : %s\n", login.getUser().getName(), msg);
 							} catch (IOException e) {
 								// TODO Auto-generated catch block
 								e.printStackTrace();
@@ -881,4 +622,120 @@ public class RequestFilter implements ContainerRequestFilter, ContainerResponseF
 			}
 		}
     }
+
+    public static void updateCrudServices(UserTransaction userTransaction, EntityManager entityManager) throws Exception {
+
+		BiFunction<Class<?>, String, String> generateFieldsStr = (entityClass, strFields) -> {
+			Field[] fields = entityClass.getDeclaredFields();
+			JsonObject jsonOriginal = Json.createReader(new StringReader(strFields)).readObject();
+			JsonObjectBuilder jsonBuilder = Json.createObjectBuilder(); 
+		
+			for (Field field : fields) {
+				String fieldName = field.getName();
+				javax.persistence.Column column = field.getAnnotation(javax.persistence.Column.class);
+				
+				if (Modifier.isStatic(field.getModifiers())) {
+					continue;
+				}
+				
+				if (field.getAnnotation(javax.persistence.Transient.class) != null) {
+					continue;
+				}
+				
+				String typeDesc = field.getType().getName();
+
+				if (typeDesc.endsWith(".String")) {
+					typeDesc = "s";
+				} else if (typeDesc.endsWith(".Integer")) {
+					typeDesc = "i";
+				} else if (typeDesc.endsWith(".Boolean")) {
+					typeDesc = "b";
+				} else if (typeDesc.endsWith(".BigDecimal")) {
+					typeDesc = "n3"; // numero com separação de milhar com casas decimais
+					
+					if (column != null) {
+						if (column.scale() == 2) {
+							typeDesc = "n2"; // numero com separação de cents
+						} else if (column.scale() == 1) {
+							typeDesc = "n1"; // numero com separação de decimais
+						}
+					}
+				} else if (typeDesc.endsWith(".Timestamp")) {
+					typeDesc = "datetime-local"; // data e hora completa
+				} else if (typeDesc.endsWith(".Date")) {
+					typeDesc = "date"; // data
+				} else if (typeDesc.endsWith(".Time")) {
+					typeDesc = "time"; // hora completa
+				} else {
+					System.err.printf("{%s} : {%s} : Unknow type : {%s}\n", entityClass.getName(), field.getName(), typeDesc);
+					continue;
+				}
+				// type (columnDefinition), readOnly, hiden, primaryKey, required (insertable), updatable, defaultValue, length, precision, scale 
+				JsonObjectBuilder jsonBuilderValue = Json.createObjectBuilder();
+				
+				if (typeDesc != null) {
+					jsonBuilderValue.add("type", typeDesc);
+				}
+				
+				if (column != null && column.updatable() == false) {
+					jsonBuilderValue.add("updatable", false);
+				}
+				
+				if (column != null && column.length() != 255) {
+					jsonBuilderValue.add("length", column.length());
+				}
+				
+				if (column != null && column.precision() != 0) {
+					jsonBuilderValue.add("precision", column.precision());
+				}
+				
+				if (column != null && column.scale() != 0) {
+					jsonBuilderValue.add("scale", column.scale());
+				}
+				
+				if (column != null && column.columnDefinition().toLowerCase().equals("serial")) {
+					jsonBuilderValue.add("hiden", true);
+				}
+				
+				if (field.getAnnotation(javax.persistence.Id.class) != null) {
+					jsonBuilderValue.add("primaryKey", true);
+				}
+				
+				if (field.getAnnotation(javax.validation.constraints.NotNull.class) != null) {
+					jsonBuilderValue.add("required", true);
+				}
+				
+				if (jsonOriginal.containsKey(fieldName)) {
+					jsonBuilder.add(fieldName, jsonOriginal.get(fieldName));
+					continue;
+				}
+	
+				jsonBuilder.add(fieldName, jsonBuilderValue.build());
+			}
+
+			return jsonBuilder.build().toString();
+		};
+		
+        for (EntityType<?> entityType : entityManager.getEntityManagerFactory().getMetamodel().getEntities()) {
+        	Class<?> entityClass = entityType.getJavaType();
+        	String name = CaseConvert.convertCaseUnderscoreToCamel(entityClass.getSimpleName(), false);
+        	CrudService service = entityManager.find(CrudService.class, name);
+			userTransaction.begin();
+			
+        	if (service != null) {
+        		service.setFields(generateFieldsStr.apply(entityClass, service.getFields()));
+        		entityManager.merge(service);
+        	} else {
+        		service = new CrudService();
+        		service.setName(name);
+        		service.setFields(generateFieldsStr.apply(entityClass, "{}"));
+        		entityManager.persist(service);
+        	}
+        	
+			userTransaction.commit();
+			RequestFilter.mapClass.put(name, entityClass);
+			RequestFilter.mapService.put (name, service);
+        }
+	}
+    
 }

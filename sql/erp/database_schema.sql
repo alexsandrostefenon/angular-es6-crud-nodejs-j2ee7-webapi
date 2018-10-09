@@ -1,12 +1,12 @@
 CREATE TABLE account (
 	company integer references crud_company,
 	id SERIAL,
-	account character varying(20),
+	number character varying(20),
 	agency character varying(20),
 	bank character varying(20),
 	description character varying(255),
 	PRIMARY KEY(company,id),
-	unique(bank,agency,account)
+	unique(bank,agency,number)
 );
 
 CREATE TABLE person (
@@ -56,7 +56,7 @@ CREATE TABLE product (
 );
 
 CREATE TABLE barcode (
-	barcode varchar(14) PRIMARY KEY, -- GTIN-8, GTIN-12, GTIN-13 ou GTIN-14 (antigos códigos EAN, UPC e DUN-14),
+	number varchar(14) PRIMARY KEY, -- GTIN-8, GTIN-12, GTIN-13 ou GTIN-14 (antigos códigos EAN, UPC e DUN-14),
 	manufacturer varchar(64), -- fabricante
 	product integer references product
 );
@@ -85,38 +85,19 @@ CREATE TABLE request_state (
 
 CREATE TABLE request (
 	company integer references crud_company,
-	id SERIAL NOT NULL,
+	id SERIAL,
 	type integer references request_type,
 	state integer references request_state,
 	person integer,
 	date timestamp without time zone,
 	additional_data character varying(255),
-	products_value numeric(19,2),
-	services_value numeric(19,2),
-	transport_value numeric(19,2),
-	sum_value numeric(19,2),
-	payments_value numeric(19,2),
+	products_value numeric(19,2) DEFAULT 0.000,
+	services_value numeric(19,2) DEFAULT 0.000,
+	transport_value numeric(19,2) DEFAULT 0.000,
+	sum_value numeric(19,2) DEFAULT 0.000,
+	payments_value numeric(19,2) DEFAULT 0.000,
 	PRIMARY KEY(company,id),
 	FOREIGN KEY(company, person) REFERENCES person(company, id)
-);
-
-CREATE TABLE request_freight ( -- frete
-	company integer references crud_company,
-	request integer,
-	person integer,
-	pay_by integer DEFAULT 0, -- 0=Por conta do emitente; 1=Por conta do destinatário/remetente; 2=Por conta de terceiros; 9=Sem frete. (V2.0)
-	license_plate char(9),--ABC123456
-	license_plate_uf integer references ibge_uf default 43,    
-	containers_type varchar(60) default 'Volumes', -- caixas, garrafas, paletes, bag, etc...
-	containers_count int DEFAULT 1, -- quantidade de embalagens
-	weight numeric(9,3) DEFAULT 0.000, -- peso líquido
-	weight_final numeric(9,3) DEFAULT 0.000, -- peso bruto
-	logo varchar(60), -- marca visível da embalagem
-	value numeric(9,2) DEFAULT 0.00,
-	PRIMARY KEY(company,request),
-	FOREIGN KEY(company,request) REFERENCES request(company, id),
-	FOREIGN KEY(company,person) REFERENCES person(company, id),
-	UNIQUE(company,request)
 );
 -- um por request
 CREATE TABLE request_nfe ( -- nota fiscal
@@ -152,6 +133,24 @@ CREATE TABLE request_nfe ( -- nota fiscal
 	value_icms_st numeric(9,2) default 0.00,
 	value_issqn numeric(9,2) default 0.00,
 	value_tax numeric(9,2) default 0.00,
+	PRIMARY KEY(company,request),
+	FOREIGN KEY(company,request) REFERENCES request(company, id),
+	FOREIGN KEY(company,person) REFERENCES person(company, id)
+);
+
+CREATE TABLE request_freight ( -- frete
+	company integer references crud_company,
+	request integer,
+	person integer,
+	pay_by integer DEFAULT 0, -- 0=Por conta do emitente; 1=Por conta do destinatário/remetente; 2=Por conta de terceiros; 9=Sem frete. (V2.0)
+	license_plate char(9),--ABC123456
+	license_plate_uf integer references ibge_uf default 43,    
+	containers_type varchar(60) default 'Volumes', -- caixas, garrafas, paletes, bag, etc...
+	containers_count int DEFAULT 1, -- quantidade de embalagens
+	weight numeric(9,3) DEFAULT 0.000, -- peso líquido
+	weight_final numeric(9,3) DEFAULT 0.000, -- peso bruto
+	logo varchar(60), -- marca visível da embalagem
+	value numeric(9,2) DEFAULT 0.00,
 	PRIMARY KEY(company,request),
 	FOREIGN KEY(company,request) REFERENCES request(company, id),
 	FOREIGN KEY(company,person) REFERENCES person(company, id),
@@ -204,7 +203,7 @@ CREATE TABLE stock (
 	margin_wholesale numeric(9,3) DEFAULT 25.000, -- atacado
 	reserved_in numeric(9,3) DEFAULT 0.000,
 	reserved_out numeric(9,3) DEFAULT 0.000,
-	stock numeric(9,3) DEFAULT 0.000,
+	stock_value numeric(9,3) DEFAULT 0.000,
 	stock_default numeric(9,3) DEFAULT 0.000,
 	stock_minimal numeric(9,3) DEFAULT 0.000,
 	stock_serials character varying(1024),

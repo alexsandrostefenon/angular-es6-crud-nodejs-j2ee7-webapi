@@ -1,8 +1,8 @@
-# angular-es6-crud-nodejs-j2ee7
+# angular-es6-crud-nodejs-j2ee7-webapi
 
-CRUD Web Application with Angular + ES6 + Bootstrap CSS in browser and NodeJs or J2EE7 server based
+CRUD Web Application with Angular + ES6 + Bootstrap CSS in browser and NodeJs, J2EE7 or WebApi server based.
 
-You need NodeJs or WildFly installed and PostgreSql server.
+You need NodeJs or WildFly or mono/dotnet installed and PostgreSql server.
 
 Requires browser with support to dynamic ES6 modules (tested with Chrome versions >= 64)
 
@@ -10,29 +10,40 @@ Requires browser with support to dynamic ES6 modules (tested with Chrome version
 
 Clone this repository and open terminal, changing path to local repository folder.
 
+git clone https://github.com/alexsandrostefenon/angular-es6-crud-nodejs-j2ee7-webapi.git;
+
+cd angular-es6-crud-nodejs-j2ee7-webapi
+
 ## PostgreSql setup
 
-execute psql terminal :
+in terminal, create database :
 
-`$sudo su postgres -c psql`
+sudo su postgres;
+export PGDATABASE=postgres;
+psql -c 'CREATE USER development WITH CREATEDB LOGIN PASSWORD '\''123456'\''';
+psql -c 'CREATE DATABASE crud WITH OWNER development';
+psql -c 'CREATE DATABASE development WITH OWNER development';
+exit;
 
-in psql terminal execute configurations commands :
+Note, database "development" is only for testing purposes.
 
-`CREATE USER development WITH CREATEDB LOGIN PASSWORD '123456';`
-`CREATE DATABASE crud WITH OWNER development;`
+import default configuration data with commands :
 
-exit psql terminal and import default configuration data with commands :
+export PGHOST=localhost;
+export PPORT=5432;
+export PGDATABASE=crud;
+export PGUSER=development;
+export PGPASSWORD=123456;
 
-`
-psql -U development -h localhost crud < ./sql/database_schema.sql;
-psql -U development -h localhost crud < ./sql/database_first_data.sql;
-psql -U development -h localhost crud < ./sql/nfe/database_schema.sql;
-psql -U development -h localhost crud < ./sql/nfe/database_first_data.sql;
-psql -U development -h localhost crud < ./sql/erp/database_schema.sql;
-psql -U development -h localhost crud < ./sql/erp/database_first_data.sql;
-psql -U development -h localhost crud < ./sql/iso8583router/database_schema.sql;
-psql -U development -h localhost crud < ./sql/iso8583router/database_first_data.sql;
-`
+psql < ./sql/database_schema.sql;
+psql < ./sql/nfe/database_schema.sql;
+psql < ./sql/erp/database_schema.sql;
+psql < ./sql/iso8583router/database_schema.sql;
+
+psql < ./sql/database_first_data.sql;
+psql < ./sql/nfe/database_first_data.sql;
+psql < ./sql/erp/database_first_data.sql;
+psql < ./sql/iso8583router/database_first_data.sql;
 
 ## NodeJs based server
 
@@ -50,7 +61,7 @@ openssl req -newkey rsa:2048 -new -nodes -x509 -days 3650 -keyout key.pem -out c
 
 execute :
 
-`nodejs --inspect --experimental-modules --loader ./custom-loader.mjs app.js`
+`nodejs --inspect --experimental-modules --loader ./src/main/es6/custom-loader.mjs ./src/main/es6/crud/app.js`
 
 ## J2EE7 based server
 
@@ -64,7 +75,7 @@ set JBOSS_HOME with your WildFly installation, example :
 
 start WildFly server :
 
-`sudo $JBOSS_HOME/bin/standalone.sh -b=0.0.0.0 -Djboss.https.port=8443 &`
+`$JBOSS_HOME/bin/standalone.sh -b=0.0.0.0 -Djboss.https.port=8443 --debug &`
 
 execute WildFly terminal :
 
@@ -84,13 +95,32 @@ close WildFly terminal.
 
 ### WildFly build and deploy
 
-Clone this repository and then `mvn clean wildfly:deploy` to build and deploy.
+in terminal then command `mvn clean wildfly:deploy` to build and deploy.
+
+## ASP.NET CORE WebApi + EF CORE based server
+
+Requires mono or dotnet
+
+### Build
+
+`nuget restore`
+`msbuild /t:Clean`
+`msbuild`
+
+### Run server application
+
+Execute :
+
+`mono ./bin/Debug/net471/AspNetCoreWebApi.exe`
 
 ## Web application
 
-In ES6 compliance browser open url `https://localhost:9443/crud` for nodejs server and `https://localhost:8443/crud` for WildFly server.
+In ES6 compliance browser open url
 
-For already configured services, use user 'user' with password '123456'.
+`https://localhost:9443/crud` for nodejs server or
+`https://localhost:8443/angular-es6-crud-nodejs-j2ee7` for WildFly server or
+`http://localhost:5000/` for mono/dotnet server
+
+For already configured services, use user 'spending' with password '123456'.
 
 For custom service configuration or user edition, use user 'admin' with password 'admin'.
- 

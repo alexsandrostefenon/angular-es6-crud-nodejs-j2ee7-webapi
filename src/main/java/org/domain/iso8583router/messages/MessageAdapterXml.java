@@ -9,8 +9,8 @@ import javax.xml.parsers.DocumentBuilderFactory;
 
 import org.domain.commom.ByteArrayUtils;
 import org.domain.commom.Utils;
-import org.domain.iso8583router.entity.ISO8583RouterMessageAdapterConf;
-import org.domain.iso8583router.entity.ISO8583RouterMessageAdapterConfItem;
+import org.domain.iso8583router.entity.Iso8583RouterMessageAdapter;
+import org.domain.iso8583router.entity.Iso8583RouterMessageAdapterItem;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
@@ -20,7 +20,7 @@ public class MessageAdapterXml implements MessageAdapter {
 	// TODO : pegar de message
 	String directionSuffix = "";
 
-	public void parse(Message message, ISO8583RouterMessageAdapterConf adapterConf, String root, String data, String directionSuffix) throws Exception {
+	public void parse(Message message, Iso8583RouterMessageAdapter adapterConf, String root, String data, String directionSuffix) throws Exception {
 		InputSource is = new InputSource();
 		is.setCharacterStream(new StringReader(data));
 		Document doc = DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(is);
@@ -56,12 +56,12 @@ public class MessageAdapterXml implements MessageAdapter {
 			map.put(tagName, value);
 		}
 		
-		List<ISO8583RouterMessageAdapterConfItem> confs = MessageAdapter.getMessageAdapterConfItems(adapterConf, root);
+		List<Iso8583RouterMessageAdapterItem> confs = MessageAdapter.getMessageAdapterConfItems(adapterConf, root);
 
 		for (Entry<String, String> entry : map.entrySet()) {
 		    String tagName = entry.getKey();
 		    String value = entry.getValue();
-			ISO8583RouterMessageAdapterConfItem conf = MessageAdapter.getMessageAdapterConfItemFromTag(confs, tagName);
+			Iso8583RouterMessageAdapterItem conf = MessageAdapter.getMessageAdapterConfItemFromTag(confs, tagName);
 
 			if (conf == null) {
 				throw new Exception(String.format("MessageAdapterXml.parseMessage : fail to add new field [%s]", tagName));
@@ -81,9 +81,9 @@ public class MessageAdapterXml implements MessageAdapter {
 		}
 	}
 
-	public String generate(Message message, ISO8583RouterMessageAdapterConf adapterConf, String root) throws Exception {
+	public String generate(Message message, Iso8583RouterMessageAdapter adapterConf, String root) throws Exception {
 		StringBuilder buffer = new StringBuilder(2048);
-		List<ISO8583RouterMessageAdapterConfItem> confs = MessageAdapter.getMessageAdapterConfItems(adapterConf, root);
+		List<Iso8583RouterMessageAdapterItem> confs = MessageAdapter.getMessageAdapterConfItems(adapterConf, root);
 
 		if (root == null) {
 		} else if (root.endsWith(Message.DIRECTION_NAME_S2C)) {
@@ -96,7 +96,7 @@ public class MessageAdapterXml implements MessageAdapter {
 		buffer.append(root);
 		buffer.append(">");
 
-		for (ISO8583RouterMessageAdapterConfItem conf : confs) {
+		for (Iso8583RouterMessageAdapterItem conf : confs) {
 			String str = MessageAdapter.getFieldDataWithAlign(conf, message);
 			
 			if (str != null) {

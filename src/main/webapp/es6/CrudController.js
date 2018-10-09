@@ -6,6 +6,7 @@ import {CrudObjJson} from "./CrudObjJson.js";
 import {CrudJsonArray} from "./CrudJsonArray.js";
 import {app} from "./app-globals.js";
 import {CaseConvert} from "./CaseConvert.js";
+import { ServerConnectionUI } from "./ServerConnectionUI.js";
 
 app.directive('crudTable', function() {
 	return {
@@ -21,8 +22,8 @@ app.directive('crudTable', function() {
 
 class CrudBase extends CrudCommom {
 
-	constructor(serverConnection, serviceName, primaryKey, action, $scope) {
-    	super(serverConnection, serverConnection.services[serviceName], primaryKey, action);
+	constructor(serverConnection, serviceName, objParams, action, $scope) {
+    	super(serverConnection, serverConnection.services[serviceName], objParams, action);
 		this.disabled = false;
 		this.isCollapsedForm = false;
 		this.required = "false";
@@ -76,12 +77,18 @@ class CrudBase extends CrudCommom {
 export class CrudController extends CrudBase {
 
     constructor(serverConnection, $scope) {
-    	const params = serverConnection.$location.search();
-    	const path = serverConnection.$location.path();
+		const url = new URL(window.location.hash.substring(2), window.location.href);
+    	const path = url.pathname;
 		const list = path.split('/');
 		const action = list[list.length-1];
 		const serviceName = CaseConvert.underscoreToCamel(list[list.length-2]);
-    	super(serverConnection, serviceName, params, action, $scope);
+		let objParams = {};
+
+		for (const [key,value] of url.searchParams) {
+			objParams[key] = value;
+		}
+
+    	super(serverConnection, serviceName, objParams, action, $scope);
     }
     
     get(primaryKey) {
@@ -92,9 +99,10 @@ export class CrudController extends CrudBase {
     }
 	
 	remove(primaryKey) {
-		return super.remove(primaryKey).then(response => {
+		return super.remove(primaryKey).then(data => {
+            // data may be null
 			this.goToSearch();
-			return response;
+			return data;
 		});
 	}
 
@@ -105,7 +113,7 @@ export class CrudController extends CrudBase {
 			if (this.crudService.params.saveAndExit == true) {
 				this.goToSearch();
 			} else {
-				this.goToEdit(primaryKey);
+				ServerConnectionUI.changeLocationHash(this.crudService.path + "/" + "edit", primaryKey);
 			}
 			
 			return response;
@@ -123,7 +131,7 @@ export class CrudController extends CrudBase {
 			if (this.crudService.params.saveAndExit == true) {
 				this.goToSearch();
 			} else {
-				this.goToEdit(primaryKey);
+				ServerConnectionUI.changeLocationHash(this.crudService.path + "/" + "edit", primaryKey);
 			}
 			
 			return response;

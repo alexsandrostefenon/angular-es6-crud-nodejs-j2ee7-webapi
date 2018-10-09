@@ -6,7 +6,6 @@ import javax.ejb.EJBContext;
 import javax.ejb.Stateless;
 import javax.ejb.TransactionManagement;
 import javax.ejb.TransactionManagementType;
-import javax.inject.Inject;
 import javax.inject.Named;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
@@ -25,7 +24,6 @@ import javax.ws.rs.core.UriInfo;
 
 import org.domain.crud.admin.RequestFilter;
 import org.domain.crud.admin.RequestFilter.LoginResponse;
-import org.domain.erp.entity.Request;
 import org.domain.erp.entity.RequestProduct;
 import org.domain.erp.entity.RequestState;
 
@@ -43,9 +41,6 @@ public class RequestProductEndpoint {
 	@PersistenceContext(unitName = "primary")
 	private EntityManager entityManager;
 
-	@Inject
-	private RequestFilter webSocket;
-
 	public static RequestState getRequestState(EntityManager entityManager, int id) {
 		TypedQuery<RequestState> query = entityManager.createQuery("FROM RequestState o WHERE o.id = :id", RequestState.class);
 		query.setParameter("id", id);
@@ -57,7 +52,7 @@ public class RequestProductEndpoint {
 	@Path("/create")
 	@Consumes("application/json")
 	public void create(@Context SecurityContext securityContext, @Context UriInfo uriInfo, RequestProduct entity, @Suspended AsyncResponse ar) {
-		RequestFilter.processCreate(securityContext.getUserPrincipal(), this.context.getUserTransaction(), this.entityManager, this.webSocket, entity)
+		RequestFilter.processCreate(securityContext.getUserPrincipal(), this.context.getUserTransaction(), this.entityManager, "requestProduct", entity)
 		.exceptionally(error -> Response.status(Response.Status.BAD_REQUEST).entity(error.getMessage()).build())
 		.thenAccept(response -> {
 			ar.resume(response);
@@ -71,9 +66,9 @@ public class RequestProductEndpoint {
 	@Path("/update")
 	@Consumes("application/json")
 	public void update(@Context SecurityContext securityContext, @Context UriInfo uriInfo, RequestProduct entity, @Suspended AsyncResponse ar) {
-		RequestFilter.getObject((LoginResponse) securityContext.getUserPrincipal(), uriInfo, this.entityManager, RequestProduct.class)
+		RequestFilter.<RequestProduct>getObject((LoginResponse) securityContext.getUserPrincipal(), uriInfo, this.entityManager, "requestProduct")
 		.thenAccept(old -> {
-			RequestFilter.processUpdate((LoginResponse) securityContext.getUserPrincipal(), uriInfo, this.context.getUserTransaction(), entityManager, webSocket, entity)
+			RequestFilter.processUpdate(securityContext.getUserPrincipal(), uriInfo, this.context.getUserTransaction(), entityManager, "requestProduct", entity)
 			.exceptionally(error -> Response.status(Response.Status.BAD_REQUEST).entity(error.getMessage()).build())
 			.thenAccept(response -> {
 				ar.resume(response);
@@ -91,9 +86,9 @@ public class RequestProductEndpoint {
 	@DELETE
 	@Path("/delete")
 	public void remove(@Context SecurityContext securityContext, @Context UriInfo uriInfo, @Suspended AsyncResponse ar) {
-		RequestFilter.getObject((LoginResponse) securityContext.getUserPrincipal(), uriInfo, this.entityManager, RequestProduct.class)
+		RequestFilter.<RequestProduct>getObject(securityContext.getUserPrincipal(), uriInfo, this.entityManager, "requestProduct")
 		.thenAccept(obj -> {
-			RequestFilter.processDelete((LoginResponse) securityContext.getUserPrincipal(), uriInfo, this.entityManager, this.webSocket, RequestProduct.class)
+			RequestFilter.processDelete(securityContext.getUserPrincipal(), uriInfo, this.context.getUserTransaction(), this.entityManager, "requestProduct")
 			.exceptionally(error -> Response.status(Response.Status.BAD_REQUEST).entity(error.getMessage()).build())
 			.thenAccept(response -> {
 				ar.resume(response);

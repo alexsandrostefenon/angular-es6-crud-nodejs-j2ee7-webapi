@@ -4,12 +4,12 @@ import java.util.List;
 
 import org.domain.commom.ByteArrayUtils;
 import org.domain.commom.Utils;
-import org.domain.iso8583router.entity.ISO8583RouterMessageAdapterConf;
-import org.domain.iso8583router.entity.ISO8583RouterMessageAdapterConfItem;
+import org.domain.iso8583router.entity.Iso8583RouterMessageAdapter;
+import org.domain.iso8583router.entity.Iso8583RouterMessageAdapterItem;
 
 public class MessageAdapterTTLV implements MessageAdapter {
 	
-	private void parse(Message message, ISO8583RouterMessageAdapterConfItem conf, String value) throws Exception {
+	private void parse(Message message, Iso8583RouterMessageAdapterItem conf, String value) throws Exception {
 		if (value != null && value.length() > 0) {
 			boolean mayBeSpecial = (conf.getDataType() == Utils.DATA_TYPE_SPECIAL);
 			
@@ -23,10 +23,10 @@ public class MessageAdapterTTLV implements MessageAdapter {
 		}
 	}
 	
-	public void parse(Message message, ISO8583RouterMessageAdapterConf adapterConf, String root, String data, String directionSuffix) throws Exception {
+	public void parse(Message message, Iso8583RouterMessageAdapter adapterConf, String root, String data, String directionSuffix) throws Exception {
 		// primeiro converte os escapes hexa 
 		data = ByteArrayUtils.unEscapeBinaryData(data, "(", ")", 2);
-		List<ISO8583RouterMessageAdapterConfItem> confs = MessageAdapter.getMessageAdapterConfItems(adapterConf, root);
+		List<Iso8583RouterMessageAdapterItem> confs = MessageAdapter.getMessageAdapterConfItems(adapterConf, root);
 		int offset = 0;
 
 		while (offset < data.length()) {
@@ -38,7 +38,7 @@ public class MessageAdapterTTLV implements MessageAdapter {
 			
 			if (offset < data.length() - 2) {
 				String name = data.substring(pos_ini, offset);
-				ISO8583RouterMessageAdapterConfItem conf = MessageAdapter.getMessageAdapterConfItemFromTag(confs, name);
+				Iso8583RouterMessageAdapterItem conf = MessageAdapter.getMessageAdapterConfItemFromTag(confs, name);
 
 				if (conf == null) {
 					throw new Exception(String.format("MessageAdapterTTLV.parseMessage : fail to add new field [%s]", name));
@@ -74,11 +74,11 @@ public class MessageAdapterTTLV implements MessageAdapter {
 		}
 	}
 	
-	public String generate(Message message, ISO8583RouterMessageAdapterConf adapterConf, String root) throws Exception {
+	public String generate(Message message, Iso8583RouterMessageAdapter adapterConf, String root) throws Exception {
 		StringBuilder buffer = new StringBuilder(2048);
-		List<ISO8583RouterMessageAdapterConfItem> confs = MessageAdapter.getMessageAdapterConfItems(adapterConf, root);
+		List<Iso8583RouterMessageAdapterItem> confs = MessageAdapter.getMessageAdapterConfItems(adapterConf, root);
 		
-		for (ISO8583RouterMessageAdapterConfItem conf : confs) {
+		for (Iso8583RouterMessageAdapterItem conf : confs) {
 			String fieldName = conf.getFieldName();
 			String str = MessageAdapter.getFieldDataWithAlign(conf, message);
 			int size = str == null ? 0 : str.length();

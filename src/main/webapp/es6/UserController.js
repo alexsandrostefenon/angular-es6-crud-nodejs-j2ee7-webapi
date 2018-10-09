@@ -4,23 +4,23 @@ import {CrudObjJson} from "./CrudObjJson.js";
 import {CrudJsonArray} from "./CrudJsonArray.js";
 import {Utils} from "./Utils.js";
 
-export const name = "UserController";
-
-export class Controller extends CrudController {
+export class UserController extends CrudController {
 
     constructor(serverConnection, $scope) {
     	super(serverConnection, $scope);
+//        debugger;
+        this.fields["password"].htmlType = "password";
     }
 
     get(primaryKey) {
     	return super.get(primaryKey).then(response => {
         	// Regras de acesso aos serviços
     		const fieldsRoles = {
-        			"read":{"defaultValue":true, "options":[false,true]},
-        			"query":{"defaultValue":true, "options":[false,true]},
-        			"create":{"defaultValue":true, "options":[false,true]},
-        			"update":{"defaultValue":true, "options":[false,true]},
-        			"delete":{"defaultValue":true, "options":[false,true]}
+        			"read":{"defaultValue":true, "options":[false,true,undefined]},
+        			"query":{"defaultValue":true, "options":[false,true,undefined]},
+        			"create":{"defaultValue":true, "options":[false,true,undefined]},
+        			"update":{"defaultValue":false, "options":[false,true,undefined]},
+        			"delete":{"defaultValue":false, "options":[false,true,undefined]}
         			};
 
         	const nameOptionsRoles = [];

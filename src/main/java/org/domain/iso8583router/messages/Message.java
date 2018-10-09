@@ -6,10 +6,10 @@ import java.util.List;
 
 import org.domain.commom.Logger;
 import org.domain.commom.Utils;
-import org.domain.iso8583router.entity.ISO8583RouterTransaction;
+import org.domain.iso8583router.entity.Iso8583RouterTransaction;
 
 // classe que extende os campos que não são arquivados no banco de dados
-public class Message extends ISO8583RouterTransaction {
+public class Message extends Iso8583RouterTransaction {
 /**
 	 * 
 	 */
@@ -41,7 +41,7 @@ public class Message extends ISO8583RouterTransaction {
 		// TODO Auto-generated constructor stub
 	}
 
-	public Message(ISO8583RouterTransaction other) {
+	public Message(Iso8583RouterTransaction other) {
 		super(other);
 	}
 
@@ -105,7 +105,7 @@ public class Message extends ISO8583RouterTransaction {
 	}
 	
 	private static ArrayList<String> getFixedFieldsNames() {
-		Field[] fields = ISO8583RouterTransaction.class.getDeclaredFields();
+		Field[] fields = Iso8583RouterTransaction.class.getDeclaredFields();
 		ArrayList<String> ret = new ArrayList<String>(fields.length);
 		
 		for (Field field : fields) {
@@ -124,7 +124,7 @@ public class Message extends ISO8583RouterTransaction {
 		Object data;
 		
 		try {
-			Field field = ISO8583RouterTransaction.class.getDeclaredField(name);
+			Field field = Iso8583RouterTransaction.class.getDeclaredField(name);
 			field.setAccessible(true);
 			data = field.get(obj);
 		} catch (Exception e) {
@@ -162,7 +162,7 @@ public class Message extends ISO8583RouterTransaction {
 	}
 
 	private void writeFixedFieldData(String name, Object value) throws Exception {
-		Field field = ISO8583RouterTransaction.class.getDeclaredField(name);
+		Field field = Iso8583RouterTransaction.class.getDeclaredField(name);
 		field.setAccessible(true);
 		// TODO : fazer cast de tipo
 		

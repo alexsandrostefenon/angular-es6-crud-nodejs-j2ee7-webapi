@@ -3,10 +3,7 @@ package org.domain.crud.entity;
 import javax.json.JsonObject;
 import javax.persistence.Column;
 import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
 import javax.persistence.Id;
-import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import javax.persistence.Transient;
 import javax.xml.bind.annotation.XmlRootElement;
@@ -15,29 +12,20 @@ import javax.xml.bind.annotation.XmlRootElement;
 @Table(name = "crud_service")
 @XmlRootElement
 public class CrudService implements java.io.Serializable {
-	// path, isOnLine, fields, filterFields, objDefault
-	// service.name, service.isOnLine, service.fields, service.filterFields, service.objDefault
-
-	/**
-	 *
-	 */
 	private static final long serialVersionUID = -1919519756231188092L;
 
 	@Id
-	@SequenceGenerator(name="crud_service_id_seq", sequenceName="crud_service_id_seq", allocationSize=1)
-	@GeneratedValue(strategy=GenerationType.SEQUENCE, generator="crud_service_id_seq")
-	@Column(columnDefinition="serial")
-	private Integer id;
+	private String name;
 
-	@Column(unique=true)
-	private String name;// path
+	// type, hiden, primaryKey, required, defaultValue
+	@Column(length=10240)
+	private String fields = "{}";
+
+	private String title;
 
 	private String menu;
 
 	private String template;
-
-	@Column(length=10240)
-	private String fields;
 
 	@Column(length=10240,name="filter_fields")
 	private String filterFields;
@@ -50,12 +38,10 @@ public class CrudService implements java.io.Serializable {
 
 	@Column(name = "save_and_exit")
 	private Boolean saveAndExit = true;
-
-	private String title;
-
+/*
 	@Transient
 	private JsonObject jsonFields;
-	
+*/	
 	public String getName() {
 		return this.name;
 	}
@@ -65,18 +51,6 @@ public class CrudService implements java.io.Serializable {
 	}
 
 	public CrudService() {
-	}
-
-	public CrudService(int id) {
-		this.id = id;
-	}
-
-	public Integer getId() {
-		return this.id;
-	}
-
-	public void setId(Integer id) {
-		this.id = id;
 	}
 
 	public String getFields() {
@@ -142,9 +116,9 @@ public class CrudService implements java.io.Serializable {
 	public void setOrderBy(String orderBy) {
 		this.orderBy = orderBy;
 	}
-
+/*
 	public void setJsonFields(JsonObject jsonFields) {
 		this.jsonFields = jsonFields;
 	}
-
+*/
 }

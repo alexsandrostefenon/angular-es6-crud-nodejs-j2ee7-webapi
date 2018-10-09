@@ -69,7 +69,7 @@ export class Utils {
 	}
 
 	static getFieldTypes() {
-    	var types = ["i", "b", "s", "n1", "n2", "n3", "c", "p", "datetime-local", "date", "time"];
+    	var types = ["i", "b", "s", "n1", "n2", "n3", "n4", "c", "datetime-local", "date", "time"];
 		return types;
 	}
 

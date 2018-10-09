@@ -1,7 +1,5 @@
-import {CrudController} from "./CrudController.js";
-import {CrudItem} from "./CrudItem.js";
-
-export const name = "RequestController";
+import {CrudController} from "../CrudController.js";
+import {CrudItem} from "../CrudItem.js";
 
 export class RequestController extends CrudController {
 
@@ -128,8 +126,11 @@ export class RequestController extends CrudController {
     	this.saveAndExit = false;
 
     	if (this.action == "new") {
-        	this.instance.date = new Date();
-        	this.instance.date.setMilliseconds(0);
+    		if (this.instance.date == undefined) {
+				this.instance.date = new Date();
+				this.instance.date.setMilliseconds(0);
+    		}
+    		
 	    	this.filterRequestState();
 		}
 
@@ -156,7 +157,3 @@ export class RequestController extends CrudController {
     }
 
 }
-
-export class Controller extends RequestController {
-}
-

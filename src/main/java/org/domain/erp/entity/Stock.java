@@ -36,8 +36,8 @@ public class Stock implements java.io.Serializable {
 	private BigDecimal estimedIn;
 	@Column(name = "estimed_out", precision = 9, scale = 3)
 	private BigDecimal estimedOut;
-	@Column(name = "stock", precision = 9, scale = 3)
-	private BigDecimal stock;
+	@Column(name = "stock_value", precision = 9, scale = 3)
+	private BigDecimal stockValue;
 
 	@Column(name = "stock_serials", length = 1024)
 	private String stockSerials;
@@ -113,11 +113,11 @@ public class Stock implements java.io.Serializable {
 	public void setEstimedOut(BigDecimal estimedOut) {
 		this.estimedOut = estimedOut;
 	}
-	public BigDecimal getStock() {
-		return stock;
+	public BigDecimal getStockValue() {
+		return stockValue;
 	}
-	public void setStock(BigDecimal stock) {
-		this.stock = stock;
+	public void setStockValue(BigDecimal stockValue) {
+		this.stockValue = stockValue;
 	}
 	public String getStockSerials() {
 		return stockSerials;

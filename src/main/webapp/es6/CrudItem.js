@@ -28,7 +28,9 @@ export class CrudItem extends CrudCommom {
 		this.isClonable = isClonable;
 
 		if (typeof foreignKey === 'object') {
-			this.foreignKey = Object.values(foreignKey)[0];
+			if (foreignKey.id != undefined) {
+				this.foreignKey = foreignKey.id;
+			}
 		} else {
 			this.foreignKey = foreignKey;
 		}
@@ -60,7 +62,7 @@ export class CrudItem extends CrudCommom {
 			for (var item of this.filterResults) {
 				let newItem = angular.copy(item);
 				newItem[this.fieldName] = this.foreignKey;
-				this.crudService.save({}, newItem).then(response => {
+				this.crudService.save(newItem).then(response => {
 					count++;
 
 					if (count == this.filterResults.length) {
@@ -74,7 +76,8 @@ export class CrudItem extends CrudCommom {
 	}
 
 	remove(primaryKey) {
-		return super.remove(primaryKey).then(response => this.query());
+        // data may be null
+		return super.remove(primaryKey).then(data => this.query());
 	}
 
 	save() {

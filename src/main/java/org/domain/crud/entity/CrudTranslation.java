@@ -23,7 +23,9 @@ public class CrudTranslation implements java.io.Serializable {
 	@GeneratedValue(strategy=GenerationType.SEQUENCE, generator="crud_translation_id_seq")
 	@Column(columnDefinition="serial")
 	private Integer id;
+	@Column(nullable = false)
 	private String name;
+	@Column(nullable = false)
 	private String locale;
 	private String translation;
 
@@ -34,7 +36,6 @@ public class CrudTranslation implements java.io.Serializable {
 		this.id = id;
 	}
 
-	@Column(nullable = false)
 	public String getLocale() {
 		return locale;
 	}
@@ -51,7 +52,6 @@ public class CrudTranslation implements java.io.Serializable {
 		this.translation = translation;
 	}
 
-	@Column(nullable = false)
 	public String getName() {
 		return name;
 	}

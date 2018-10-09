@@ -114,17 +114,4 @@ export class CrudUiSkeleton {
 		return ret;
 	}
 
-	buildUrl(service, primaryKey, action) {
-		var obj = {};
-		obj.path = "/app/" + service.path + "/" + action;
-		obj.search = "";
-
-		for (var fieldName in primaryKey) {
-			obj.search = obj.search + encodeURIComponent(fieldName) + "=" + encodeURIComponent(primaryKey[fieldName]) + "&";
-		}
-
-		obj.url = obj.path + "?" + obj.search;
-    	return obj;
-	}
-
 }

@@ -1,5 +1,6 @@
 import {Utils} from "./Utils.js";
 import {CrudUiSkeleton} from "./CrudUiSkeleton.js";
+import { ServerConnectionUI } from "./ServerConnectionUI.js";
 
 export class Pagination {
 
@@ -24,14 +25,14 @@ export class Pagination {
 
 export class CrudCommom extends CrudUiSkeleton {
 
-	constructor(serverConnection, crudService, searchParams, action) {
+	constructor(serverConnection, crudService, objParams, action) {
 		super(serverConnection, crudService.params.name, crudService.databaseUiAdapter);
 		this.crudService = crudService;
-		this.primaryKey = this.crudService.getPrimaryKey(searchParams);
+		this.primaryKey = this.crudService.getPrimaryKey(objParams);
 		this.action = action;
 		this.filterResults = this.crudService.list;
 		this.filterResultsStr = this.crudService.listStr;
-		this.setValues(searchParams);
+		this.setValues(objParams);
 		this.pagination = new Pagination(10);
 		this.paginate();
 
@@ -42,25 +43,12 @@ export class CrudCommom extends CrudUiSkeleton {
 		}
 	}
 
-	goToView(primaryKey) {
-//		this.serverConnection.$location.path(this.buildUrl(this.crudService, primaryKey, "view"));
-		this.serverConnection.$location.path("/app/" + this.crudService.path + "/view").search(primaryKey);
-	}
-
-	goToEdit(primaryKey) {
-//		this.serverConnection.$location.path(this.buildUrl(this.crudService, primaryKey, "edit"));
-		this.serverConnection.$location.path("/app/" + this.crudService.path + "/edit").search(primaryKey);
-	}
-
-	goToNew() {
-//		this.serverConnection.$location.path(this.buildUrl(this.crudService, {}, "new"));
-		this.serverConnection.$location.path("/app/" + this.crudService.path + "/new").search({});
+	buildLocationHash(hashPath, hashSearchObj) {
+		return ServerConnectionUI.buildLocationHash(this.crudService.path + "/" + hashPath, hashSearchObj)
 	}
 
 	goToSearch() {
-//		this.serverConnection.$location.path(this.buildUrl(this.crudService, {}, "search"));
-//		this.serverConnection.$location.path("/app/" + this.crudService.path + "/search").search({});
-		if (this.serverConnection.$location.path().endsWith("/search") == false) {
+		if (window.location.hash.endsWith("/search") == false) {
 			window.history.back();
 		}
 	}
@@ -79,13 +67,13 @@ export class CrudCommom extends CrudUiSkeleton {
     		}
     	}
 
-    	var obj = this.buildUrl(service, primaryKey, action);
+		const url = ServerConnectionUI.buildLocationHash(service.path + "/" + action, primaryKey);
 
-    	if (isGoNow == true && this.serverConnection.$location != undefined) {
-    		this.serverConnection.$location.path(obj.path).search(obj.search);
+    	if (isGoNow == true) {
+    		ServerConnectionUI.changeLocationHash(service.path + "/" + action, primaryKey);
     	}
 
-    	return "#!" + obj.url;
+    	return url;
     }
 
 	remove(primaryKey) {
@@ -120,7 +108,7 @@ export class CrudCommom extends CrudUiSkeleton {
 	save() {
 		this.primaryKey = {};
 		this.loadInstance();
-		return this.crudService.save({}, this.instance);
+		return this.crudService.save(this.instance);
 	}
 
 	paginate() {

@@ -1,4 +1,4 @@
-﻿CREATE TABLE payment_type (
+CREATE TABLE payment_type (
 	id integer PRIMARY KEY,
 	description character varying(255),
 	name character varying(50) NOT NULL

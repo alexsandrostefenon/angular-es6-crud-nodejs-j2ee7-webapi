@@ -19,7 +19,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
 import org.domain.iso8583router.beans.ConnectorBean;
-import org.domain.iso8583router.entity.ISO8583RouterTransaction;
+import org.domain.iso8583router.entity.Iso8583RouterTransaction;
 import org.domain.iso8583router.messages.Message;
 
 @Path("/connector")
@@ -128,7 +128,7 @@ public class ConnectorEndpoint implements Serializable {
 	@Path("request")
 	public Message request(Message message) {
 		this.logger.log(Level.INFO, String.format(">>>>>>> request "));
-		this.entityManager.persist((ISO8583RouterTransaction) message);
+		this.entityManager.persist((Iso8583RouterTransaction) message);
 		Message messageIn = null;//Session.execute(this.manager.getManager(), message);
 		return messageIn;
 	}
