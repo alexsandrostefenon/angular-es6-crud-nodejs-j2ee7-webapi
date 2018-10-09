@@ -2,6 +2,7 @@ package org.domain.commom;
 
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Set;
 
 public class Utils {
 	public static enum DataAlign {
@@ -286,4 +287,27 @@ public class Utils {
 		return pos;
 	}
 	public static String year = Integer.toString(Calendar.getInstance().get(Calendar.YEAR));
+	// Utils
+	public static boolean findInSet(Set<String> set, String item) {
+		boolean found = false;
+	
+		for (String key : set) {
+			if (key.equals(item)) {
+				found = true;
+				break;
+			}
+		}
+	
+		return found;
+	}
+	// Utils
+	public static Integer parseInt(String str) {
+		Integer ret = null;
+	
+		if (str != null) {
+			ret = Integer.parseInt(str);
+		}
+	
+		return ret;
+	}
 }

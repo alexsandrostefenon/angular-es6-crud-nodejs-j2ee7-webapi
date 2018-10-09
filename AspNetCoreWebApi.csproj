@@ -1,0 +1,41 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFrameworks>net471;netcoreapp2.1;</TargetFrameworks>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Folder Include="src\" />
+    <Folder Include="src\main\" />
+    <Folder Include="src\main\webapp\" />
+    <Folder Include="src\main\dotnet\" />
+    <Folder Include="src\main\dotnet\commom\" />
+    <Folder Include="src\main\dotnet\crud\" />
+    <Folder Include="src\main\dotnet\erp\" />
+    <Folder Include="src\main\dotnet\iso8583router\" />
+    <Folder Include="src\main\dotnet\badmt\" />
+    <Folder Include="src\main\dotnet\badmt\Entity\" />
+    <Folder Include="src\main\dotnet\badmt\Rest\" />
+    <Folder Include="src\main\dotnet\crud\Entity\" />
+    <Folder Include="src\main\dotnet\erp\Entity\" />
+    <Folder Include="src\main\dotnet\financial2\" />
+    <Folder Include="src\main\dotnet\financial2\Entity\" />
+    <Folder Include="src\main\dotnet\iso8583router\Entity\" />
+    <Folder Include="src\main\dotnet\nfe\" />
+    <Folder Include="src\main\dotnet\nfe\Entity\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore" Version="2.1.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Core" Version="2.1.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Formatters.Json" Version="2.1.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Cors" Version="2.1.0" />
+    <PackageReference Include="Microsoft.AspNetCore.HttpsPolicy" Version="2.1.0" />
+    <PackageReference Include="Microsoft.AspNetCore.StaticFiles" Version="2.1.0" />
+    <PackageReference Include="Microsoft.AspNetCore.Diagnostics" Version="2.1.0" />
+    <PackageReference Include="Newtonsoft.Json" Version="11.0.2" />
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="2.1.1" />
+    <PackageReference Include="Microsoft.AspNetCore.WebSockets" Version="2.1.1" />
+  </ItemGroup>
+
+</Project>
