@@ -26,13 +26,9 @@ namespace AspNetCoreWebApi.Entity
         public virtual DbSet<CrudService> CrudService { get; set; }
         public virtual DbSet<CrudTranslation> CrudTranslation { get; set; }
         public virtual DbSet<CrudUser> CrudUser { get; set; }
-        public virtual DbSet<Employed> Employed { get; set; }
         public virtual DbSet<IbgeCity> IbgeCity { get; set; }
         public virtual DbSet<IbgeCnae> IbgeCnae { get; set; }
         public virtual DbSet<IbgeUf> IbgeUf { get; set; }
-        public virtual DbSet<Iso8583Bin> Iso8583Bin { get; set; }
-        public virtual DbSet<Iso8583CrackerLog> Iso8583CrackerLog { get; set; }
-        public virtual DbSet<Iso8583PosFreteMoney> Iso8583PosFreteMoney { get; set; }
         public virtual DbSet<Iso8583RouterChipApplicationIdentifier> Iso8583RouterChipApplicationIdentifier { get; set; }
         public virtual DbSet<Iso8583RouterChipPublicKey> Iso8583RouterChipPublicKey { get; set; }
         public virtual DbSet<Iso8583RouterComm> Iso8583RouterComm { get; set; }
@@ -40,12 +36,6 @@ namespace AspNetCoreWebApi.Entity
         public virtual DbSet<Iso8583RouterMessageAdapter> Iso8583RouterMessageAdapter { get; set; }
         public virtual DbSet<Iso8583RouterMessageAdapterItem> Iso8583RouterMessageAdapterItem { get; set; }
         public virtual DbSet<Iso8583RouterTransaction> Iso8583RouterTransaction { get; set; }
-        public virtual DbSet<Iso8583TefFlow> Iso8583TefFlow { get; set; }
-        public virtual DbSet<Iso8583TefProduct> Iso8583TefProduct { get; set; }
-        public virtual DbSet<Iso8583TefProductWithoutCard> Iso8583TefProductWithoutCard { get; set; }
-        public virtual DbSet<Iso8583TefProvider> Iso8583TefProvider { get; set; }
-        public virtual DbSet<Iso8583TefQuestion> Iso8583TefQuestion { get; set; }
-        public virtual DbSet<Iso8583Terminal> Iso8583Terminal { get; set; }
         public virtual DbSet<NfeCfop> NfeCfop { get; set; }
         public virtual DbSet<NfeStCofins> NfeStCofins { get; set; }
         public virtual DbSet<NfeStCsosn> NfeStCsosn { get; set; }
@@ -60,26 +50,16 @@ namespace AspNetCoreWebApi.Entity
         public virtual DbSet<NfeStPis> NfeStPis { get; set; }
         public virtual DbSet<NfeTaxGroup> NfeTaxGroup { get; set; }
         public virtual DbSet<PaymentType> PaymentType { get; set; }
-        public virtual DbSet<Payroll> Payroll { get; set; }
         public virtual DbSet<Person> Person { get; set; }
         public virtual DbSet<Product> Product { get; set; }
-        public virtual DbSet<ProductAssembleProduct> ProductAssembleProduct { get; set; }
-        public virtual DbSet<ProductAssembleService> ProductAssembleService { get; set; }
         public virtual DbSet<Request> Request { get; set; }
-        public virtual DbSet<RequestComission> RequestComission { get; set; }
-        public virtual DbSet<RequestFreight> RequestFreight { get; set; }
         public virtual DbSet<RequestNfe> RequestNfe { get; set; }
         public virtual DbSet<RequestPayment> RequestPayment { get; set; }
         public virtual DbSet<RequestProduct> RequestProduct { get; set; }
-        public virtual DbSet<RequestRepair> RequestRepair { get; set; }
-        public virtual DbSet<RequestRepairInmetro> RequestRepairInmetro { get; set; }
-        public virtual DbSet<RequestService> RequestService { get; set; }
         public virtual DbSet<RequestState> RequestState { get; set; }
         public virtual DbSet<RequestType> RequestType { get; set; }
-        public virtual DbSet<Service> Service { get; set; }
         public virtual DbSet<Stock> Stock { get; set; }
         public virtual DbSet<StockAction> StockAction { get; set; }
-        public virtual DbSet<StockService> StockService { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -151,13 +131,6 @@ namespace AspNetCoreWebApi.Entity
                 entity.Property(e => e.Id).ValueGeneratedOnAdd();
             });
 
-            modelBuilder.Entity<Employed>(entity =>
-            {
-                entity.HasKey(e => new { e.Company, e.Id });
-
-                entity.Property(e => e.Id).ValueGeneratedOnAdd();
-            });
-
             modelBuilder.Entity<IbgeCity>(entity =>
             {
                 entity.HasIndex(e => new { e.Name, e.Uf })
@@ -195,16 +168,6 @@ namespace AspNetCoreWebApi.Entity
                 entity.Property(e => e.Country).HasDefaultValueSql("1058");
 
                 entity.Property(e => e.Ddd).HasDefaultValueSql("NULL::character varying");
-            });
-
-            modelBuilder.Entity<Iso8583Bin>(entity =>
-            {
-                entity.Property(e => e.Bin).ValueGeneratedNever();
-            });
-
-            modelBuilder.Entity<Iso8583PosFreteMoney>(entity =>
-            {
-                entity.Property(e => e.Code).ValueGeneratedNever();
             });
 
             modelBuilder.Entity<Iso8583RouterChipApplicationIdentifier>(entity =>
@@ -342,19 +305,6 @@ namespace AspNetCoreWebApi.Entity
                 entity.Property(e => e.Id).ValueGeneratedNever();
             });
 
-            modelBuilder.Entity<Payroll>(entity =>
-            {
-                entity.HasKey(e => new { e.Company, e.Id });
-
-                entity.HasIndex(e => new { e.Employed, e.TimeIn })
-                    .HasName("payroll_employed_time_in_key")
-                    .IsUnique();
-
-                entity.HasIndex(e => new { e.Employed, e.TimeOut })
-                    .HasName("payroll_employed_time_out_key")
-                    .IsUnique();
-            });
-
             modelBuilder.Entity<Person>(entity =>
             {
                 entity.HasKey(e => new { e.Company, e.Id });
@@ -399,59 +349,11 @@ namespace AspNetCoreWebApi.Entity
                 entity.Property(e => e.Weight).HasDefaultValueSql("0.000");
             });
 
-            modelBuilder.Entity<ProductAssembleProduct>(entity =>
-            {
-                entity.HasIndex(e => new { e.ProductIn, e.ProductOut })
-                    .HasName("product_assemble_product_product_in_product_out_key")
-                    .IsUnique();
-
-                entity.Property(e => e.AmountIn).HasDefaultValueSql("1.000");
-
-                entity.Property(e => e.FactorLoseInAssemble).HasDefaultValueSql("0.000");
-
-                entity.Property(e => e.FactorLoseInDisassemble).HasDefaultValueSql("0.000");
-            });
-
-            modelBuilder.Entity<ProductAssembleService>(entity =>
-            {
-                entity.HasIndex(e => new { e.ServiceIn, e.ProductOut })
-                    .HasName("product_assemble_service_service_in_product_out_key")
-                    .IsUnique();
-
-                entity.Property(e => e.AmountIn).HasDefaultValueSql("1.000");
-            });
-
             modelBuilder.Entity<Request>(entity =>
             {
                 entity.HasKey(e => new { e.Company, e.Id });
 
                 entity.Property(e => e.Id).ValueGeneratedOnAdd();
-            });
-
-            modelBuilder.Entity<RequestComission>(entity =>
-            {
-                entity.HasKey(e => new { e.Company, e.Id });
-
-                entity.Property(e => e.TaxComission).HasDefaultValueSql("0.000");
-            });
-
-            modelBuilder.Entity<RequestFreight>(entity =>
-            {
-                entity.HasKey(e => new { e.Company, e.Request });
-
-                entity.Property(e => e.ContainersCount).HasDefaultValueSql("1");
-
-                entity.Property(e => e.ContainersType).HasDefaultValueSql("'Volumes'::character varying");
-
-                entity.Property(e => e.LicensePlateUf).HasDefaultValueSql("43");
-
-                entity.Property(e => e.PayBy).HasDefaultValueSql("0");
-
-                entity.Property(e => e.Value).HasDefaultValueSql("0.00");
-
-                entity.Property(e => e.Weight).HasDefaultValueSql("0.000");
-
-                entity.Property(e => e.WeightFinal).HasDefaultValueSql("0.000");
             });
 
             modelBuilder.Entity<RequestNfe>(entity =>
@@ -539,52 +441,8 @@ namespace AspNetCoreWebApi.Entity
                 entity.Property(e => e.ValueItem).HasDefaultValueSql("0.00");
             });
 
-            modelBuilder.Entity<RequestRepair>(entity =>
-            {
-                entity.HasKey(e => new { e.Company, e.Request });
-
-                entity.Property(e => e.Value).HasDefaultValueSql("0");
-            });
-
-            modelBuilder.Entity<RequestRepairInmetro>(entity =>
-            {
-                entity.HasKey(e => new { e.Company, e.Request });
-
-                entity.Property(e => e.Inmetro).HasDefaultValueSql("0");
-
-                entity.Property(e => e.Seal).HasDefaultValueSql("0");
-            });
-
-            modelBuilder.Entity<RequestService>(entity =>
-            {
-                entity.HasKey(e => new { e.Company, e.Id });
-
-                entity.Property(e => e.Id).ValueGeneratedOnAdd();
-
-                entity.Property(e => e.Quantity).HasDefaultValueSql("1.000");
-
-                entity.Property(e => e.Value).HasDefaultValueSql("0.000");
-
-                entity.Property(e => e.ValueAllTax).HasDefaultValueSql("0.00");
-
-                entity.Property(e => e.ValueDesc).HasDefaultValueSql("0.00");
-
-                entity.Property(e => e.ValueFrete).HasDefaultValueSql("0.00");
-
-                entity.Property(e => e.ValueItem).HasDefaultValueSql("0.00");
-            });
-
             modelBuilder.Entity<RequestState>(entity =>
             {
-            });
-
-            modelBuilder.Entity<Service>(entity =>
-            {
-                entity.HasIndex(e => e.Name)
-                    .HasName("service_name_key")
-                    .IsUnique();
-
-                entity.Property(e => e.TaxIss).HasDefaultValueSql("0.000");
             });
 
             modelBuilder.Entity<Stock>(entity =>
@@ -629,45 +487,6 @@ namespace AspNetCoreWebApi.Entity
                 entity.HasIndex(e => e.Name)
                     .HasName("stock_action_name_key")
                     .IsUnique();
-            });
-
-            modelBuilder.Entity<StockService>(entity =>
-            {
-                entity.HasKey(e => new { e.Company, e.Id });
-
-                entity.Property(e => e.CountIn).HasDefaultValueSql("0.000");
-
-                entity.Property(e => e.CountOut).HasDefaultValueSql("0.000");
-
-                entity.Property(e => e.EstimedIn).HasDefaultValueSql("0.000");
-
-                entity.Property(e => e.EstimedOut).HasDefaultValueSql("0.000");
-
-                entity.Property(e => e.EstimedValue).HasDefaultValueSql("0.000");
-
-                entity.Property(e => e.MarginSale).HasDefaultValueSql("50.000");
-
-                entity.Property(e => e.MarginWholesale).HasDefaultValueSql("25.000");
-
-                entity.Property(e => e.ReservedIn).HasDefaultValueSql("0.000");
-
-                entity.Property(e => e.ReservedOut).HasDefaultValueSql("0.000");
-
-                entity.Property(e => e.Stock).HasDefaultValueSql("0.000");
-
-                entity.Property(e => e.StockDefault).HasDefaultValueSql("0.000");
-
-                entity.Property(e => e.StockMinimal).HasDefaultValueSql("0.000");
-
-                entity.Property(e => e.SumValueIn).HasDefaultValueSql("0.000");
-
-                entity.Property(e => e.SumValueOut).HasDefaultValueSql("0.000");
-
-                entity.Property(e => e.SumValueStock).HasDefaultValueSql("0.000");
-
-                entity.Property(e => e.Value).HasDefaultValueSql("0.000");
-
-                entity.Property(e => e.ValueWholesale).HasDefaultValueSql("0.000");
             });
 
             modelBuilder.HasSequence("hibernate_sequence");
