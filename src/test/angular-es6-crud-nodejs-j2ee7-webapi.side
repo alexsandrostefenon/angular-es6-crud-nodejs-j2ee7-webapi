@@ -1,7 +1,8 @@
 {
   "id": "5ebf3ab3-7a16-4ca5-bc32-95e2ddbf6e1b",
+  "version": "1.1",
   "name": "angular-es6-crud-nodejs-j2ee7-webapi",
-  "url": "https://localhost:8443/angular-es6-crud-nodejs-j2ee7",
+  "url": "https://192.168.2.139:9443",
   "tests": [{
     "id": "a634f1aa-1398-4f5e-8b60-14bc2320cbf0",
     "name": "request_buy_new",
@@ -47,9 +48,9 @@
       "target": "linkText=Compra",
       "targets": [
         ["linkText=Compra", "linkText"],
-        ["//a[contains(text(),'Compra')]", "xpath:link"],
-        ["//a[contains(@href, '#!/app/request/new?type=1&state=10')]", "xpath:href"],
-        ["//div[2]/ul/li/a", "xpath:position"]
+        ["xpath=//a[contains(text(),'Compra')]", "xpath:link"],
+        ["xpath=//a[contains(@href, '#!/app/request/new?type=1&state=10')]", "xpath:href"],
+        ["xpath=//div[2]/ul/li/a", "xpath:position"]
       ],
       "value": ""
     }, {
@@ -61,9 +62,9 @@
         ["id=requestForm-date", "id"],
         ["name=date", "name"],
         ["css=#requestForm-date", "css"],
-        ["//input[@id='requestForm-date']", "xpath:attributes"],
-        ["//div[@id='requestForm-date_controls']/input", "xpath:idRelative"],
-        ["//div[4]/div/div/input", "xpath:position"]
+        ["xpath=//input[@id='requestForm-date']", "xpath:attributes"],
+        ["xpath=//div[@id='requestForm-date_controls']/input", "xpath:idRelative"],
+        ["xpath=//div[4]/div/div/input", "xpath:position"]
       ],
       "value": "2018-05-18T20:08:34"
     }, {
@@ -89,9 +90,9 @@
         ["id=requestProductForm-product", "id"],
         ["name=product", "name"],
         ["css=#requestProductForm-product", "css"],
-        ["//select[@id='requestProductForm-product']", "xpath:attributes"],
-        ["//div[@id='requestProductForm-product_controls']/select", "xpath:idRelative"],
-        ["//crud-item/form/div[2]/div/div/div/select", "xpath:position"]
+        ["xpath=//select[@id='requestProductForm-product']", "xpath:attributes"],
+        ["xpath=//div[@id='requestProductForm-product_controls']/select", "xpath:idRelative"],
+        ["xpath=//crud-item/form/div[2]/div/div/div/select", "xpath:position"]
       ],
       "value": "index=1"
     }, {
@@ -123,6 +124,13 @@
       "targets": [],
       "value": "5102 - Venda de mercadoria adquirida ou recebida de terceiros - "
     }, {
+      "id": "d7462c65-9dbc-4537-8f55-71fc53b27bdf",
+      "comment": "",
+      "command": "//assertValue",
+      "target": "id=requestProductForm-value",
+      "targets": [],
+      "value": "5.29"
+    }, {
       "id": "51fe206a-1ece-4c3e-b260-d270d64dc97c",
       "comment": "",
       "command": "click",
@@ -152,9 +160,9 @@
         ["id=requestPaymentForm-dueDate", "id"],
         ["name=dueDate", "name"],
         ["css=#requestPaymentForm-dueDate", "css"],
-        ["//input[@id='requestPaymentForm-dueDate']", "xpath:attributes"],
-        ["//div[@id='requestPaymentForm-dueDate_controls']/input", "xpath:idRelative"],
-        ["//crud-item[2]/form/div[2]/div[5]/div/div/input", "xpath:position"]
+        ["xpath=//input[@id='requestPaymentForm-dueDate']", "xpath:attributes"],
+        ["xpath=//div[@id='requestPaymentForm-dueDate_controls']/input", "xpath:idRelative"],
+        ["xpath=//crud-item[2]/form/div[2]/div[5]/div/div/input", "xpath:position"]
       ],
       "value": "2018-05-18T20:08:34"
     }, {
@@ -164,6 +172,54 @@
       "target": "id=requestPaymentForm-add",
       "targets": [],
       "value": ""
+    }, {
+      "id": "edb77868-caef-41d3-9f83-ee3a762d09ea",
+      "comment": "",
+      "command": "click",
+      "target": "id=single-button-form",
+      "targets": [
+        ["id=single-button-form", "id"],
+        ["css=#single-button-form", "css"],
+        ["css=#single-button-form", "css:finder"],
+        ["xpath=//button[@id='single-button-form']", "xpath:attributes"],
+        ["xpath=//div[3]/button", "xpath:position"]
+      ],
+      "value": ""
+    }, {
+      "id": "8a2a4e14-55db-483f-8bd9-cc04493e6a7a",
+      "comment": "",
+      "command": "click",
+      "target": "linkText=Requisições",
+      "targets": [
+        ["linkText=Requisições", "linkText"],
+        ["css=.dropdown-menu > .ng-scope:nth-child(2) > .ng-binding", "css:finder"],
+        ["xpath=//a[contains(text(),'Requisições')]", "xpath:link"],
+        ["xpath=//a[contains(@href, '#!/app/request/search')]", "xpath:href"],
+        ["xpath=//li[2]/a", "xpath:position"]
+      ],
+      "value": ""
+    }, {
+      "id": "e55f6018-c8d9-4b44-b02b-7089efa7fb79",
+      "comment": "",
+      "command": "click",
+      "target": "linkText=Edit",
+      "targets": [
+        ["linkText=Edit", "linkText"],
+        ["css=a.ng-binding.ng-scope", "css"],
+        ["css=td > .ng-scope:nth-child(1)", "css:finder"],
+        ["xpath=//a[contains(text(),'Edit')]", "xpath:link"],
+        ["xpath=//tbody[@id='requestForm-crud-table-body']/tr/td/a", "xpath:idRelative"],
+        ["xpath=//a[contains(@href, '#!/app/request/edit?company=2&id=17')]", "xpath:href"],
+        ["xpath=//td/a", "xpath:position"]
+      ],
+      "value": ""
+    }, {
+      "id": "f6b802bf-2777-4a4f-8847-e914bdb7ecdc",
+      "comment": "",
+      "command": "assertValue",
+      "target": "",
+      "targets": [],
+      "value": "2018-05-18T20:08:34"
     }]
   }, {
     "id": "459c824d-1825-4183-90db-145872eac86e",
@@ -207,7 +263,7 @@
       "id": "ea3d11c9-b61d-4a53-94e1-d55bbeb70837",
       "comment": "",
       "command": "clickAt",
-      "target": "//a[contains(text(),'Clientes e Fornecedores')]",
+      "target": "xpath=//a[contains(text(),'Clientes e Fornecedores')]",
       "targets": [],
       "value": "58,17"
     }, {
@@ -319,7 +375,7 @@
       "id": "fed8f530-ec32-43e6-8c23-5024d64963b5",
       "comment": "",
       "command": "clickAt",
-      "target": "//a[contains(text(),'Produtos')]",
+      "target": "xpath=//a[contains(text(),'Produtos')]",
       "targets": [],
       "value": "41,17"
     }, {
@@ -389,7 +445,7 @@
       "id": "2eed6924-38a2-4a60-9035-0090cd600c65",
       "comment": "",
       "command": "clickAt",
-      "target": "//a[contains(text(),'Contas')]",
+      "target": "xpath=//a[contains(text(),'Contas')]",
       "targets": [],
       "value": "42,11"
     }, {
@@ -497,21 +553,21 @@
       "id": "fa280e29-15d6-4ab1-8404-e4c89d57218b",
       "comment": "",
       "command": "clickAt",
-      "target": "//a[contains(text(),'Crud User')]",
+      "target": "xpath=//a[contains(text(),'Crud User')]",
       "targets": [],
       "value": "37,8"
     }, {
       "id": "2d7f0b0e-ac26-498f-8145-2f81f8fe57f2",
       "comment": "",
       "command": "click",
-      "target": "//a[contains(@href, '#!/app/crud_user/edit?company=2&id=2')]",
+      "target": "xpath=//a[contains(@href, '#!/app/crud_user/edit?company=2&id=2')]",
       "targets": [
         ["linkText=Edit", "linkText"],
         ["css=a.ng-binding.ng-scope", "css"],
-        ["//a[contains(text(),'Edit')]", "xpath:link"],
-        ["//tbody[@id='crudUserForm-crud-table-body']/tr/td/a", "xpath:idRelative"],
-        ["//a[contains(@href, '#!/app/crud_user/edit?company=2&id=2')]", "xpath:href"],
-        ["//td/a", "xpath:position"]
+        ["xpath=//a[contains(text(),'Edit')]", "xpath:link"],
+        ["xpath=//tbody[@id='crudUserForm-crud-table-body']/tr/td/a", "xpath:idRelative"],
+        ["xpath=//a[contains(@href, '#!/app/crud_user/edit?company=2&id=2')]", "xpath:href"],
+        ["xpath=//td/a", "xpath:position"]
       ],
       "value": ""
     }, {
@@ -652,9 +708,9 @@
       "targets": [
         ["id=login", "id"],
         ["css=#login", "css"],
-        ["//button[@id='login']", "xpath:attributes"],
-        ["//div[@id='main']/form/button", "xpath:idRelative"],
-        ["//form/button", "xpath:position"]
+        ["xpath=//button[@id='login']", "xpath:attributes"],
+        ["xpath=//div[@id='main']/form/button", "xpath:idRelative"],
+        ["xpath=//form/button", "xpath:position"]
       ],
       "value": ""
     }]
@@ -927,12 +983,12 @@
       "id": "b47286d4-dcf3-4e20-8d5d-9cf2022f801a",
       "comment": "",
       "command": "click",
-      "target": "//a[contains(@href, '#!/app/crud_user/edit?company=2&id=2')]",
+      "target": "xpath=//a[contains(@href, '#!/app/crud_user/edit?company=2&id=2')]",
       "targets": [
         ["xpath=(//a[contains(text(),'Edit')])[2]", "xpath:link"],
-        ["//tbody[@id='crudUserForm-crud-table-body']/tr[2]/td/a", "xpath:idRelative"],
-        ["//a[contains(@href, '#!/app/crud_user/edit?company=2&id=2')]", "xpath:href"],
-        ["//tr[2]/td/a", "xpath:position"]
+        ["xpath=//tbody[@id='crudUserForm-crud-table-body']/tr[2]/td/a", "xpath:idRelative"],
+        ["xpath=//a[contains(@href, '#!/app/crud_user/edit?company=2&id=2')]", "xpath:href"],
+        ["xpath=//tr[2]/td/a", "xpath:position"]
       ],
       "value": ""
     }, {
@@ -1129,7 +1185,6 @@
     "timeout": 300,
     "tests": ["459c824d-1825-4183-90db-145872eac86e", "a634f1aa-1398-4f5e-8b60-14bc2320cbf0", "1e9f3675-4bd4-4450-a7a6-c31b52b5e3b8", "eeb9e8f0-7a60-4b9d-9422-86d8f667fe4d", "a4720c93-1155-49f1-940e-1240e2c6adf6"]
   }],
-  "urls": ["http://localhost:5000/", "https://localhost:9443/crud", "https://localhost:9443/", "https://localhost:8443/angular-es6-crud-nodejs-j2ee7"],
-  "plugins": [],
-  "version": "1.0"
+  "urls": ["http://192.168.2.139:5000/", "https://192.168.2.139:9443/crud", "https://192.168.2.139:9443/", "https://192.168.2.139:8443/angular-es6-crud-nodejs-j2ee7", "https://192.168.2.139:9443/"],
+  "plugins": []
 }

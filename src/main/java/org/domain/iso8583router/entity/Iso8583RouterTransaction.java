@@ -1,18 +1,18 @@
 package org.domain.iso8583router.entity;
 
-import java.util.HashMap;
-
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Id;
-import javax.persistence.Table;
+import java.io.Serializable;
+import javax.persistence.*;
 import javax.validation.constraints.Size;
+
+import java.lang.Long;
+import java.util.HashMap;
 
 import org.domain.commom.ByteArrayUtils;
 
 @Entity
-@Table(name = "iso8583_router_transaction", schema = "public")
-public class Iso8583RouterTransaction implements java.io.Serializable {
+@Table(name = "iso8583_router_transaction")
+@NamedQuery(name="Iso8583RouterTransaction.findAll", query="SELECT r FROM Iso8583RouterTransaction r")
+public class Iso8583RouterTransaction implements Serializable {
 /**
 	 * 
 	 */

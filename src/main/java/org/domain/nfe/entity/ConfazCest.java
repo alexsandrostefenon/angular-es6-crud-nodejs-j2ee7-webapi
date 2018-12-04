@@ -3,6 +3,7 @@ package org.domain.nfe.entity;
 import java.io.Serializable;
 import javax.persistence.*;
 
+import org.domain.nfe.entity.ConfazCestPK;
 
 /**
  * The persistent class for the confaz_cest database table.

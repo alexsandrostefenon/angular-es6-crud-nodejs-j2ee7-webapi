@@ -1,40 +1,55 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
+using AspNetCoreWebApi.Entity;
 using Microsoft.AspNetCore.Mvc;
-
-// For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+using Microsoft.EntityFrameworkCore;
 
 namespace org.domain.iso8583router.rest {
 	[Route("rest/iso8583router/connector")]
     [ApiController]
 	public class ConnectorEndpoint : ControllerBase {
-        // GET api/values
-        [HttpGet]
-        public ActionResult<IEnumerable<string>> Get() {
-            return new string[] { "value1", "value2" };
+		private readonly DbContext entityManager;
+
+		public ConnectorEndpoint (CrudContext dbContext) {
+			this.entityManager = dbContext;
+		}
+
+		[HttpPost ("create")]
+		public ActionResult<Iso8583RouterComm> Create ([FromBody] Iso8583RouterComm obj) {
+			entityManager.Add (obj);
+			entityManager.SaveChanges ();
+			return obj;
+		}
+
+		[HttpGet ("read")]
+		public ActionResult<Iso8583RouterComm> Read ([FromQuery] String name) {
+			return this.entityManager.Set<Iso8583RouterComm> ().Find(name);
+		}
+
+		[HttpPut ("update")]
+		public ActionResult<Iso8583RouterComm> Update ([FromQuery] String name, [FromBody] Iso8583RouterComm newObj) {
+			if (String.Equals(name, newObj.Name) == false) {
+				Iso8583RouterComm oldObj = this.entityManager.Set<Iso8583RouterComm> ().Find (name);
+				this.entityManager.Entry (oldObj).State = EntityState.Detached;
+			}
+
+			this.entityManager.Update (newObj);
+			this.entityManager.SaveChanges ();
+			return newObj;
+		}
+
+		[HttpDelete ("delete")]
+		public ActionResult Delete([FromQuery] String name) {
+			Iso8583RouterComm oldObj = this.entityManager.Set<Iso8583RouterComm> ().Find (name);
+			this.entityManager.Remove (oldObj);
+			this.entityManager.SaveChanges ();
+			return this.Ok ();
         }
 
-        // GET api/values/5
-        [HttpGet("{id}")]
-        public ActionResult<string> Get(int id) {
-            return "value";
-        }
-
-        // POST api/values
-        [HttpPost]
-        public void Post([FromBody]string value) {
-        }
-
-        // PUT api/values/5
-        [HttpPut("{id}")]
-        public void Put(int id, [FromBody]string value) {
-        }
-
-        // DELETE api/values/5
-        [HttpDelete("{id}")]
-        public void Delete(int id) {
-        }
+		[HttpGet ("query")]
+		public ActionResult<List<Iso8583RouterComm>> Query () {
+			return this.entityManager.Set<Iso8583RouterComm> ().ToList ();
+		}
     }
 }

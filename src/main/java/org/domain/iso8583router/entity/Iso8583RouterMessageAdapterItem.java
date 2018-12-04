@@ -7,6 +7,7 @@ import javax.persistence.Table;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
 
+import org.domain.commom.Utils.DataAlign;
 import org.domain.commom.Utils;
 
 @Entity
@@ -17,7 +18,7 @@ public class Iso8583RouterMessageAdapterItem implements java.io.Serializable {
 	private Integer id;
 	@Column(name="message_adapter") @NotNull
 	private String messageAdapter = "iso8583default"; // iso8583default
-	private Utils.DataAlign alignment = Utils.DataAlign.ZERO_LEFT;
+	private DataAlign alignment = DataAlign.ZERO_LEFT;
 	@Column(name="data_type") @NotNull
 	private Integer dataType = Utils.DATA_TYPE_DECIMAL | Utils.DATA_TYPE_ALPHA | Utils.DATA_TYPE_SPECIAL;
 	@Column(name="data_format")
@@ -131,11 +132,11 @@ public class Iso8583RouterMessageAdapterItem implements java.io.Serializable {
 		this.dataFormat = dataFormat;
 	}
 
-	public Utils.DataAlign getAlignment() {
+	public DataAlign getAlignment() {
 		return alignment;
 	}
 
-	public void setAlignment(Utils.DataAlign alignment) {
+	public void setAlignment(DataAlign alignment) {
 		this.alignment = alignment;
 	}
 

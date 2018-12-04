@@ -8,12 +8,10 @@ import javax.persistence.Id;
 import javax.persistence.IdClass;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
-import javax.xml.bind.annotation.XmlRootElement;
 
 @IdClass(CompanyIdPK.class)
 @Entity
 @Table(name = "crud_user")
-@XmlRootElement
 public class CrudUser {
 
 	/**

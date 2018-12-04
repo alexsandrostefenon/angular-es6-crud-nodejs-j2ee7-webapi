@@ -719,6 +719,7 @@ public class RequestFilter implements ContainerRequestFilter, ContainerResponseF
         for (EntityType<?> entityType : entityManager.getEntityManagerFactory().getMetamodel().getEntities()) {
         	Class<?> entityClass = entityType.getJavaType();
         	String name = CaseConvert.convertCaseUnderscoreToCamel(entityClass.getSimpleName(), false);
+//    		log.info(String.format("[RequestFilter.updateCrudServices] Processing entity %s", name));
         	CrudService service = entityManager.find(CrudService.class, name);
 			userTransaction.begin();
 			

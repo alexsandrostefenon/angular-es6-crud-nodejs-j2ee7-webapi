@@ -6,11 +6,9 @@ import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.Table;
 import javax.persistence.Transient;
-import javax.xml.bind.annotation.XmlRootElement;
 
 @Entity
 @Table(name = "crud_service")
-@XmlRootElement
 public class CrudService implements java.io.Serializable {
 	private static final long serialVersionUID = -1919519756231188092L;
 

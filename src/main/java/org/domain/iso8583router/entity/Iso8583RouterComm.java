@@ -5,11 +5,11 @@ import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.Table;
 
-import org.domain.commom.Utils;
-import org.domain.iso8583router.messages.comm.Comm;
+import org.domain.commom.Utils.CommRequestDirection;
+import org.domain.iso8583router.messages.comm.Comm.BinaryEndian;
 
 @Entity
-@Table(name = "iso8583_router_comm", schema = "public")
+@Table(name = "iso8583_router_comm")
 public class Iso8583RouterComm implements java.io.Serializable {
 
 	/**
@@ -34,10 +34,10 @@ public class Iso8583RouterComm implements java.io.Serializable {
 	// número máximo de conexões que podem aguardar na fila para ser capturadas pelo servidor
 	private Integer backlog = 50;
 	// Client to Server, Server to Client, Bidirecional
-	private Utils.CommRequestDirection direction = Utils.CommRequestDirection.CLIENT_TO_SERVER; // CLIENT_TO_SERVER = 0, SERVER_TO_CLIENT = 1, BIDIRECIONAL = 2
+	private CommRequestDirection direction = CommRequestDirection.CLIENT_TO_SERVER; // CLIENT_TO_SERVER = 0, SERVER_TO_CLIENT = 1, BIDIRECIONAL = 2
 	// Comm.ENDIAN_BIG ou Comm.ENDIAN_LITTLE
 	@Column(name="endian_type")
-	private Comm.BinaryEndian endianType = Comm.BinaryEndian.UNKNOW; // BIG
+	private BinaryEndian endianType = BinaryEndian.UNKNOW; // BIG
 	// número máximo de seções simultâneas que o servidor pode processar
 	@Column(name="max_opened_connections")
 	private Integer maxOpenedConnections = 100; // n�mro m�ximo de conex�es : 1, 100, 1000
@@ -54,7 +54,7 @@ public class Iso8583RouterComm implements java.io.Serializable {
 	public Iso8583RouterComm() {
 	}
 
-	public Iso8583RouterComm(String name, Integer port, Boolean permanent, Utils.CommRequestDirection direction, String adapter, String messageConf, Boolean sizeAscii) {
+	public Iso8583RouterComm(String name, Integer port, Boolean permanent, CommRequestDirection direction, String adapter, String messageConf, Boolean sizeAscii) {
 		this.name = name;
 		this.port = port;
 		this.permanent = permanent;
@@ -112,11 +112,11 @@ public class Iso8583RouterComm implements java.io.Serializable {
 		this.permanent = permanent;
 	}
 
-	public Utils.CommRequestDirection getDirection() {
-		return this.direction != null ? this.direction : Utils.CommRequestDirection.CLIENT_TO_SERVER;
+	public CommRequestDirection getDirection() {
+		return this.direction != null ? this.direction : CommRequestDirection.CLIENT_TO_SERVER;
 	}
 
-	public void setDirection(Utils.CommRequestDirection direction) {
+	public void setDirection(CommRequestDirection direction) {
 		this.direction = direction;
 	}
 
@@ -144,11 +144,11 @@ public class Iso8583RouterComm implements java.io.Serializable {
 		this.messageAdapter = messageAdapter;
 	}
 
-	public Comm.BinaryEndian getEndianType() {
+	public BinaryEndian getEndianType() {
 		return endianType;
 	}
 
-	public void setEndianType(Comm.BinaryEndian endianType) {
+	public void setEndianType(BinaryEndian endianType) {
 		this.endianType = endianType;
 	}
 	

@@ -1,10 +1,11 @@
 package org.domain.erp.entity;
 
+import org.domain.erp.entity.RequestNfePK;
+
 import java.io.Serializable;
 import javax.persistence.*;
 import java.math.BigDecimal;
 import java.sql.Timestamp;
-
 
 /**
  * The persistent class for the request_nfe database table.
@@ -59,7 +60,6 @@ public class RequestNfe implements Serializable {
 
 	public RequestNfe() {
 	}
-
 
 	public RequestNfePK getId() {
 		return this.id;

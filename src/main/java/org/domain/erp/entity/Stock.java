@@ -7,14 +7,12 @@ import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.IdClass;
 import javax.persistence.Table;
-import javax.xml.bind.annotation.XmlRootElement;
 
 import org.domain.crud.entity.CompanyIdPK;
 
 @IdClass(CompanyIdPK.class)
 @Entity
 @Table(name = "stock")
-@XmlRootElement
 public class Stock implements java.io.Serializable {
 
 	/**

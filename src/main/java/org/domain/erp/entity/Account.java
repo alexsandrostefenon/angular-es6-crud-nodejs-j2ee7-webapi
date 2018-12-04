@@ -10,14 +10,12 @@ import javax.persistence.IdClass;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import javax.persistence.UniqueConstraint;
-import javax.xml.bind.annotation.XmlRootElement;
 
 import org.domain.crud.entity.CompanyIdPK;
 
 @IdClass(CompanyIdPK.class)
 @Entity
 @Table(name = "account", uniqueConstraints = @UniqueConstraint(columnNames = {"bank", "agency", "number"}))
-@XmlRootElement
 public class Account implements java.io.Serializable {
 
 	/**
