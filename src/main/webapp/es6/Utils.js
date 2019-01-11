@@ -18,22 +18,25 @@ export class Utils {
 	}
 
 	// retorna um array de boolean, um elemento para cada bit, ou seja, cada caracter ascii hex gera quatro elementos.
-	static strAsciiHexToFlags(strAsciiHex) {
+	static strAsciiHexToFlags(strAsciiHex, numBits) {
 		if (strAsciiHex == null || strAsciiHex.length == 0) {
 			return null;
 		}
 
-		var numNibbles = (strAsciiHex.length);
-		var flags = new Array(numNibbles * 4);
+		if (numBits == undefined) {
+			numBits = 32;
+		}
 
-		for (var i = 0, j = 0; i < numNibbles; i++) {
-			var ch = strAsciiHex.charAt(i);
-			var byte = parseInt(ch, 16);
+		const flags = new Array(numBits);
 
-			for (var k = 3; k >= 0; k--, j++) {
-				var bit = 1 << j;
-				var value = byte & bit;
-				var flag = value != 0 ? true : false;
+		for (let i = strAsciiHex.length-1, j = 0; i >= 0; i--) {
+			let ch = strAsciiHex.charAt(i);
+			let byte = parseInt(ch, 16);
+
+			for (let k = 0; k < 4; k++, j++) {
+				let bit = 1 << k;
+				let value = byte & bit;
+				let flag = value != 0 ? true : false;
 	    		flags[j] = flag;
 			}
 		}
@@ -43,28 +46,18 @@ export class Utils {
 
 	// faz o inverso da funcao strAsciiHexToFlags
 	static flagsToStrAsciiHex(flags) {
-		var value = 0;
-		var numNibbles = flags.length;
+		let value = 0;
 
-		for (var i = 0; i < numNibbles; i++) {
-			var flag = flags[i];
-			var bit = 0x80000000 >> i;
+		for (let i = 0; i < flags.length; i++) {
+			let flag = flags[i];
+			let bit = 1 << i;
 
 			if (flag == true) {
 				value |= bit;
 			}
 		}
 
-		var strAsciiHex = value.toString(16);
-
-		while (strAsciiHex.length < numNibbles) {
-			strAsciiHex = strAsciiHex + '0';
-		}
-
-		if (strAsciiHex.length > numNibbles) {
-			strAsciiHex = strAsciiHex.substring(0, numNibbles);
-		}
-
+		let strAsciiHex = value.toString(16);
 		return strAsciiHex;
 	}
 

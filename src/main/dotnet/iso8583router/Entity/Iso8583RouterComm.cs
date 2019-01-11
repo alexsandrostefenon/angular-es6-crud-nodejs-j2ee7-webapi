@@ -34,7 +34,7 @@ namespace AspNetCoreWebApi.Entity
         public int? EndianType { get; set; }
         [Column("max_opened_connections")]
         public int? MaxOpenedConnections { get; set; }
-        [Column("message_adapter", TypeName = "character varying(255)")]
-        public string MessageAdapter { get; set; }
+		[Required][Column("message_adapter", TypeName = "character varying(64)")][ForeignKey ("Iso8583RouterMessageAdapter")]
+		public string MessageAdapter { get; set; }
     }
 }

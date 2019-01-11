@@ -7,6 +7,7 @@ var revertCamelCase = pgCamelCase.inject(pg);
 // Fix for parsing of numeric fields
 var types = pg.types
 types.setTypeParser(1700, 'text', parseFloat);
+types.setTypeParser(1114, str => new Date(str + "+0000"));
 
 export class DbClientPostgres {
 

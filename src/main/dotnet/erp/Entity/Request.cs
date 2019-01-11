@@ -35,6 +35,8 @@ namespace AspNetCoreWebApi.Entity
         public decimal ServicesValue { get; set; }
 		[Column("transport_value", TypeName = "numeric(19,2)")][Editable(false)][Required][FilterUIHint("", "", "defaultValue", "0.000")]
         public decimal TransportValue { get; set; }
+		[Column("desc_value", TypeName = "numeric(19,2)")][Editable(false)][Required][FilterUIHint("", "", "defaultValue", "0.000")]
+        public decimal descValue { get; set; }
 		[Column("sum_value", TypeName = "numeric(19,2)")][Editable(false)][Required][FilterUIHint("", "", "defaultValue", "0.000")]
         public decimal SumValue { get; set; }
 		[Column("payments_value", TypeName = "numeric(19,2)")][Editable(false)][Required][FilterUIHint("", "", "defaultValue", "0.000")]

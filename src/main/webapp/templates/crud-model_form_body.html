@@ -2,33 +2,27 @@
 	<div class="form-group" ng-class="{'has-error': {{vm.formId}}.{{fieldName}}.$invalid}">
 	    <label for="{{fieldName}}" class="col-sm-2 control-label">{{vm.serverConnection.convertCaseAnyToLabel(field.label)}}</label>
 
-	    <div id="{{vm.formId}}-{{fieldName}}_controls" class="col-sm-10" ng-if="field.service == undefined">
-            <input  ng-if="field.options != undefined && field.options.length >  50"                                           class="form-control" id="{{vm.formId}}-{{fieldName}}" name="{{fieldName}}" ng-required="field.required == true" ng-model="vm.instance[fieldName]"      type="text"                                                                              list="{{vm.formId}}-{{fieldName}}-list" autocomplete="off">
-			<select ng-if="field.options != undefined && field.options.length <= 50"                                           class="form-control" id="{{vm.formId}}-{{fieldName}}" name="{{fieldName}}" ng-required="field.required == true" ng-model="vm.instance[fieldName]"                                                                                               ng-options="o for o in field.options | filter:$viewValue | limitTo:100"></select>
-			<input  ng-if="field.options == undefined"                                                                         class="form-control" id="{{vm.formId}}-{{fieldName}}" name="{{fieldName}}" ng-required="field.required == true" ng-model="vm.instance[fieldName]"      type="{{field.htmlType}}" step="{{field.htmlStep}}" ng-readonly="{{field.readOnly == true}}" placeholder="{{field.placeholder}}" autocomplete="off">
-            <datalist id="{{vm.formId}}-{{fieldName}}-list">
-                <option ng-repeat="o in field.options" value="{{o}}"/>
-            </datalist>
+	    <div id="{{vm.formId}}-{{fieldName}}_controls" class="col-sm-10" ng-if="field.filterResultsStr == undefined">
+			<input                                              class="form-control" id="{{vm.formId}}-{{fieldName}}" name="{{fieldName}}" ng-required="field.required == true" ng-model="vm.instance[fieldName]"      ng-disabled="{{field.readOnly == true}}" type="{{field.htmlType}}" step="{{field.htmlStep}}" placeholder="{{field.placeholder}}" autocomplete="off">
 	    </div>
 
-	    <div id="{{vm.formId}}-{{fieldName}}_controls" class="col-sm-7" ng-if="field.service != undefined">
-			<select ng-if="field.filterResultsStr.length > 0 && field.filterResultsStr.length <= 20 && field.readOnly != true" class="form-control" id="{{vm.formId}}-{{fieldName}}" name="{{fieldName}}" ng-required="field.required == true" ng-model="field.externalReferencesStr"                                                                                          ng-change="vm.setFieldId(fieldName,field.externalReferencesStr)"    ng-options="o for o in field.filterResultsStr | filter:$viewValue | limitTo:100"></select>
-            <input  ng-if="field.filterResultsStr.length > 0 && field.filterResultsStr.length >  20 && field.readOnly != true" class="form-control" id="{{vm.formId}}-{{fieldName}}" name="{{fieldName}}" ng-required="field.required == true" ng-model="field.externalReferencesStr" type="text"                                                                              ng-change="vm.setFieldId(fieldName,field.externalReferencesStr)" list="{{vm.formId}}-{{fieldName}}-list" autocomplete="off">
-			<input  ng-if="field.readOnly == true"                                                                             class="form-control" id="{{vm.formId}}-{{fieldName}}" name="{{fieldName}}" ng-required="field.required == true" ng-model="field.externalReferencesStr" type="text"                                         ng-readonly="true">
+	    <div id="{{vm.formId}}-{{fieldName}}_controls" class="col-sm-7" ng-if="field.filterResultsStr != undefined">
+            <input  ng-if="field.filterResultsStr.length >  20" class="form-control" id="{{vm.formId}}-{{fieldName}}" name="{{fieldName}}" ng-required="field.required == true" ng-model="field.externalReferencesStr" ng-disabled="{{field.readOnly == true}}" type="text" ng-change="vm.parseValue(fieldName)" list="{{vm.formId}}-{{fieldName}}-list" autocomplete="off">
+			<select ng-if="field.filterResultsStr.length <= 20" class="form-control" id="{{vm.formId}}-{{fieldName}}" name="{{fieldName}}" ng-required="field.required == true" ng-model="field.externalReferencesStr" ng-disabled="{{field.readOnly == true}}"             ng-change="vm.parseValue(fieldName)" ng-options="o for o in field.filterResultsStr"></select>
             <datalist id="{{vm.formId}}-{{fieldName}}-list">
                 <option ng-repeat="o in field.filterResultsStr" value="{{o}}"/>
             </datalist>
 	    </div>
 
         <div class="col-sm-3" ng-if="field.service != undefined && field.readOnly != true">
-            <button id="{{vm.formId}}-create" name="create" class="btn btn-primary" ng-click="vm.goToField(fieldName, 'new', null, true)"><span class="glyphicon glyphicon-plus"></span> {{vm.translation.create}}</button>
-            <button id="{{vm.formId}}-search" name="search" class="btn btn-primary" ng-click="vm.goToField(fieldName, 'search', null, true)"><span class="glyphicon glyphicon-search"></span> {{vm.translation.search}}</button>
+            <a id="{{vm.formId}}-create" name="create" class="btn btn-secondary" href="{{vm.goToField(fieldName, 'new')}}"><span class="glyphicon glyphicon-plus"></span> {{vm.translation.create}}</a>
+            <a id="{{vm.formId}}-search" name="search" class="btn btn-secondary" href="{{vm.goToField(fieldName, 'search')}}"><span class="glyphicon glyphicon-search"></span> {{vm.translation.search}}</a>
         </div>
 	</div>
-<!-- 	field.flags -> tipagem : Strings[] -->
+	<!-- field.flags : String[], vm.instanceFlags[fieldName] : Boolean[] -->
 	<div ng-repeat="flagLabel in field.flags">
 		<div ng-if="flagLabel.length > 0" class="form-group form-group-xs">
-			<label class="col-xs-offset-1 control-label"><input type="checkbox" id="{{vm.formId}}-{{fieldName}}_{{$index}}" ng-model="field.flagsInstance[$index]"/>{{flagLabel}}</label>
+			<label class="col-xs-offset-1 control-label"><input type="checkbox" id="{{vm.formId}}-{{fieldName}}-{{$index}}" ng-model="vm.instanceFlags[fieldName][$index]" ng-change="vm.parseValue(fieldName)"/>{{flagLabel}}</label>
 		</div>
 	</div>
 </div>

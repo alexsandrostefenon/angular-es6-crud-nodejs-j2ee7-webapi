@@ -1,5 +1,5 @@
 CREATE TABLE account (
-	company integer references crud_company,
+	company integer references crud_company NOT NULL,
 	id SERIAL,
 	number character varying(20),
 	agency character varying(20),
@@ -10,7 +10,7 @@ CREATE TABLE account (
 );
 
 CREATE TABLE person (
-	company integer references crud_company,
+	company integer references crud_company NOT NULL,
 	id SERIAL,
 	name varchar(100) not null,
 	fantasy varchar(100),
@@ -43,7 +43,7 @@ CREATE TABLE person (
 
 CREATE TABLE product (
 	id SERIAL PRIMARY KEY,
-	category integer references category, -- replace to camex_ncm
+	category integer references category NOT NULL, -- replace to camex_ncm
 	ncm integer references camex_ncm,
 	orig integer references nfe_st_icms_origem default 0,
 	name character varying(120) UNIQUE,
@@ -64,7 +64,7 @@ CREATE TABLE barcode (
 CREATE TABLE request_type (
 	id SERIAL PRIMARY KEY,
 	description character varying(100),
-	name character varying(255) NOT NULL
+	name character varying(255) UNIQUE NOT NULL
 );
 
 CREATE TABLE stock_action (
@@ -84,26 +84,28 @@ CREATE TABLE request_state (
 );
 
 CREATE TABLE request (
-	company integer references crud_company,
+	company integer references crud_company NOT NULL,
 	id SERIAL,
-	type integer references request_type,
-	state integer references request_state,
-	person integer,
-	date timestamp without time zone,
+	type integer references request_type NOT NULL,
+	state integer references request_state NOT NULL,
+	person integer NOT NULL,
+	date timestamp NOT NULL,
 	additional_data character varying(255),
 	products_value numeric(19,2) DEFAULT 0.000,
 	services_value numeric(19,2) DEFAULT 0.000,
 	transport_value numeric(19,2) DEFAULT 0.000,
+	desc_value numeric(19,2) DEFAULT 0.00,
 	sum_value numeric(19,2) DEFAULT 0.000,
 	payments_value numeric(19,2) DEFAULT 0.000,
 	PRIMARY KEY(company,id),
-	FOREIGN KEY(company, person) REFERENCES person(company, id)
+	FOREIGN KEY(company, person) REFERENCES person(company, id),
+	UNIQUE(person,date)
 );
 -- um por request
 CREATE TABLE request_nfe ( -- nota fiscal
-	company integer references crud_company,
-	request integer,
-	person integer,-- emit/dest primeiro cadastro de person para esta company
+	company integer references crud_company NOT NULL,
+	request integer NOT NULL,
+	person integer NOT NULL,-- emit/dest primeiro cadastro de person para esta company
 	versao varchar(4) default '3.10',
 	nfe_id char(47),
 	natOp varchar(60) default 'VENDA',
@@ -111,8 +113,8 @@ CREATE TABLE request_nfe ( -- nota fiscal
 	mod integer default 55,-- 55=NF-e emitida em substituição ao modelo 1 ou 1A; 65=NFC-e, utilizada nas operações de venda no varejo (a critério da UF aceitar este modelo de documento).
 	serie integer default 1,
 	nNF SERIAL not null,
-	dhEmi timestamp without time zone default now(),-- Data e hora no formato UTC (Universal Coordinated Time): AAAA-MM-DDThh:mm:ssTZD
-	dhSaiEnt timestamp without time zone default now(),
+	dhEmi timestamp default now(),-- Data e hora no formato UTC (Universal Coordinated Time): AAAA-MM-DDThh:mm:ssTZD
+	dhSaiEnt timestamp default now(),
 	tpNF integer default 1,-- 0=Entrada; 1=Saída
 	idDest integer default 1,-- 1=Operação interna; 2=Operação interestadual; 3=Operação com exterior.
 	tpImp integer default 1,-- 0=Sem geração de DANFE; 1=DANFE normal, Retrato; 2=DANFE normal, Paisagem; 3=DANFE Simplificado; 4=DANFE NFC-e; 5=DANFE NFC-e somente em mensagem eletrônica
@@ -139,8 +141,8 @@ CREATE TABLE request_nfe ( -- nota fiscal
 );
 
 CREATE TABLE request_freight ( -- frete
-	company integer references crud_company,
-	request integer,
+	company integer references crud_company NOT NULL,
+	request integer NOT NULL,
 	person integer,
 	pay_by integer DEFAULT 0, -- 0=Por conta do emitente; 1=Por conta do destinatário/remetente; 2=Por conta de terceiros; 9=Sem frete. (V2.0)
 	license_plate char(9),--ABC123456
@@ -158,8 +160,9 @@ CREATE TABLE request_freight ( -- frete
 );
 
 CREATE TABLE request_product (
-	company integer references crud_company,
-	request integer,
+	company integer references crud_company NOT NULL,
+	request integer NOT NULL,
+	product integer references product NOT NULL,
 	id SERIAL NOT NULL,
 	quantity numeric(9,3) DEFAULT 1.000 not null,
 	value numeric(9,3) NOT NULL,
@@ -169,22 +172,21 @@ CREATE TABLE request_product (
 	cfop integer references nfe_cfop,
 	tax integer references nfe_tax_group,
 	value_all_tax numeric(9,2) default 0.00, -- NFE
-	product integer references product,
 	serials character varying(255),
 	PRIMARY KEY(company,id),
 	FOREIGN KEY(company,request) REFERENCES request(company, id)
 );
 
 CREATE TABLE request_payment (
-	company integer references crud_company,
-	request integer,
+	company integer references crud_company NOT NULL,
+	request integer NOT NULL,
 	id SERIAL NOT NULL,
-	type integer references payment_type,
+	type integer references payment_type NOT NULL,
 	value numeric(9,2) DEFAULT 0.000 NOT NULL,
-	account integer,
+	account integer NOT NULL,
 	number character varying(16),
-	due_date timestamp without time zone,
-	payday timestamp without time zone,
+	due_date timestamp NOT NULL,
+	payday timestamp,
 	balance numeric(9,2) DEFAULT 0.000 NOT NULL,
 	PRIMARY KEY(company,id),
 	FOREIGN KEY(company,request) REFERENCES request(company, id),
@@ -192,8 +194,8 @@ CREATE TABLE request_payment (
 );
 
 CREATE TABLE stock (
-	company integer references crud_company,
-	id integer references product,
+	company integer references crud_company NOT NULL,
+	id integer references product NOT NULL,
 	count_in numeric(9,3) DEFAULT 0.000,
 	count_out numeric(9,3) DEFAULT 0.000,
 	estimed_in numeric(9,3),

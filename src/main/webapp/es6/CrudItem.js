@@ -17,31 +17,26 @@ app.directive('crudItem', function() {
 
 export class CrudItem extends CrudCommom {
 
-	constructor(serverConnection, serviceName, fieldName, foreignKey, isClonable, title, numMaxItems, queryCallback, selectCallback) {
+	constructor(serverConnection, serviceName, fieldName, primaryKeyForeign, title, numMaxItems, queryCallback, selectCallback) {
     	super(serverConnection, serverConnection.services[serviceName], {}, 1);
-		this.title = title;
+		this.fieldName = fieldName;
+		this.foreignKey = this.crudService.getForeignKeyFromPrimaryKeyForeign(primaryKeyForeign, this.fieldName);
+		const field = this.crudService.params.fields[fieldName];
+		this.title = (title != undefined && title != null) ? title : field.title;
+		this.isClonable = field.isClonable == undefined ? false : field.isClonable;
 		this.numMaxItems = (numMaxItems != undefined && numMaxItems != null) ? numMaxItems : 999;
 		this.queryCallback = queryCallback;
 		this.selectCallback = selectCallback;
-		this.fields[fieldName].hiden = true;
-		this.fieldName = fieldName;
-		this.isClonable = isClonable;
-
-		if (typeof foreignKey === 'object') {
-			if (foreignKey.id != undefined) {
-				this.foreignKey = foreignKey.id;
-			}
-		} else {
-			this.foreignKey = foreignKey;
-		}
 		
+		for (fieldName in this.foreignKey) {
+			this.fields[fieldName].hiden = true;
+		}
+
 		this.query();
 	}
 
 	query() {
-		var params = {}
-		params[this.fieldName] = this.foreignKey;
-		this.filterResults = this.crudService.find(params);
+		this.filterResults = this.crudService.find(this.foreignKey);
 		// pagina e monta a listStr
 		this.paginate();
 
@@ -50,18 +45,21 @@ export class CrudItem extends CrudCommom {
 		}
 		// aproveita e limpa os campos de inserção de novo instance
 		this.clear();
-		this.instance[this.fieldName] = this.foreignKey;
 	}
 
-	clone(foreignKeyRefNew) {
-		this.foreignKey = foreignKeyRefNew;
+	clone(primaryKeyForeign) {
+		this.foreignKey = this.service.getForeignKeyFromPrimaryKeyForeign(primaryKeyForeign, this.fieldName);
 
 		if (this.isClonable == true) {
 			let count = 0;
 
 			for (var item of this.filterResults) {
 				let newItem = angular.copy(item);
-				newItem[this.fieldName] = this.foreignKey;
+				
+				for (fieldName in this.foreignKey) {
+					this.newItem[fieldName] = this.foreignKey[fieldName];
+				}
+				
 				this.crudService.save(newItem).then(response => {
 					count++;
 
@@ -72,6 +70,14 @@ export class CrudItem extends CrudCommom {
 			}
 		} else {
 			this.query();
+		}
+	}
+	
+	clear() {
+		super.clear();
+		
+		for (let fieldName in this.foreignKey) {
+			this.instance[fieldName] = this.foreignKey[fieldName];
 		}
 	}
 

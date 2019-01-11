@@ -127,3 +127,9 @@ In ES6 compliance browser open url
 For already configured services, use user 'spending' with password '123456'.
 
 For custom service configuration or user edition, use user 'admin' with password 'admin'.
+
+## Automated tests
+
+npm install selenium-side-runner &&
+./node_modules/.bin/selenium-side-runner --server http://localhost:4444/wd/hub ./src/test/*.side
+

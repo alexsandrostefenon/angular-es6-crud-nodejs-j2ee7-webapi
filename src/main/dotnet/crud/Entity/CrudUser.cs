@@ -10,9 +10,7 @@ namespace AspNetCoreWebApi.Entity
     {
 		[Key][Column("company")][ForeignKey("CrudCompany")]
         public int? Company { get; set; }
-        [Key][Column("id")][DatabaseGenerated(DatabaseGeneratedOption.Identity)]
-        public int Id { get; set; }
-		[Column("name", TypeName = "character varying(255)")]
+		[Key][Column("name", TypeName = "character varying(255)")]
         public string Name { get; set; }
 		[Column("path", TypeName = "character varying(255)")]
         public string Path { get; set; }

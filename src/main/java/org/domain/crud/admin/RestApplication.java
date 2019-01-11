@@ -2,6 +2,8 @@ package org.domain.crud.admin;
 
 import javax.ws.rs.core.Application;
 
+import org.domain.iso8583router.beans.Iso8583RouterMessageAdapterParser;
+
 import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
 import javax.persistence.EntityManager;
@@ -21,6 +23,7 @@ public class RestApplication extends Application {
     public void initialize() {
     	try {
 			RequestFilter.updateCrudServices(userTransaction, this.entityManager);
+			Iso8583RouterMessageAdapterParser.loadConfs(userTransaction, entityManager, "/tmp");
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

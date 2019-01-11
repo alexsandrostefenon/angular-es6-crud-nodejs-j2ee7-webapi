@@ -43,6 +43,8 @@ public class Request {
 	private BigDecimal transportValue = new BigDecimal(0.0);
 	@Column(name = "sum_value")
 	private BigDecimal sumValue = new BigDecimal(0.0);
+	@Column(name = "desc_value")
+	private BigDecimal descValue = new BigDecimal(0.0);
 	@Column(name = "payments_value")
 	private BigDecimal paymentsValue = new BigDecimal(0.0);
 	public Integer getCompany() {

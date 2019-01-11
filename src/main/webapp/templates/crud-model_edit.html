@@ -1,7 +1,7 @@
 <h4>{{vm.translation.edit}}</h4>
 
 <form id="{{vm.formId}}" name="{{vm.formId}}" class="form-horizontal" role="form">
-    <div ng-show="displayError" class="alert alert-danger">
+    <div ng-if="displayError" class="alert alert-danger">
         <strong>Error!</strong> Something broke. Retry, or cancel and start afresh.
     </div>
 

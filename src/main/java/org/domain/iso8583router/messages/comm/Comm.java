@@ -15,7 +15,6 @@ import org.domain.commom.Logger;
 import org.domain.commom.RefInt;
 import org.domain.iso8583router.entity.Iso8583RouterComm;
 import org.domain.iso8583router.entity.Iso8583RouterMessageAdapter;
-import org.domain.iso8583router.entity.Iso8583RouterMessageAdapterItem;
 import org.domain.iso8583router.messages.Message;
 import org.domain.iso8583router.messages.MessageAdapter;
 
@@ -36,31 +35,16 @@ public class Comm {
 
 	@SuppressWarnings("unchecked")
 	public static void loadConfs(EntityManager entityManager, Logger logger) {
-		List<Iso8583RouterMessageAdapter> listMessageAdapterConf = entityManager.createQuery("from MessageAdapterConf").getResultList();
-		
-		if (listMessageAdapterConf.size() == 0) {
-			entityManager.getTransaction().begin();
-			entityManager.persist(new Iso8583RouterMessageAdapter("iso8583default", null));
-			entityManager.persist(new Iso8583RouterMessageAdapterItem(1, "msgType", "0", 4, 4, 0, "\\d\\d\\d\\d_\\d\\d\\d\\d\\d\\d", "iso8583default", 0x00000001));
-			entityManager.persist(new Iso8583RouterMessageAdapterItem(2, "pan", "2", 12, 16, 0, "\\d\\d\\d\\d_\\d\\d\\d\\d\\d\\d", "iso8583default", 0x00000001));
-			entityManager.persist(new Iso8583RouterMessageAdapterItem(3, "codeProcess", "3", 6, 6, 0, "\\d\\d\\d\\d_\\d\\d\\d\\d\\d\\d", "iso8583default", 0x00000001));
-			entityManager.persist(new Iso8583RouterMessageAdapterItem(4, "transactionValue", "4", 12, 12, 0, "\\d\\d\\d\\d_\\d\\d\\d\\d\\d\\d", "iso8583default", 0x00000001));
-			entityManager.persist(new Iso8583RouterMessageAdapterItem(11, "captureNsu", "11", 6, 6, 0, "\\d\\d\\d\\d_\\d\\d\\d\\d\\d\\d", "iso8583default", 0x00000001));
-			entityManager.persist(new Iso8583RouterMessageAdapterItem(42, "captureEc", "42", 15, 15, 0, "\\d\\d\\d\\d_\\d\\d\\d\\d\\d\\d", "iso8583default", 0x00000001));
-			entityManager.persist(new Iso8583RouterMessageAdapterItem(41, "equipamentId", "41", 8, 8, 0, "\\d\\d\\d\\d_\\d\\d\\d\\d\\d\\d", "iso8583default", 0x00000001));
-			entityManager.persist(new Iso8583RouterMessageAdapterItem(67, "numPayments", "67", 2, 2, 0, "\\d\\d\\d\\d_\\d\\d\\d\\d\\d\\d", "iso8583default", 0x00000001));
-			entityManager.getTransaction().commit();
-			listMessageAdapterConf = entityManager.createQuery("from MessageAdapterConf").getResultList();
-		}
+		List<Iso8583RouterMessageAdapter> listMessageAdapterConf = entityManager.createQuery("from Iso8583RouterMessageAdapter").getResultList();
 		
 		for (Iso8583RouterMessageAdapter messageAdapterConf : listMessageAdapterConf) {
-			messageAdapterConf.setItems(entityManager.createQuery("from MessageAdapterConfItem o where o.messageAdapterConfName='" + messageAdapterConf.getName() + "'").getResultList());
+			messageAdapterConf.setItems(entityManager.createQuery("from Iso8583RouterMessageAdapterItem o where o.messageAdapter='" + messageAdapterConf.getName() + "'").getResultList());
 			Comm.mapConf.put(messageAdapterConf.getName(), messageAdapterConf);
 			String className = messageAdapterConf.getAdapterClass();
 			
 			if (Comm.mapAdapters.get(className) == null) {
 				try {
-					Comm.mapAdapters.put(className, (MessageAdapter) Class.forName(className).newInstance());
+					Comm.mapAdapters.put(className, (MessageAdapter) Class.forName(className).getConstructor().newInstance());
 				} catch (Exception e) {
 					logger.log(Logger.LOG_LEVEL_ERROR, "Comm.loadConfs", e.getMessage(), null);
 				}
@@ -296,7 +280,7 @@ public class Comm {
 		log(Logger.LOG_LEVEL_DEBUG, "Comm.initialize", String.format("modulo v2 [%s]", this.conf.getName()), null);
 		String adapter = conf.getAdapter();
 		Class<?> _class = Class.forName(adapter);
-		this.commAdapter = (CommAdapter) _class.newInstance();
+		this.commAdapter = (CommAdapter) _class.getConstructor().newInstance();
 
 		if (isServer == true) {
 			this.directionNameReceive = Message.DIRECTION_NAME_C2S;

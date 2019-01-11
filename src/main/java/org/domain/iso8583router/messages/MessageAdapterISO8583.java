@@ -9,8 +9,13 @@ import org.domain.iso8583router.entity.Iso8583RouterMessageAdapter;
 import org.domain.iso8583router.entity.Iso8583RouterMessageAdapterItem;
 
 public class MessageAdapterISO8583 implements MessageAdapter {
+	private boolean isAsciiHexExpanded = false;
 	
-	public static String getRoot(Message message) throws Exception {
+	public MessageAdapterISO8583(boolean isAsciiHexExpanded) {
+		this.isAsciiHexExpanded = isAsciiHexExpanded;
+	}
+
+	private static String getRoot(Message message) throws Exception {
 		String msgType = message.getMsgType();
 		
 		if (msgType == null) {
@@ -35,7 +40,7 @@ public class MessageAdapterISO8583 implements MessageAdapter {
 		return ret;
 	}
 	
-	public static boolean isPanCandidate(String str) {
+	private static boolean isPanCandidate(String str) {
 		boolean ret = false;
 		
 		if (Utils.isHex(str, 0, str.length(), true, false)) {
@@ -132,7 +137,7 @@ public class MessageAdapterISO8583 implements MessageAdapter {
 			oddRightAlign = true;
 		}
 
-		boolean isAsciiHexExpandedValue = message.isAsciiHexExpanded();
+		boolean isAsciiHexExpandedValue = this.isAsciiHexExpanded;
 		boolean mayBeAlpha = (conf.getDataType() & Utils.DATA_TYPE_ALPHA) > 0;
 		boolean mayBeSpecial = (conf.getDataType() & Utils.DATA_TYPE_SPECIAL) > 0;
 
@@ -156,7 +161,7 @@ public class MessageAdapterISO8583 implements MessageAdapter {
 				message.bufferAuxLocal.setLength(0);
 				ByteArrayUtils.appendAsciiHexToBinary(message.bufferAuxLocal, src, offset, sizeToRead, 2, '*', '0');
 				value = message.bufferAuxLocal.toString();
-			} else if (message.isAsciiHexExpanded() == false || (sizeToRead % 2) == 0) {
+			} else if (this.isAsciiHexExpanded == false || (sizeToRead % 2) == 0) {
 				value = src.substring(offset, offset + sizeToRead);
 			} else if (oddRightAlign) {
 				offset++;
@@ -187,7 +192,7 @@ public class MessageAdapterISO8583 implements MessageAdapter {
 		int sizeToRead;
 		// extrai o tamanho dos dados
 		if (sizeHeader > 0) {
-			if (message.isAsciiHexExpanded() && ((sizeHeader % 2) != 0)) {
+			if (this.isAsciiHexExpanded && ((sizeHeader % 2) != 0)) {
 				sizeHeader++;
 			}
 
@@ -317,7 +322,7 @@ public class MessageAdapterISO8583 implements MessageAdapter {
 	private void addField(StringBuilder buffer, Message message, Iso8583RouterMessageAdapterItem conf, String value) {
 		boolean mayBeAlpha = (conf.getDataType() & Utils.DATA_TYPE_ALPHA) > 0;
 		boolean mayBeSpecial = (conf.getDataType() & Utils.DATA_TYPE_SPECIAL) > 0;
-		boolean expandedData = message.isAsciiHexExpanded();
+		boolean expandedData = this.isAsciiHexExpanded;
 
 		if ((mayBeAlpha == false) && (mayBeSpecial == false)) {
 			expandedData = false;
@@ -327,7 +332,7 @@ public class MessageAdapterISO8583 implements MessageAdapter {
 		int strLen = value.length();
 
 		if (sizeHeader > 0) {
-			if (message.isAsciiHexExpanded() == true && (sizeHeader % 2) != 0) {
+			if (this.isAsciiHexExpanded == true && (sizeHeader % 2) != 0) {
 				MessageAdapterISO8583.intToStr(strLen, buffer, sizeHeader + 1);
 			} else {
 				MessageAdapterISO8583.intToStr(strLen, buffer, sizeHeader);
@@ -343,7 +348,7 @@ public class MessageAdapterISO8583 implements MessageAdapter {
 
 		if (expandedData == true) {
 			ByteArrayUtils.unCompress(buffer, value);
-		} else if (message.isAsciiHexExpanded() == false || (strLen % 2) == 0) {
+		} else if (this.isAsciiHexExpanded == false || (strLen % 2) == 0) {
 			buffer.append(value);
 		} else if (oddRightAlign) {
 			buffer.append('0');
@@ -371,12 +376,12 @@ public class MessageAdapterISO8583 implements MessageAdapter {
 			if (conf != null) {
 				String value = MessageAdapter.getFieldDataWithAlign(conf, message);
 			
-			if (value != null) {
-				values[field] = value;
-					usedConfs[field] = conf;
-				lastField = field;
+				if (value != null) {
+					values[field] = value;
+						usedConfs[field] = conf;
+					lastField = field;
+				}
 			}
-		}
 		}
 		
 		if (lastField >= 65) {

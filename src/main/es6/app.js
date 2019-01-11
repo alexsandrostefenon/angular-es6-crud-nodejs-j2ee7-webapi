@@ -5,17 +5,31 @@ import express from "express";
 import websocket from "websocket";
 import url from "url";
 import fetch from "node-fetch";
-import {DbClientPostgres} from "./admin/dbClientPostgres.js";
-import {RequestFilter} from "./admin/RequestFilter.js";
-import {ResquestNfeEndpoint} from "./nfe/rest/ResquestNfeEndpoint.js";
+import {DbClientPostgres} from "./crud/admin/dbClientPostgres.js";
+import {RequestFilter} from "./crud/admin/RequestFilter.js";
 
 const WebSocketServer = websocket.server;
 
-const dbName = process.argv[2] || "crud";
-const webapp = process.argv[3] || "./src/main/webapp";
-const portListen = process.argv[4] || 9443;
-const fileNamePrivateKey = process.argv[5] || "key.pem";
-const fileNameCertificate = process.argv[6] || "cert.pem";
+function getArg(name, defaultValue) {
+	let value = defaultValue;
+	
+	for (let arg of process.argv) {
+		let tmp = "--" + name + "=";
+		
+		if (arg.startsWith(tmp)) {
+			value = arg.substring(tmp.length);
+			break;
+		}
+	}
+	
+	return value;
+}
+
+const dbName = getArg("database", "crud");
+const webapp = getArg("www-data", "./src/main/webapp");
+const portListen = getArg("port", "9443");
+const fileNamePrivateKey = getArg("private-key", "key.pem");
+const fileNameCertificate = getArg("certificate", "cert.pem");
 
 const appExpress = express();
 appExpress.use("/" + dbName, express.static(webapp));
@@ -35,7 +49,6 @@ const dbClient = new DbClientPostgres(dbName);
 
 RequestFilter.updateCrudServices(dbClient);
 const requestFilter = new RequestFilter(appRestExpress, dbClient);
-const resquestNfeEndpoint = new ResquestNfeEndpoint(appRestExpress, dbClient);
 
 dbClient.connect().then(() => {
 	server.listen(portListen, () => {
@@ -43,6 +56,19 @@ dbClient.connect().then(() => {
 		const port = server.address().port;
 		
 		console.log('Example app listening at http://%s:%s', host, port);
+		// load modules
+		const modules = getArg("modules", "").split(",");
+		
+		for (let path of modules) {
+			if (path.length > 0) {
+				console.log("loading ", path, "...");
+				
+				let promise = import(path).then(module => {
+					console.log("loaded:", path);
+					module.setup(appRestExpress, dbClient);
+				});
+			}
+		}
 	});
 });
 

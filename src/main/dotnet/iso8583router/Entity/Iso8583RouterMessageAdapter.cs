@@ -10,8 +10,10 @@ namespace AspNetCoreWebApi.Entity
     {
         public Iso8583RouterMessageAdapter()
         {
+/*
             InverseParentNavigation = new HashSet<Iso8583RouterMessageAdapter>();
             Iso8583RouterMessageAdapterItem = new HashSet<Iso8583RouterMessageAdapterItem>();
+*/
         }
 
         [Key][Column("name", TypeName = "character varying(64)")]
@@ -21,11 +23,7 @@ namespace AspNetCoreWebApi.Entity
         [Required]
         [Column("adapter_class", TypeName = "character varying(255)")]
         public string AdapterClass { get; set; }
-        [Column("compress")]
-        public bool? Compress { get; set; }
-        [Column("tag_prefix", TypeName = "character varying(32)")]
-        public string TagPrefix { get; set; }
-
+/*
         [ForeignKey("Parent")]
         [InverseProperty("InverseParentNavigation")]
         public Iso8583RouterMessageAdapter ParentNavigation { get; set; }
@@ -33,5 +31,6 @@ namespace AspNetCoreWebApi.Entity
         public ICollection<Iso8583RouterMessageAdapter> InverseParentNavigation { get; set; }
         [InverseProperty("MessageAdapterNavigation")]
         public ICollection<Iso8583RouterMessageAdapterItem> Iso8583RouterMessageAdapterItem { get; set; }
+*/
     }
 }

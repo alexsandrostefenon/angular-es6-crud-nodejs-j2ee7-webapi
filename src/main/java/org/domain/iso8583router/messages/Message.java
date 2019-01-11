@@ -31,7 +31,6 @@ public class Message extends Iso8583RouterTransaction {
 	// indice do Pool de conex�o de transmiss�o da mensagem
 	private Integer poolCommId;
 	boolean enableBinarySkip;
-	private boolean isAsciiHexExpanded;
 	public boolean lockNotify = false;
 	public boolean transmissionTimeout;
 	public String rawData;
@@ -58,14 +57,6 @@ public class Message extends Iso8583RouterTransaction {
 		this.enableBinarySkip = enableBinarySkip;
 	}
 
-	public boolean isAsciiHexExpanded() {
-		return isAsciiHexExpanded;
-	}
-	
-	public void setAsciiHexExpanded(boolean isAsciiHexExpanded) {
-		this.isAsciiHexExpanded = isAsciiHexExpanded;
-	}
-	
 	public void setMsgTypeResponse(String msgType) {
 		if (msgType != null) {
 			int val = Integer.parseInt(msgType);

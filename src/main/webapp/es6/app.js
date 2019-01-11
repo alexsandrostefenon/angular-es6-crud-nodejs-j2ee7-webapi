@@ -9,7 +9,7 @@ class ServerConnectionService extends ServerConnectionUI {
     }
 
     login(server, user, password, callbackPartial) {
-        super.login(server, user, password, CrudServiceUI, callbackPartial);
+        return super.login(server, user, password, CrudServiceUI, callbackPartial);
     }
 
 }
@@ -60,5 +60,5 @@ class MenuController {
 }
 
 app.controller("MenuController", function(ServerConnectionService) {
-    	return new MenuController(ServerConnectionService);
+    return new MenuController(ServerConnectionService);
 });

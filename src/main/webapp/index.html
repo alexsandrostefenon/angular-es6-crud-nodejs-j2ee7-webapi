@@ -18,8 +18,8 @@
   </head>
 
   <body ng-app="app">
-	<div class="navbar navbar-default navbar-fixed-top" ng-controller="MenuController as vm" role="navigation" ng-show="vm.serverConnection.user">
-      <div class="container">
+	<div id="header" class="navbar navbar-default navbar-fixed-top" ng-controller="MenuController as vm" role="navigation">
+      <div class="container" ng-if="vm.serverConnection.user">
         <div class="navbar-header">
           <button type="button" class="navbar-toggle collapsed" ng-click="vm.isCollapsed = !(vm.isCollapsed)">
               <span class="sr-only">Toggle navigation</span>
@@ -42,6 +42,14 @@
 			</ul>
         </div>
       </div>
+
+		<div id="http-working" class="container" ng-if="vm.serverConnection.httpRest.messageWorking.length > 0">
+			<strong>{{vm.serverConnection.httpRest.messageWorking}}</strong>
+		</div>
+
+		<div id="http-error" class="container" ng-if="vm.serverConnection.httpRest.messageError.length > 0">
+			<strong>{{vm.serverConnection.httpRest.messageError}}</strong>
+		</div>
 	</div>
 
     <div id="main" class="well mainarea" ng-view></div>

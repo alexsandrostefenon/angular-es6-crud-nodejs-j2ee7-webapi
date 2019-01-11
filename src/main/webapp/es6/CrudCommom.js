@@ -1,11 +1,16 @@
 import {Utils} from "./Utils.js";
 import {CrudUiSkeleton} from "./CrudUiSkeleton.js";
-import { ServerConnectionUI } from "./ServerConnectionUI.js";
+import {ServerConnectionUI} from "./ServerConnectionUI.js";
 
 export class Pagination {
 
-    constructor(pageSize) {
-    	this.pageSize = pageSize;
+    constructor() {
+		let avaiableHeight = window.innerHeight || document.documentElement.clientHeight || document.body.clientHeight;
+		const style = window.getComputedStyle(document.getElementById("header"));
+		avaiableHeight -= parseFloat(style.height);
+		const rowHeight = parseFloat(style.fontSize) * 2.642857143;
+    	this.pageSize = avaiableHeight / rowHeight;
+    	this.pageSize -= 4;
     	this.process([]);
     }
 
@@ -31,9 +36,8 @@ export class CrudCommom extends CrudUiSkeleton {
 		this.primaryKey = this.crudService.getPrimaryKey(objParams);
 		this.action = action;
 		this.filterResults = this.crudService.list;
-		this.filterResultsStr = this.crudService.listStr;
 		this.setValues(objParams);
-		this.pagination = new Pagination(10);
+		this.pagination = new Pagination();
 		this.paginate();
 
 		if (this.crudService.params.template != undefined && this.crudService.params.template.length > 0) {
@@ -54,13 +58,15 @@ export class CrudCommom extends CrudUiSkeleton {
 	}
 	// fieldName, 'view', item, false
     goToField(fieldName, action, obj, isGoNow) {
-    	var service = this.fields[fieldName].crudService;
-    	var primaryKey = {};
+    	const field = this.fields[fieldName];
+    	let service = field.crudService;
+    	let primaryKey = {};
 
     	if (obj != null && obj != undefined) {
     		if (service != undefined) {
     			// neste caso, obj[fieldName] contém o id do registro de referência
-    			primaryKey = service.getPrimaryKey(obj, obj[fieldName]);
+				// dataForeign, fieldNameForeign, fieldName
+    			primaryKey = service.getPrimaryKeyFromForeignData(obj, fieldName, field.fieldNameForeign);
     		} else {
     			service = this.crudService;
     			primaryKey = this.crudService.getPrimaryKey(obj);
@@ -83,31 +89,13 @@ export class CrudCommom extends CrudUiSkeleton {
 
 		return this.crudService.remove(primaryKey);
 	}
-	// private, use in save and update
-	loadInstance() {
-		for (var fieldName in this.fields) {
-			var field = this.fields[fieldName];
-			// primeiro, parseia as flags
-			if (field.flagsInstance != undefined) {
-				// field.flags -> tipagem : String[]
-				// field.flagsInstance -> tipagem : Boolean[]
-				this.instance[fieldName] = Utils.flagsToStrAsciiHex(field.flagsInstance);
-			}
-			// depois parseia os campos json
-			if (field.strJson != undefined) {
-				this.instance[fieldName] = field.strJson;
-			}
-		}
-	}
 
 	update() {
-		this.loadInstance();
 		return this.crudService.update(this.primaryKey, this.instance);
 	}
 
 	save() {
 		this.primaryKey = {};
-		this.loadInstance();
 		return this.crudService.save(this.instance);
 	}
 
@@ -118,14 +106,12 @@ export class CrudCommom extends CrudUiSkeleton {
 	clearFilter() {
 		if (this.filterResults != this.crudService.list) {
 			this.filterResults = this.crudService.list;
-			this.filterResultsStr = this.crudService.listStr;
 			this.paginate();
 		}
 	}
 
 	applyFilter() {
 		this.filterResults = this.crudService.getFilteredItems(this.instance, true);
-		this.filterResultsStr = this.crudService.buildListStr(this.filterResults);
 		this.paginate();
 	}
 

@@ -42,48 +42,93 @@ export class DatabaseUiAdapter {
 				field.label = label;
 			}
 
+			if (field.flags != undefined) {
+				field.flags = field.flags.split(",");
+			}
+
 			if (field.options != undefined) {
 				field.options = field.options.split(",");
 			}
+
+			if (field.optionsStr != undefined) {
+				field.optionsStr = field.optionsStr.split(",");
+			}
 		}
 	}
+	// private
+    buildItem(stringBuffer, service, item, parent) {
+		for (let fieldName of service.filterFields) {
+			if (parent == undefined || item[fieldName] != parent[fieldName]) {
+				this.buildField(stringBuffer, service.databaseUiAdapter, fieldName, item, parent);
+			}
+		}
 
-	getUiValue(item, fieldName, isConvertToString) {
-    	var value = item[fieldName];
-    	var field = this.fields[fieldName];
+    	return stringBuffer;
+    }
+    // private
+	buildField(stringBuffer, databaseUiAdapter, fieldName, item, parent) {
+    	let value = item[fieldName];
 
-    	if (field != undefined) {
-			var serviceName = field.service;
+		if (value == undefined || value == null) {
+			return stringBuffer;
+		}
 
-			if (serviceName != undefined) {
-				// neste caso, valRef contém o id do registro de referência
-				var service = this.serverConnection.services[serviceName];
-				var primaryKey = service.getPrimaryKey(item, value);
-				let pos = service.findPos(primaryKey);
-				value = service.listStr[pos];
-			} else if (fieldName == "id") {
-				// TODO : o "id" não deve fazer parte de StrValue, criar uma lista para armazenar os primaryKeys
-				function padLeft(str, size, ch) {
-					while (str.length < size) {
-						str = ch + str;
-					}
+    	const field = databaseUiAdapter.fields[fieldName];
 
-					return str;
-				}
+		if (field == undefined) {
+			console.error("DatabaseUiAdapter : buildField : field ", fieldName, " don't found in fields, options are : ", databaseUiAdapter.fields);
+			return stringBuffer;
+		}
 
-				value = padLeft(value.toString(), 4, '0');
-			} else if (field.htmlType == "datetime-local") {
-				value = new Date(value);
+		const serviceName = field.service;
 
-				if (isConvertToString == true) {
-					value = value.toLocaleString();
+		if (serviceName != undefined) {
+//			console.time(fieldName + "-" + serviceName);
+			// neste caso, valRef contém o id do registro de referência
+			const service = this.serverConnection.services[serviceName];
+			// dataForeign, fieldNameForeign, fieldName
+			const primaryKey = service.getPrimaryKeyFromForeignData(item, fieldName, field.fieldNameForeign);
+			
+			if (parent == undefined || parent == null) {
+				stringBuffer.push(service.findOneStr(primaryKey));
+			} else {
+				const foreignData = service.findOne(primaryKey);
+				console.log("DatabaseUiAdapter : buildField : using foreignData from service with primaryKey, ", foreignData, service, primaryKey);
+
+				if (foreignData != null) {
+					this.buildItem(stringBuffer, service, foreignData, item, parent);
+				} else {
+					console.error("DatabaseUiAdapter : buildField : fail to find foreignData from service with primaryKey, ", foreignData, service, primaryKey);
 				}
 			}
-    	}
+			
+//			console.timeEnd(fieldName + "-" + serviceName);
+		} else if (fieldName == "id") {
+			// TODO : o "id" não deve fazer parte de StrValue, criar uma lista para armazenar os primaryKeys
+			function padLeft(str, size, ch) {
+				while (str.length < size) {
+					str = ch + str;
+				}
 
-    	return value;
+				return str;
+			}
+
+			stringBuffer.push(padLeft(value.toString(), 4, '0'));
+		} else if (field.type == "datetime-local") {
+			stringBuffer.push(new Date(value).toLocaleString());
+		} else {
+			stringBuffer.push(value);
+		}
+
+    	return stringBuffer;
     }
-
+	// public
+	buildFieldStr(fieldName, item, parent) {
+//		console.time("buildFieldStr" + "-" + fieldName);
+		const str = this.buildField([], this, fieldName, item, parent).join(" - ");
+//		console.timeEnd("buildFieldStr" + "-" + fieldName);
+		return str;
+	}
 }
 
 export class CrudServiceUI extends CrudService {
@@ -93,32 +138,33 @@ export class CrudServiceUI extends CrudService {
 		this.databaseUiAdapter = new DatabaseUiAdapter(serverConnection, params.fields);
 		this.label = (params.title == undefined || params.title == null) ? serverConnection.convertCaseAnyToLabel(this.path) : params.title;
 		// filterFields
-		params.filterFields = (params.filterFields != undefined && params.filterFields != null) ? params.filterFields.split(",") : [];
+		params.filterFields = (params.filterFields != undefined && params.filterFields != null) ? params.filterFields.split(",") : this.primaryKeys;
         this.filterFields = params.filterFields;
         console.log("[CrudServiceUI] constructor : path = " + this.path + ", fields = " + this.databaseUiAdapter.fields + ", filterFields = " + params.filterFields);
         // END PARAMS
 		this.listStr = [];
 	}
-
-    buildItemStr(item) {
-		var str = "";
-
-		for (var fieldName of this.filterFields) {
-			str = str + this.databaseUiAdapter.getUiValue(item, fieldName, true) + " - ";
-		}
-
-    	return str;
+	// public
+	findOneStr(params) {
+		let pos = this.findPos(params);
+		return pos >= 0 ? this.listStr[pos] : null;
+	}
+	// private
+    buildItemStr(item, parent) {
+    	return this.databaseUiAdapter.buildItem([], this, item, parent).join(" - ");
     }
 
-    buildListStr(list) {
+    buildListStr(list, parent) {
+		console.time("buildListStr : " + this.label);
     	var ret = [];
 
     	for (var i = 0; i < list.length; i++) {
     		var item = list[i];
-    		var str = this.buildItemStr(item);
+    		var str = this.buildItemStr(item, parent);
     		ret.push(str);
     	}
 
+		console.timeEnd("buildListStr : " + this.label);
     	return ret;
     }
 
@@ -133,49 +179,62 @@ export class CrudServiceUI extends CrudService {
 
 		return list;
 	}
-	// private
-	processListUi(response) {
-		let str = response.data == undefined ? null : this.buildItemStr(response.data);
+	// private, params.data, params.oldPos, params.newPos
+	updateListStr(params) {
+		if (params == null) {
+			console.error("CrudServiceUI.updateListStr : received null parameter");
+			return null;
+		}
 
-        if (response.oldPos == undefined && response.newPos == undefined) {
+		let str = params.data == undefined ? null : this.buildItemStr(params.data);
+
+        if (params.oldPos == undefined && params.newPos == undefined) {
         	// add
         	this.listStr.push(str);
-        } else if (response.oldPos != undefined && response.newPos == undefined) {
+        } else if (params.oldPos != undefined && params.newPos == undefined) {
         	// remove
-        	this.listStr.splice(response.oldPos, 1);
-        } else if (response.newPos == response.oldPos) {
+        	this.listStr.splice(params.oldPos, 1);
+        } else if (params.newPos == params.oldPos) {
         	// replace
-        	this.listStr[response.newPos] = str;
-        } else if (response.oldPos != undefined && response.newPos != undefined) {
+        	this.listStr[params.newPos] = str;
+        } else if (params.oldPos != undefined && params.newPos != undefined) {
         	// remove and add
-        	this.listStr.splice(response.oldPos, 1);
-        	this.listStr.splice(response.newPos, 0, str);
+        	this.listStr.splice(params.oldPos, 1);
+        	this.listStr.splice(params.newPos, 0, str);
         }
         
-        return response;
+        return params;
 	}
 	// used by websocket
 	removeInternal(primaryKey) {
+		console.log("CrudServiceUI.removeInternal : calling super...");
 		let response = super.removeInternal(primaryKey);
-		console.log("CrudService.removeInternal : response = ", response, ", str :", this.listStr[response.oldPos]);
-        return response != null ? this.processListUi(response) : null;
+		console.log("CrudServiceUI.removeInternal : ...super response = ", response);
+
+		if (response != null) {
+			console.log("CrudServiceUI.removeInternal : doing updateListStr :", this.listStr[response.oldPos]);
+	        return this.updateListStr(response);
+		} else {
+			console.log("CrudServiceUI.removeInternal : alread removed, primaryKey = ", primaryKey);
+			return null;
+		}
 	}
 	// used by websocket
 	getRemote(primaryKey) {
-    	return super.getRemote(primaryKey).then(response => this.processListUi(response));
+    	return super.getRemote(primaryKey).then(response => this.updateListStr(response));
 	}
 
 	save(itemSend) {
-    	return super.save(itemSend).then(response => this.processListUi(response));
+    	return super.save(itemSend).then(response => this.updateListStr(response));
 	}
 
 	update(primaryKey, itemSend) {
-        return super.update(primaryKey, itemSend).then(response => this.processListUi(response));
+        return super.update(primaryKey, itemSend).then(response => this.updateListStr(response));
 	}
 
 	remove(primaryKey) {
         // data may be null
-    	return super.remove(primaryKey);//.then(data => this.processListUi(data));
+    	return super.remove(primaryKey);//.then(response => this.updateListStr(response));
 	}
 
 	queryRemote(params) {
@@ -297,12 +356,16 @@ export class ServerConnectionUI extends ServerConnection {
 		globalRouteProvider.when('/app/login',{templateUrl:'templates/login.html', controller:'LoginController', controllerAs: "vm"});
 
 		if (this.user.routes != undefined && this.user.routes != null) {
-			let routes = null;
+			let routes = [];
 
 			if (Array.isArray(this.user.routes) == true) {
 				routes = this.user.routes;
 			} else if (typeof this.user.routes === 'string' || this.user.routes instanceof String) {
-				routes = JSON.parse(this.user.routes);
+				try {
+					routes = JSON.parse(this.user.routes);
+				} catch (e) {
+					console.error("fail to parse json from string this.user.routes : ", this.user.routes, "err : ", e);
+				}
 			} else {
 				console.err("invalid routes");
 			}
@@ -345,7 +408,7 @@ export class ServerConnectionUI extends ServerConnection {
     		server = window.location.origin + window.location.pathname;
     	}
 
-        super.login(server, user, password, CrudServiceClass, callbackPartial).then(loginResponse => this.loginDone(loginResponse));
+        return super.login(server, user, password, CrudServiceClass, callbackPartial).then(loginResponse => this.loginDone(loginResponse));
     }
 
     logout() {

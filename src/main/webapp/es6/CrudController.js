@@ -59,10 +59,10 @@ class CrudBase extends CrudCommom {
 				for (let fieldName in service.params.fields) {
 					let field = service.params.fields[fieldName];
 
-					if (field.service == this.crudService.path) {
+					if (field.service == this.crudService.params.name) {
 						if (field.title != undefined && field.title.length > 0) {
-							let isClonable = field.isClonable == undefined ? false : field.isClonable;
-					    	this.listItemCrud.push(new CrudItem(this.serverConnection, serviceName, fieldName, this.primaryKey, isClonable, field.title));
+					        // serverConnection, serviceName, fieldName, primaryKeyForeign, title, numMaxItems, queryCallback, selectCallback
+					    	this.listItemCrud.push(new CrudItem(this.serverConnection, serviceName, fieldName, this.primaryKey));
 						}
 					}
 				}

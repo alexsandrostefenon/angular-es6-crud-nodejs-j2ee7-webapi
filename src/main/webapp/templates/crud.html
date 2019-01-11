@@ -1,7 +1,3 @@
 <h3>{{vm.crudService.label}}</h3>
 
-<div id="{{vm.formId}}-messages" class="check-element animate-show" ng-show="vm.crudService.httpRest.message.length > 0">
-	<strong>{{vm.crudService.httpRest.message}}</strong>
-</div>
-
 <div ng-include="vm.templateModel"></div>

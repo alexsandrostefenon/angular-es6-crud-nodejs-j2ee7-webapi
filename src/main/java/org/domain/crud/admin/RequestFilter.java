@@ -21,6 +21,8 @@ import javax.annotation.Resource;
 import javax.json.Json;
 import javax.json.JsonObject;
 import javax.json.JsonObjectBuilder;
+import javax.json.bind.Jsonb;
+import javax.json.bind.JsonbBuilder;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.metamodel.EntityType;
@@ -361,7 +363,8 @@ public class RequestFilter implements ContainerRequestFilter, ContainerResponseF
 				if (uriPath.equals("create") || uriPath.equals("update")) {
 					try {
 						InputStream inputStream = requestContext.getEntityStream();
-						obj = ReflectionUtils.loadObjectFromJson(objectClass, inputStream);
+						Jsonb jsonb = JsonbBuilder.create();
+						obj = jsonb.fromJson(inputStream, objectClass);
 					} catch (Exception e) {
 						return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(e.getMessage()).build();
 					}

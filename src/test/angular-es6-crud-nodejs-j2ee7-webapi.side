@@ -2,36 +2,15 @@
   "id": "5ebf3ab3-7a16-4ca5-bc32-95e2ddbf6e1b",
   "version": "1.1",
   "name": "angular-es6-crud-nodejs-j2ee7-webapi",
-  "url": "https://192.168.2.139:9443",
+  "url": "https://localhost:9443/crud",
   "tests": [{
     "id": "a634f1aa-1398-4f5e-8b60-14bc2320cbf0",
     "name": "request_buy_new",
     "commands": [{
       "id": "115dafec-d819-4f18-bf34-b20a6ee20cae",
       "comment": "",
-      "command": "open",
-      "target": "",
-      "targets": [],
-      "value": ""
-    }, {
-      "id": "ead56d47-159f-41d1-b8d9-6dc41fa05332",
-      "comment": "",
-      "command": "type",
-      "target": "id=user",
-      "targets": [],
-      "value": "spending"
-    }, {
-      "id": "a0e89c55-fffa-49c4-b432-844f95626393",
-      "comment": "",
-      "command": "type",
-      "target": "id=password",
-      "targets": [],
-      "value": "123456"
-    }, {
-      "id": "b53ef953-36a2-40fe-a2be-a183e62ff43b",
-      "comment": "",
-      "command": "click",
-      "target": "id=login",
+      "command": "run",
+      "target": "login_spending",
       "targets": [],
       "value": ""
     }, {
@@ -54,6 +33,43 @@
       ],
       "value": ""
     }, {
+      "id": "9ba4eda4-76f2-4a55-a783-953def696f57",
+      "comment": "",
+      "command": "assertValue",
+      "target": "id=requestForm-type",
+      "targets": [
+        ["id=requestForm-type", "id"],
+        ["name=type", "name"],
+        ["css=#requestForm-type", "css"],
+        ["css=#requestForm-type", "css:finder"],
+        ["xpath=//input[@id='requestForm-type']", "xpath:attributes"],
+        ["xpath=//div[@id='requestForm-type_controls']/input", "xpath:idRelative"],
+        ["xpath=//input", "xpath:position"]
+      ],
+      "value": "string:Compra"
+    }, {
+      "id": "99308d4f-0796-4390-b461-4d5a0d55d76c",
+      "comment": "",
+      "command": "assertValue",
+      "target": "id=requestForm-state",
+      "targets": [
+        ["id=requestForm-state", "id"],
+        ["name=state", "name"],
+        ["css=#requestForm-state", "css"],
+        ["css=#requestForm-state", "css:finder"],
+        ["xpath=//select[@id='requestForm-state']", "xpath:attributes"],
+        ["xpath=//div[@id='requestForm-state_controls']/select", "xpath:idRelative"],
+        ["xpath=//select", "xpath:position"]
+      ],
+      "value": "string:Solicitar Orçamento"
+    }, {
+      "id": "2d031dfa-658f-4b6e-8b12-47099564cc4d",
+      "comment": "",
+      "command": "select",
+      "target": "id=requestForm-person",
+      "targets": [],
+      "value": "index=1"
+    }, {
       "id": "e97162a7-edce-4ad1-a64b-72c1b58c4054",
       "comment": "",
       "command": "type",
@@ -68,19 +84,47 @@
       ],
       "value": "2018-05-18T20:08:34"
     }, {
-      "id": "2d031dfa-658f-4b6e-8b12-47099564cc4d",
-      "comment": "",
-      "command": "select",
-      "target": "id=requestForm-person",
-      "targets": [],
-      "value": "index=1"
-    }, {
-      "id": "007a18c5-2c55-4a66-9540-20dbd82faccf",
+      "id": "733a0f0b-6cb7-421e-a672-49af814128bd",
       "comment": "",
       "command": "click",
       "target": "id=requestForm-save",
-      "targets": [],
+      "targets": [
+        ["id=requestForm-save", "id"],
+        ["name=save", "name"],
+        ["css=#requestForm-save", "css"],
+        ["css=#requestForm-save", "css:finder"],
+        ["xpath=//button[@id='requestForm-save']", "xpath:attributes"],
+        ["xpath=//form[@id='requestForm']/div[2]/div/button", "xpath:idRelative"],
+        ["xpath=//div[2]/div/button", "xpath:position"]
+      ],
       "value": ""
+    }, {
+      "id": "47e490bf-7222-4800-aa73-77e4d6541d58",
+      "comment": "",
+      "command": "assertElementNotPresent",
+      "target": "id=http-error",
+      "targets": [
+        ["css=strong.ng-binding", "css"],
+        ["css=#http-error > .ng-binding", "css:finder"],
+        ["xpath=//div[@id='http-error']/strong", "xpath:idRelative"],
+        ["xpath=//strong", "xpath:position"]
+      ],
+      "value": ""
+    }, {
+      "id": "f6b802bf-2777-4a4f-8847-e914bdb7ecdc",
+      "comment": "",
+      "command": "assertValue",
+      "target": "id=requestForm-date",
+      "targets": [
+        ["id=requestForm-date", "id"],
+        ["name=date", "name"],
+        ["css=#requestForm-date", "css"],
+        ["css=#requestForm-date", "css:finder"],
+        ["xpath=//input[@id='requestForm-date']", "xpath:attributes"],
+        ["xpath=//div[@id='requestForm-date_controls']/input", "xpath:idRelative"],
+        ["xpath=//div[4]/div/div/input", "xpath:position"]
+      ],
+      "value": "2018-05-18T20:08:34.000"
     }, {
       "id": "80520c0c-07b3-4d75-808f-4b100d4c7e85",
       "comment": "",
@@ -122,11 +166,11 @@
       "command": "type",
       "target": "id=requestProductForm-cfop",
       "targets": [],
-      "value": "5102 - Venda de mercadoria adquirida ou recebida de terceiros - "
+      "value": "5102 - Venda de mercadoria adquirida ou recebida de terceiros"
     }, {
       "id": "d7462c65-9dbc-4537-8f55-71fc53b27bdf",
       "comment": "",
-      "command": "//assertValue",
+      "command": "assertValue",
       "target": "id=requestProductForm-value",
       "targets": [],
       "value": "5.29"
@@ -138,12 +182,68 @@
       "targets": [],
       "value": ""
     }, {
+      "id": "c2c4c8ad-e860-48c1-91e4-5e8c1c256d1e",
+      "comment": "",
+      "command": "assertElementNotPresent",
+      "target": "id=http-error",
+      "targets": [
+        ["css=strong.ng-binding", "css"],
+        ["css=#http-error > .ng-binding", "css:finder"],
+        ["xpath=//div[@id='http-error']/strong", "xpath:idRelative"],
+        ["xpath=//strong", "xpath:position"]
+      ],
+      "value": ""
+    }, {
+      "id": "8edb500c-e734-47f9-9a0f-62c939fd188d",
+      "comment": "",
+      "command": "assertValue",
+      "target": "id=requestForm-sumValue",
+      "targets": [
+        ["id=requestForm-sumValue", "id"],
+        ["name=sumValue", "name"],
+        ["css=#requestForm-sumValue", "css"],
+        ["css=#requestForm-sumValue", "css:finder"],
+        ["xpath=//input[@id='requestForm-sumValue']", "xpath:attributes"],
+        ["xpath=//div[@id='requestForm-sumValue_controls']/input", "xpath:idRelative"],
+        ["xpath=//div[7]/div/div/input", "xpath:position"]
+      ],
+      "value": "15.92"
+    }, {
       "id": "09e4f31f-3a21-4c09-bdec-d0fba8700b0c",
       "comment": "",
       "command": "select",
       "target": "id=requestPaymentForm-type",
       "targets": [],
-      "value": "0001 - Dinheiro -"
+      "value": "Dinheiro"
+    }, {
+      "id": "5b06c194-009b-4ced-92a8-5868cc31ea93",
+      "comment": "",
+      "command": "assertValue",
+      "target": "id=requestPaymentForm-value",
+      "targets": [
+        ["id=requestPaymentForm-value", "id"],
+        ["css=#requestPaymentForm-value", "css"],
+        ["css=#requestPaymentForm-value", "css:finder"],
+        ["xpath=//input[@id='requestPaymentForm-value']", "xpath:attributes"],
+        ["xpath=//div[@id='requestPaymentForm-value_controls']/input", "xpath:idRelative"],
+        ["xpath=//crud-item[2]/form/div/div[2]/div/div/input", "xpath:position"]
+      ],
+      "value": "15.92"
+    }, {
+      "id": "876d0341-3fad-4e4c-8e5c-c490a730a2bb",
+      "comment": "",
+      "command": "assertValue",
+      "target": "id=requestPaymentForm-dueDate",
+      "targets": [
+        ["id=requestPaymentForm-dueDate", "id"],
+        ["name=dueDate", "name"],
+        ["css=#requestPaymentForm-dueDate", "css"],
+        ["css=#requestPaymentForm-dueDate", "css:finder"],
+        ["xpath=//input[@id='requestPaymentForm-dueDate']", "xpath:attributes"],
+        ["xpath=//div[@id='requestPaymentForm-dueDate_controls']/input", "xpath:idRelative"],
+        ["xpath=//crud-item[2]/form/div/div[5]/div/div/input", "xpath:position"]
+      ],
+      "value": "2018-05-18T20:08:34.000"
     }, {
       "id": "85231d53-6ed1-4fc3-ba5f-b8cde5cf7f19",
       "comment": "",
@@ -173,267 +273,42 @@
       "targets": [],
       "value": ""
     }, {
-      "id": "edb77868-caef-41d3-9f83-ee3a762d09ea",
+      "id": "165cebe5-01e8-4948-8eb0-be2d29228990",
       "comment": "",
-      "command": "click",
-      "target": "id=single-button-form",
+      "command": "assertElementNotPresent",
+      "target": "id=http-error",
       "targets": [
-        ["id=single-button-form", "id"],
-        ["css=#single-button-form", "css"],
-        ["css=#single-button-form", "css:finder"],
-        ["xpath=//button[@id='single-button-form']", "xpath:attributes"],
-        ["xpath=//div[3]/button", "xpath:position"]
+        ["css=strong.ng-binding", "css"],
+        ["css=#http-error > .ng-binding", "css:finder"],
+        ["xpath=//div[@id='http-error']/strong", "xpath:idRelative"],
+        ["xpath=//strong", "xpath:position"]
       ],
       "value": ""
-    }, {
-      "id": "8a2a4e14-55db-483f-8bd9-cc04493e6a7a",
-      "comment": "",
-      "command": "click",
-      "target": "linkText=Requisições",
-      "targets": [
-        ["linkText=Requisições", "linkText"],
-        ["css=.dropdown-menu > .ng-scope:nth-child(2) > .ng-binding", "css:finder"],
-        ["xpath=//a[contains(text(),'Requisições')]", "xpath:link"],
-        ["xpath=//a[contains(@href, '#!/app/request/search')]", "xpath:href"],
-        ["xpath=//li[2]/a", "xpath:position"]
-      ],
-      "value": ""
-    }, {
-      "id": "e55f6018-c8d9-4b44-b02b-7089efa7fb79",
-      "comment": "",
-      "command": "click",
-      "target": "linkText=Edit",
-      "targets": [
-        ["linkText=Edit", "linkText"],
-        ["css=a.ng-binding.ng-scope", "css"],
-        ["css=td > .ng-scope:nth-child(1)", "css:finder"],
-        ["xpath=//a[contains(text(),'Edit')]", "xpath:link"],
-        ["xpath=//tbody[@id='requestForm-crud-table-body']/tr/td/a", "xpath:idRelative"],
-        ["xpath=//a[contains(@href, '#!/app/request/edit?company=2&id=17')]", "xpath:href"],
-        ["xpath=//td/a", "xpath:position"]
-      ],
-      "value": ""
-    }, {
-      "id": "f6b802bf-2777-4a4f-8847-e914bdb7ecdc",
-      "comment": "",
-      "command": "assertValue",
-      "target": "",
-      "targets": [],
-      "value": "2018-05-18T20:08:34"
     }]
   }, {
     "id": "459c824d-1825-4183-90db-145872eac86e",
     "name": "first_data",
     "commands": [{
-      "id": "0d429ca8-27e2-41dc-aee1-98f5eb317e06",
+      "id": "00ed2635-8f56-46c3-8e5f-958de1743875",
       "comment": "",
-      "command": "open",
-      "target": "",
+      "command": "run",
+      "target": "login_spending",
       "targets": [],
       "value": ""
     }, {
-      "id": "ec591413-249e-4c76-9166-7d2aca756399",
+      "id": "4c6f8a7a-a794-4753-b015-15efd5d08096",
       "comment": "",
-      "command": "type",
-      "target": "id=user",
+      "command": "run",
+      "target": "create_person",
       "targets": [],
-      "value": "spending"
+      "value": ""
     }, {
-      "id": "0fba26c9-8526-4b8c-bdbc-b6d305358c91",
+      "id": "6c926f71-33d7-4174-ac86-9ca4f87732dd",
       "comment": "",
-      "command": "type",
-      "target": "id=password",
+      "command": "run",
+      "target": "create_product",
       "targets": [],
-      "value": "123456"
-    }, {
-      "id": "ed956d9d-fa14-49f7-940b-769370974561",
-      "comment": "",
-      "command": "clickAt",
-      "target": "id=login",
-      "targets": [],
-      "value": "22,23"
-    }, {
-      "id": "62171c33-c992-4c4c-810b-453170e29a7b",
-      "comment": "",
-      "command": "clickAt",
-      "target": "id=single-button-form",
-      "targets": [],
-      "value": "36,25"
-    }, {
-      "id": "ea3d11c9-b61d-4a53-94e1-d55bbeb70837",
-      "comment": "",
-      "command": "clickAt",
-      "target": "xpath=//a[contains(text(),'Clientes e Fornecedores')]",
-      "targets": [],
-      "value": "58,17"
-    }, {
-      "id": "65f76bc7-fb16-460a-9204-f295c4754a8a",
-      "comment": "",
-      "command": "clickAt",
-      "target": "id=personForm-create",
-      "targets": [],
-      "value": "35,21"
-    }, {
-      "id": "7760bd11-ac86-4315-bb95-0acd75e0c962",
-      "comment": "",
-      "command": "clickAt",
-      "target": "id=personForm-name",
-      "targets": [],
-      "value": "26,16"
-    }, {
-      "id": "8e8b8c3d-6868-42a9-bccd-3e888b95e71e",
-      "comment": "",
-      "command": "type",
-      "target": "id=personForm-name",
-      "targets": [],
-      "value": "WMS SUPERMERCADOS DO BRASIL LTDA"
-    }, {
-      "id": "08917988-48c8-4542-ad6f-8adc0980ae52",
-      "comment": "",
-      "command": "type",
-      "target": "id=personForm-cnpjCpf",
-      "targets": [],
-      "value": "93209765016110"
-    }, {
-      "id": "80a7b36a-6647-47a7-9c3a-3ddd9beaeef1",
-      "comment": "",
-      "command": "type",
-      "target": "id=personForm-ieRg",
-      "targets": [],
-      "value": "0240296389"
-    }, {
-      "id": "8bd94105-7c2f-464d-bdb0-6c14433c482d",
-      "comment": "",
-      "command": "type",
-      "target": "id=personForm-cnae",
-      "targets": [],
-      "value": "4711302 - Comércio varejista de mercadorias em geral, com predominância de produtos alimentícios - supermercados - "
-    }, {
-      "id": "7963dae1-626c-42ce-a31f-b6fc55d348c3",
-      "comment": "",
-      "command": "type",
-      "target": "id=personForm-zip",
-      "targets": [],
-      "value": "92310-001"
-    }, {
-      "id": "d12e996b-a88c-4420-862b-0aff978ea7d9",
-      "comment": "",
-      "command": "type",
-      "target": "id=personForm-country",
-      "targets": [],
-      "value": "1058 - Brazil - "
-    }, {
-      "id": "88d2e5da-378f-4d48-89cb-08eaecdf485f",
-      "comment": "",
-      "command": "type",
-      "target": "id=personForm-uf",
-      "targets": [],
-      "value": "0043 - Rio Grande do Sul - "
-    }, {
-      "id": "08c8320f-db07-4ce0-8855-51f26e0b5a0e",
-      "comment": "",
-      "command": "type",
-      "target": "id=personForm-city",
-      "targets": [],
-      "value": "4304606 - Canoas - "
-    }, {
-      "id": "9da7e98f-026d-45df-a265-338cc56550cd",
-      "comment": "",
-      "command": "type",
-      "target": "id=personForm-district",
-      "targets": [],
-      "value": "Tabaí"
-    }, {
-      "id": "e94d389e-1bab-4a3d-abf8-af2117bdfa39",
-      "comment": "",
-      "command": "type",
-      "target": "id=personForm-address",
-      "targets": [],
-      "value": "Av. Guilherme Schell"
-    }, {
-      "id": "11845acf-4de1-4cd1-8fa5-e75eadd6eef8",
-      "comment": "",
-      "command": "type",
-      "target": "id=personForm-addressNumber",
-      "targets": [],
-      "value": "8800"
-    }, {
-      "id": "117a47a6-30ed-4793-9672-645ff648e74d",
-      "comment": "",
-      "command": "clickAt",
-      "target": "id=personForm-save",
-      "targets": [],
-      "value": "-331,-1257"
-    }, {
-      "id": "48a80c52-9382-4cec-af2f-652e2b43e573",
-      "comment": "",
-      "command": "clickAt",
-      "target": "id=single-button-form",
-      "targets": [],
-      "value": "29,15"
-    }, {
-      "id": "fed8f530-ec32-43e6-8c23-5024d64963b5",
-      "comment": "",
-      "command": "clickAt",
-      "target": "xpath=//a[contains(text(),'Produtos')]",
-      "targets": [],
-      "value": "41,17"
-    }, {
-      "id": "96ba7d3f-a2d7-4a33-9d92-badddd042515",
-      "comment": "",
-      "command": "clickAt",
-      "target": "id=productForm-create",
-      "targets": [],
-      "value": "57,18"
-    }, {
-      "id": "5631ebc1-05df-411d-9518-0af6092bd6e0",
-      "comment": "",
-      "command": "select",
-      "target": "id=productForm-category",
-      "targets": [],
-      "value": "label=0001 - mercado -"
-    }, {
-      "id": "75edfa7c-77dc-40b1-9af6-003116f331bb",
-      "comment": "",
-      "command": "type",
-      "target": "id=productForm-ncm",
-      "targets": [],
-      "value": "22021000 - AGUA INCLMINERAL/GASEIFADICIONACUCAR,AROMATIZADA,E - "
-    }, {
-      "id": "4e3b2faf-b4e5-450a-b590-ead995f5f34f",
-      "comment": "",
-      "command": "select",
-      "target": "id=productForm-orig",
-      "targets": [],
-      "value": "label=0"
-    }, {
-      "id": "db641fbc-4d66-4a56-8cf2-730ec68c17ab",
-      "comment": "",
-      "command": "type",
-      "target": "id=productForm-name",
-      "targets": [],
-      "value": "REFRIGERANTE COCA COLA ZERO 2 LITROS"
-    }, {
-      "id": "cb1f2ea8-192d-49e2-b597-fac68ab74f42",
-      "comment": "",
-      "command": "type",
-      "target": "id=productForm-description",
-      "targets": [],
-      "value": "refrigerante de cola sem açucar"
-    }, {
-      "id": "8d72fd73-3c68-43d5-9d46-fbb317c81b46",
-      "comment": "",
-      "command": "type",
-      "target": "id=productForm-weight",
-      "targets": [],
-      "value": "2.00"
-    }, {
-      "id": "ee32ce52-7e53-47c2-8f36-23d1a2cdb0bc",
-      "comment": "",
-      "command": "clickAt",
-      "target": "id=productForm-save",
-      "targets": [],
-      "value": "-331,-569"
+      "value": ""
     }, {
       "id": "49dab0c4-67d7-4054-9410-c22075f501f8",
       "comment": "",
@@ -470,6 +345,18 @@
       "targets": [],
       "value": "-331,-401"
     }, {
+      "id": "b8acc6df-d7ef-4fa7-96c2-100a65763143",
+      "comment": "",
+      "command": "assertElementNotPresent",
+      "target": "id=http-error",
+      "targets": [
+        ["css=strong.ng-binding", "css"],
+        ["css=#http-error > .ng-binding", "css:finder"],
+        ["xpath=//div[@id='http-error']/strong", "xpath:idRelative"],
+        ["xpath=//strong", "xpath:position"]
+      ],
+      "value": ""
+    }, {
       "id": "185de433-6c41-4d7a-9acc-e6f27112cbbb",
       "comment": "",
       "command": "clickAt",
@@ -490,6 +377,18 @@
       "target": "id=accountForm-save",
       "targets": [],
       "value": "60,17"
+    }, {
+      "id": "08f4a4af-5428-4f74-ae03-31cf109191c2",
+      "comment": "",
+      "command": "assertElementNotPresent",
+      "target": "id=http-error",
+      "targets": [
+        ["css=strong.ng-binding", "css"],
+        ["css=#http-error > .ng-binding", "css:finder"],
+        ["xpath=//div[@id='http-error']/strong", "xpath:idRelative"],
+        ["xpath=//strong", "xpath:position"]
+      ],
+      "value": ""
     }]
   }, {
     "id": "1e9f3675-4bd4-4450-a7a6-c31b52b5e3b8",
@@ -497,51 +396,10 @@
     "commands": [{
       "id": "643e53a3-8dac-4229-b22a-f95c48becb95",
       "comment": "",
-      "command": "open",
-      "target": "",
+      "command": "run",
+      "target": "login_admin",
       "targets": [],
       "value": ""
-    }, {
-      "id": "7baea709-b89c-45b2-a867-af81c6c98fc7",
-      "comment": "",
-      "command": "type",
-      "target": "id=user",
-      "targets": [
-        ["id=user", "id"],
-        ["name=user", "name"],
-        ["css=#user", "css"],
-        ["xpath=//input[@id='user']", "xpath:attributes"],
-        ["xpath=//div[@id='main']/form/div[2]/input", "xpath:idRelative"],
-        ["xpath=//div[2]/input", "xpath:position"]
-      ],
-      "value": "admin"
-    }, {
-      "id": "3448e13f-6369-453a-8890-09030ff174f3",
-      "comment": "",
-      "command": "type",
-      "target": "id=password",
-      "targets": [
-        ["id=password", "id"],
-        ["name=password", "name"],
-        ["css=#password", "css"],
-        ["xpath=//input[@id='password']", "xpath:attributes"],
-        ["xpath=//div[@id='main']/form/div[3]/input", "xpath:idRelative"],
-        ["xpath=//div[3]/input", "xpath:position"]
-      ],
-      "value": "admin"
-    }, {
-      "id": "69773f46-9c3a-41bc-8ac6-6f9b23f4eefd",
-      "comment": "",
-      "command": "clickAt",
-      "target": "id=login",
-      "targets": [
-        ["id=login", "id"],
-        ["css=#login", "css"],
-        ["xpath=//button[@id='login']", "xpath:attributes"],
-        ["xpath=//div[@id='main']/form/button", "xpath:idRelative"],
-        ["xpath=//form/button", "xpath:position"]
-      ],
-      "value": "25,11"
     }, {
       "id": "f73fa8a1-9ad6-4d7b-b445-a431325b782f",
       "comment": "",
@@ -560,14 +418,13 @@
       "id": "2d7f0b0e-ac26-498f-8145-2f81f8fe57f2",
       "comment": "",
       "command": "click",
-      "target": "xpath=//a[contains(@href, '#!/app/crud_user/edit?company=2&id=2')]",
+      "target": "xpath=//a[contains(@href, '#!/app/crud_user/edit?company=2&name=spending')]",
       "targets": [
-        ["linkText=Edit", "linkText"],
-        ["css=a.ng-binding.ng-scope", "css"],
-        ["xpath=//a[contains(text(),'Edit')]", "xpath:link"],
-        ["xpath=//tbody[@id='crudUserForm-crud-table-body']/tr/td/a", "xpath:idRelative"],
-        ["xpath=//a[contains(@href, '#!/app/crud_user/edit?company=2&id=2')]", "xpath:href"],
-        ["xpath=//td/a", "xpath:position"]
+        ["css=.ng-scope:nth-child(2) > td > .ng-scope:nth-child(1)", "css:finder"],
+        ["xpath=(//a[contains(text(),'Edit')])[2]", "xpath:link"],
+        ["xpath=//tbody[@id='crudUserForm-crud-table-body']/tr[2]/td/a", "xpath:idRelative"],
+        ["xpath=//a[contains(@href, '#!/app/crud_user/edit?company=2&name=spending')]", "xpath:href"],
+        ["xpath=//tr[2]/td/a", "xpath:position"]
       ],
       "value": ""
     }, {
@@ -661,6 +518,18 @@
       "target": "id=crudUserForm-update",
       "targets": [],
       "value": "39,20"
+    }, {
+      "id": "10d22df6-97d1-4095-935c-7e016b5ec12a",
+      "comment": "",
+      "command": "assertElementNotPresent",
+      "target": "id=http-error",
+      "targets": [
+        ["css=strong.ng-binding", "css"],
+        ["css=#http-error > .ng-binding", "css:finder"],
+        ["xpath=//div[@id='http-error']/strong", "xpath:idRelative"],
+        ["xpath=//strong", "xpath:position"]
+      ],
+      "value": ""
     }]
   }, {
     "id": "b27ccfb6-01a9-435c-ac0d-7a49de274b68",
@@ -720,65 +589,9 @@
     "commands": [{
       "id": "5d809918-e5e4-4466-9cdc-a0524c530a19",
       "comment": "",
-      "command": "open",
-      "target": "",
+      "command": "run",
+      "target": "login_spending",
       "targets": [],
-      "value": ""
-    }, {
-      "id": "057b9e7a-b4c4-47f0-a291-8f6a4bfa94bf",
-      "comment": "",
-      "command": "clickAt",
-      "target": "id=user",
-      "targets": [
-        ["id=user", "id"],
-        ["name=user", "name"],
-        ["css=#user", "css"],
-        ["xpath=//input[@id='user']", "xpath:attributes"],
-        ["xpath=//div[@id='main']/form/div[2]/input", "xpath:idRelative"],
-        ["xpath=//div[2]/input", "xpath:position"]
-      ],
-      "value": "34,21"
-    }, {
-      "id": "2f7610ec-9132-4697-a767-cd87ed132453",
-      "comment": "",
-      "command": "type",
-      "target": "id=user",
-      "targets": [
-        ["id=user", "id"],
-        ["name=user", "name"],
-        ["css=#user", "css"],
-        ["xpath=//input[@id='user']", "xpath:attributes"],
-        ["xpath=//div[@id='main']/form/div[2]/input", "xpath:idRelative"],
-        ["xpath=//div[2]/input", "xpath:position"]
-      ],
-      "value": "spending"
-    }, {
-      "id": "dd35abba-72fe-44dc-a4a3-ae7c83f90aa3",
-      "comment": "",
-      "command": "type",
-      "target": "id=password",
-      "targets": [
-        ["id=password", "id"],
-        ["name=password", "name"],
-        ["css=#password", "css"],
-        ["xpath=//input[@id='password']", "xpath:attributes"],
-        ["xpath=//div[@id='main']/form/div[3]/input", "xpath:idRelative"],
-        ["xpath=//div[3]/input", "xpath:position"]
-      ],
-      "value": "123456"
-    }, {
-      "id": "a5159264-cf3b-4a51-b527-1a5a8bb03e35",
-      "comment": "",
-      "command": "click",
-      "target": "id=login",
-      "targets": [
-        ["id=password", "id"],
-        ["name=password", "name"],
-        ["css=#password", "css"],
-        ["xpath=//input[@id='password']", "xpath:attributes"],
-        ["xpath=//div[@id='main']/form/div[3]/input", "xpath:idRelative"],
-        ["xpath=//div[3]/input", "xpath:position"]
-      ],
       "value": ""
     }, {
       "id": "a5050478-100f-4875-97d5-0e1a248d7a15",
@@ -817,6 +630,18 @@
       ],
       "value": "39,8"
     }, {
+      "id": "92f3a660-a2dd-4a42-8720-11d0ee6b1ebb",
+      "comment": "",
+      "command": "assertElementNotPresent",
+      "target": "id=http-error",
+      "targets": [
+        ["css=strong.ng-binding", "css"],
+        ["css=#http-error > .ng-binding", "css:finder"],
+        ["xpath=//div[@id='http-error']/strong", "xpath:idRelative"],
+        ["xpath=//strong", "xpath:position"]
+      ],
+      "value": ""
+    }, {
       "id": "9a83e393-30bd-4ca9-a26c-bd0ea7d9f4ca",
       "comment": "",
       "command": "clickAt",
@@ -829,6 +654,18 @@
         ["xpath=//a[2]", "xpath:position"]
       ],
       "value": "39,1"
+    }, {
+      "id": "38bd0375-9d65-4218-b09e-d0117529cf63",
+      "comment": "",
+      "command": "assertElementNotPresent",
+      "target": "id=http-error",
+      "targets": [
+        ["css=strong.ng-binding", "css"],
+        ["css=#http-error > .ng-binding", "css:finder"],
+        ["xpath=//div[@id='http-error']/strong", "xpath:idRelative"],
+        ["xpath=//strong", "xpath:position"]
+      ],
+      "value": ""
     }, {
       "id": "300872dd-7f4a-432c-83da-5e168f008a48",
       "comment": "",
@@ -867,6 +704,18 @@
       ],
       "value": "44,4"
     }, {
+      "id": "75244915-bd63-4fb1-9f6c-aa255ecbf1fd",
+      "comment": "",
+      "command": "assertElementNotPresent",
+      "target": "id=http-error",
+      "targets": [
+        ["css=strong.ng-binding", "css"],
+        ["css=#http-error > .ng-binding", "css:finder"],
+        ["xpath=//div[@id='http-error']/strong", "xpath:idRelative"],
+        ["xpath=//strong", "xpath:position"]
+      ],
+      "value": ""
+    }, {
       "id": "e4c68e73-7fe7-41fa-b89c-d202a82c7266",
       "comment": "",
       "command": "clickAt",
@@ -903,6 +752,18 @@
         ["xpath=//a[2]", "xpath:position"]
       ],
       "value": "37,5"
+    }, {
+      "id": "fe15869e-e774-4ada-a7b3-bad9931b0d25",
+      "comment": "",
+      "command": "assertElementNotPresent",
+      "target": "id=http-error",
+      "targets": [
+        ["css=strong.ng-binding", "css"],
+        ["css=#http-error > .ng-binding", "css:finder"],
+        ["xpath=//div[@id='http-error']/strong", "xpath:idRelative"],
+        ["xpath=//strong", "xpath:position"]
+      ],
+      "value": ""
     }]
   }, {
     "id": "9d483cf8-5f6b-4c7a-a575-2baf733398ae",
@@ -911,7 +772,7 @@
       "id": "2de8d529-9f7e-4877-9e50-d33a4760e3e4",
       "comment": "",
       "command": "open",
-      "target": "/crud/",
+      "target": "",
       "targets": [],
       "value": ""
     }, {
@@ -1078,51 +939,10 @@
     "commands": [{
       "id": "9530fb4a-a355-483f-86ce-261fea23f003",
       "comment": "",
-      "command": "open",
-      "target": "",
+      "command": "run",
+      "target": "login_spending",
       "targets": [],
       "value": ""
-    }, {
-      "id": "04a69961-dfcf-4513-8aba-c6d194ab1a50",
-      "comment": "",
-      "command": "type",
-      "target": "id=user",
-      "targets": [
-        ["id=user", "id"],
-        ["name=user", "name"],
-        ["css=#user", "css"],
-        ["xpath=//input[@id='user']", "xpath:attributes"],
-        ["xpath=//div[@id='main']/form/div[2]/input", "xpath:idRelative"],
-        ["xpath=//div[2]/input", "xpath:position"]
-      ],
-      "value": "spending"
-    }, {
-      "id": "aabb91ea-42ee-4f5b-ac20-480ef7a98de3",
-      "comment": "",
-      "command": "type",
-      "target": "id=password",
-      "targets": [
-        ["id=password", "id"],
-        ["name=password", "name"],
-        ["css=#password", "css"],
-        ["xpath=//input[@id='password']", "xpath:attributes"],
-        ["xpath=//div[@id='main']/form/div[3]/input", "xpath:idRelative"],
-        ["xpath=//div[3]/input", "xpath:position"]
-      ],
-      "value": "123456"
-    }, {
-      "id": "eb795299-fda6-45b0-a527-448a61256c92",
-      "comment": "",
-      "command": "clickAt",
-      "target": "id=login",
-      "targets": [
-        ["id=login", "id"],
-        ["css=#login", "css"],
-        ["xpath=//button[@id='login']", "xpath:attributes"],
-        ["xpath=//div[@id='main']/form/button", "xpath:idRelative"],
-        ["xpath=//form/button", "xpath:position"]
-      ],
-      "value": "37,21"
     }, {
       "id": "76c9cf2f-ae1d-4296-a45c-0afd6798da14",
       "comment": "",
@@ -1150,6 +970,18 @@
       ],
       "value": "52,8"
     }, {
+      "id": "935caf2c-ac89-41f2-a079-9d97dc56d788",
+      "comment": "",
+      "command": "assertElementNotPresent",
+      "target": "id=http-error",
+      "targets": [
+        ["css=strong.ng-binding", "css"],
+        ["css=#http-error > .ng-binding", "css:finder"],
+        ["xpath=//div[@id='http-error']/strong", "xpath:idRelative"],
+        ["xpath=//strong", "xpath:position"]
+      ],
+      "value": ""
+    }, {
       "id": "d245a86a-2d19-4739-a5c2-0e97213bf6ad",
       "comment": "",
       "command": "clickAt",
@@ -1162,6 +994,18 @@
         ["xpath=//a[2]", "xpath:position"]
       ],
       "value": "41,8"
+    }, {
+      "id": "120bd78e-fd0d-4f97-964f-51b87019c380",
+      "comment": "",
+      "command": "assertElementNotPresent",
+      "target": "id=http-error",
+      "targets": [
+        ["css=strong.ng-binding", "css"],
+        ["css=#http-error > .ng-binding", "css:finder"],
+        ["xpath=//div[@id='http-error']/strong", "xpath:idRelative"],
+        ["xpath=//strong", "xpath:position"]
+      ],
+      "value": ""
     }, {
       "id": "54fda413-e40f-4617-a8c9-c41359178c7b",
       "comment": "",
@@ -1176,15 +1020,406 @@
         ["xpath=//button[4]", "xpath:position"]
       ],
       "value": "37,25"
+    }, {
+      "id": "5cf88b15-104a-4dbc-8301-3efae120b475",
+      "comment": "",
+      "command": "assertElementNotPresent",
+      "target": "id=http-error",
+      "targets": [
+        ["css=strong.ng-binding", "css"],
+        ["css=#http-error > .ng-binding", "css:finder"],
+        ["xpath=//div[@id='http-error']/strong", "xpath:idRelative"],
+        ["xpath=//strong", "xpath:position"]
+      ],
+      "value": ""
+    }]
+  }, {
+    "id": "88ca5807-7d2d-4a44-8d9c-9b595cb5bebf",
+    "name": "login_admin",
+    "commands": [{
+      "id": "bd3658ca-f69b-46bd-b68b-1499ada49d40",
+      "comment": "",
+      "command": "open",
+      "target": "",
+      "targets": [],
+      "value": ""
+    }, {
+      "id": "c20fa6d6-3922-40c8-a60e-b572c0ac2a89",
+      "comment": "",
+      "command": "type",
+      "target": "id=user",
+      "targets": [
+        ["id=user", "id"],
+        ["name=user", "name"],
+        ["css=#user", "css"],
+        ["xpath=//input[@id='user']", "xpath:attributes"],
+        ["xpath=//div[@id='main']/form/div[2]/input", "xpath:idRelative"],
+        ["xpath=//div[2]/input", "xpath:position"]
+      ],
+      "value": "admin"
+    }, {
+      "id": "67d16918-8c73-4bd2-9898-e093ccdc08c5",
+      "comment": "",
+      "command": "type",
+      "target": "id=password",
+      "targets": [
+        ["id=password", "id"],
+        ["name=password", "name"],
+        ["css=#password", "css"],
+        ["xpath=//input[@id='password']", "xpath:attributes"],
+        ["xpath=//div[@id='main']/form/div[3]/input", "xpath:idRelative"],
+        ["xpath=//div[3]/input", "xpath:position"]
+      ],
+      "value": "admin"
+    }, {
+      "id": "6731c3f3-df21-4dc7-b65b-b18e46200f18",
+      "comment": "",
+      "command": "click",
+      "target": "id=login",
+      "targets": [
+        ["id=login", "id"],
+        ["css=#login", "css"],
+        ["xpath=//button[@id='login']", "xpath:attributes"],
+        ["xpath=//div[@id='main']/form/button", "xpath:idRelative"],
+        ["xpath=//form/button", "xpath:position"]
+      ],
+      "value": ""
+    }]
+  }, {
+    "id": "b77d46ed-2a97-4a13-a38e-cfab228e0b2a",
+    "name": "create_person",
+    "commands": [{
+      "id": "b2f141f5-e07f-4b24-88a8-4058e66b74c0",
+      "comment": "",
+      "command": "clickAt",
+      "target": "id=single-button-form",
+      "targets": [],
+      "value": "36,25"
+    }, {
+      "id": "592aab2d-82d4-4a00-83df-840bf0ebcb10",
+      "comment": "",
+      "command": "clickAt",
+      "target": "xpath=//a[contains(text(),'Clientes e Fornecedores')]",
+      "targets": [],
+      "value": "58,17"
+    }, {
+      "id": "76fad755-7025-41cb-b573-9d4c65015765",
+      "comment": "",
+      "command": "clickAt",
+      "target": "id=personForm-create",
+      "targets": [],
+      "value": "35,21"
+    }, {
+      "id": "f268ae28-e99b-4325-84d0-17da5e552388",
+      "comment": "",
+      "command": "type",
+      "target": "id=personForm-name",
+      "targets": [],
+      "value": "WMS SUPERMERCADOS DO BRASIL LTDA"
+    }, {
+      "id": "9390572d-411a-439e-ba60-85b6b5c9606d",
+      "comment": "",
+      "command": "type",
+      "target": "id=personForm-cnpjCpf",
+      "targets": [],
+      "value": "93209765016110"
+    }, {
+      "id": "528bb4c2-dec5-481a-95f1-bbee0f00972e",
+      "comment": "",
+      "command": "type",
+      "target": "id=personForm-ieRg",
+      "targets": [],
+      "value": "0240296389"
+    }, {
+      "id": "90e1a6d4-f0e7-453d-8962-0300519899f9",
+      "comment": "",
+      "command": "type",
+      "target": "id=personForm-cnae",
+      "targets": [],
+      "value": "4711302 - Comércio varejista de mercadorias em geral, com predominância de produtos alimentícios - supermercados"
+    }, {
+      "id": "8b3c4fac-a40b-4eb7-8798-59526db26652",
+      "comment": "",
+      "command": "type",
+      "target": "id=personForm-zip",
+      "targets": [],
+      "value": "92310-001"
+    }, {
+      "id": "18a3a55e-c691-4f89-a186-11fef80d26cb",
+      "comment": "",
+      "command": "type",
+      "target": "id=personForm-country",
+      "targets": [],
+      "value": "1058 - Brazil"
+    }, {
+      "id": "047bdbc1-0f89-49bf-8779-9b6b25518c5b",
+      "comment": "",
+      "command": "type",
+      "target": "id=personForm-uf",
+      "targets": [],
+      "value": "0043 - Rio Grande do Sul"
+    }, {
+      "id": "3777e4e9-ba62-4f0a-830b-e0ea18a05101",
+      "comment": "",
+      "command": "type",
+      "target": "id=personForm-city",
+      "targets": [],
+      "value": "4304606 - Canoas"
+    }, {
+      "id": "35187401-fae8-421a-a1ff-33612fd8e120",
+      "comment": "",
+      "command": "type",
+      "target": "id=personForm-district",
+      "targets": [],
+      "value": "Tabaí"
+    }, {
+      "id": "738e51e7-2b5c-42eb-ab60-671351dd61a4",
+      "comment": "",
+      "command": "type",
+      "target": "id=personForm-address",
+      "targets": [],
+      "value": "Av. Guilherme Schell"
+    }, {
+      "id": "9e1ad3de-6064-4b2a-a7f4-c08217439790",
+      "comment": "",
+      "command": "type",
+      "target": "id=personForm-addressNumber",
+      "targets": [],
+      "value": "8800"
+    }, {
+      "id": "f2fc7dae-cd39-419d-9aad-8503d4f0f969",
+      "comment": "",
+      "command": "clickAt",
+      "target": "id=personForm-save",
+      "targets": [],
+      "value": "-331,-1257"
+    }, {
+      "id": "823d9d3f-d606-4be1-ae2f-0b66f82a51b4",
+      "comment": "",
+      "command": "assertElementNotPresent",
+      "target": "id=http-error",
+      "targets": [
+        ["css=strong.ng-binding", "css"],
+        ["css=#http-error > .ng-binding", "css:finder"],
+        ["xpath=//div[@id='http-error']/strong", "xpath:idRelative"],
+        ["xpath=//strong", "xpath:position"]
+      ],
+      "value": ""
+    }, {
+      "id": "65b87c97-8797-416f-ab0e-8703810817d6",
+      "comment": "",
+      "command": "click",
+      "target": "id=single-button-form",
+      "targets": [
+        ["id=single-button-form", "id"],
+        ["css=#single-button-form", "css"],
+        ["css=#single-button-form", "css:finder"],
+        ["xpath=//button[@id='single-button-form']", "xpath:attributes"],
+        ["xpath=//div[@id='header']/div/div[2]/ul/div[3]/button", "xpath:idRelative"],
+        ["xpath=//div[3]/button", "xpath:position"]
+      ],
+      "value": ""
+    }, {
+      "id": "af4adc2a-20fd-493a-be8c-5d17ffe8cfe0",
+      "comment": "",
+      "command": "click",
+      "target": "linkText=Clientes e Fornecedores",
+      "targets": [
+        ["linkText=Clientes e Fornecedores", "linkText"],
+        ["css=.dropdown-menu > .ng-scope:nth-child(3) > .ng-binding", "css:finder"],
+        ["xpath=//a[contains(text(),'Clientes e Fornecedores')]", "xpath:link"],
+        ["xpath=//div[@id='header']/div/div[2]/ul/div[3]/ul/li[3]/a", "xpath:idRelative"],
+        ["xpath=//a[contains(@href, '#!/app/person/search')]", "xpath:href"],
+        ["xpath=//li[3]/a", "xpath:position"]
+      ],
+      "value": ""
+    }, {
+      "id": "c0457880-30e9-4805-a38a-006c08b8849e",
+      "comment": "",
+      "command": "click",
+      "target": "linkText=WMS SUPERMERCADOS DO BRASIL LTDA",
+      "targets": [
+        ["linkText=WMS SUPERMERCADOS DO BRASIL LTDA", "linkText"],
+        ["css=td.ng-scope > a.ng-binding", "css"],
+        ["css=.ng-scope > .ng-scope:nth-child(2) > .ng-binding", "css:finder"],
+        ["xpath=//a[contains(text(),'WMS SUPERMERCADOS DO BRASIL LTDA')]", "xpath:link"],
+        ["xpath=//tbody[@id='personForm-crud-table-body']/tr/td[2]/a", "xpath:idRelative"],
+        ["xpath=//a[contains(@href, '#!/app/person/view?company=2&id=2')]", "xpath:href"],
+        ["xpath=//td[2]/a", "xpath:position"]
+      ],
+      "value": ""
+    }, {
+      "id": "a71b6115-2a3d-44b4-8a50-2466bcabf334",
+      "comment": "",
+      "command": "assertValue",
+      "target": "id=personForm-name",
+      "targets": [],
+      "value": "WMS SUPERMERCADOS DO BRASIL LTDA"
+    }, {
+      "id": "d5c4512f-0ecc-4ff8-8f9b-429a725a1046",
+      "comment": "",
+      "command": "assertValue",
+      "target": "id=personForm-cnpjCpf",
+      "targets": [],
+      "value": "93209765016110"
+    }, {
+      "id": "3123bcb1-6804-4a06-a37b-2507e72718f4",
+      "comment": "",
+      "command": "assertValue",
+      "target": "id=personForm-ieRg",
+      "targets": [],
+      "value": "0240296389"
+    }, {
+      "id": "4ca4a86e-1243-4c80-919b-a16328685bc2",
+      "comment": "",
+      "command": "assertValue",
+      "target": "id=personForm-cnae",
+      "targets": [],
+      "value": "4711302 - Comércio varejista de mercadorias em geral, com predominância de produtos alimentícios - supermercados"
+    }, {
+      "id": "8b8a8b7f-12af-4958-b064-fec50ffd8db1",
+      "comment": "",
+      "command": "assertValue",
+      "target": "id=personForm-zip",
+      "targets": [],
+      "value": "92310-001"
+    }, {
+      "id": "833eb452-820c-49c5-b5a6-4ae954149554",
+      "comment": "",
+      "command": "assertValue",
+      "target": "id=personForm-country",
+      "targets": [],
+      "value": "1058 - Brazil"
+    }, {
+      "id": "8356d2d6-6ddb-4679-829c-96d44ce3f82d",
+      "comment": "",
+      "command": "assertValue",
+      "target": "id=personForm-uf",
+      "targets": [],
+      "value": "0043 - Rio Grande do Sul"
+    }, {
+      "id": "1e3b1f60-93aa-49c9-98fe-858568ffdeb0",
+      "comment": "",
+      "command": "assertValue",
+      "target": "id=personForm-city",
+      "targets": [],
+      "value": "4304606 - Canoas"
+    }, {
+      "id": "f082b70d-7389-47b1-b3a8-58edb4de9557",
+      "comment": "",
+      "command": "assertValue",
+      "target": "id=personForm-district",
+      "targets": [],
+      "value": "Tabaí"
+    }, {
+      "id": "fbad3ae7-4b33-4669-b549-db521eb8b417",
+      "comment": "",
+      "command": "assertValue",
+      "target": "id=personForm-address",
+      "targets": [],
+      "value": "Av. Guilherme Schell"
+    }, {
+      "id": "d0d6068e-b1ef-4fd7-beb4-19f2c59aefde",
+      "comment": "",
+      "command": "assertValue",
+      "target": "id=personForm-addressNumber",
+      "targets": [],
+      "value": "8800"
+    }]
+  }, {
+    "id": "feea2d66-d488-49a4-a388-819ae6fda686",
+    "name": "create_product",
+    "commands": [{
+      "id": "ac35a977-3cc8-41f5-a01b-c2b2b9a190f0",
+      "comment": "",
+      "command": "clickAt",
+      "target": "id=single-button-form",
+      "targets": [],
+      "value": "29,15"
+    }, {
+      "id": "338e3287-2b15-4d86-a7a8-0163db0787de",
+      "comment": "",
+      "command": "clickAt",
+      "target": "xpath=//a[contains(text(),'Produtos')]",
+      "targets": [],
+      "value": "41,17"
+    }, {
+      "id": "3f03e46c-f5b1-478e-8d5e-fcf0d63004af",
+      "comment": "",
+      "command": "clickAt",
+      "target": "id=productForm-create",
+      "targets": [],
+      "value": "57,18"
+    }, {
+      "id": "3273579d-f4d8-4fb3-a8b7-75c800f3f744",
+      "comment": "",
+      "command": "select",
+      "target": "id=productForm-category",
+      "targets": [],
+      "value": "label=Mercado"
+    }, {
+      "id": "e615cbc6-47c3-4e64-8aa3-8e9312206f65",
+      "comment": "",
+      "command": "type",
+      "target": "id=productForm-ncm",
+      "targets": [],
+      "value": "22021000 - AGUA INCLMINERAL/GASEIFADICIONACUCAR,AROMATIZADA,E"
+    }, {
+      "id": "7cbe1525-b4ff-4f5a-8b06-3bbb1ce55951",
+      "comment": "",
+      "command": "select",
+      "target": "id=productForm-orig",
+      "targets": [],
+      "value": "label=0"
+    }, {
+      "id": "5b3946c8-746f-4f80-8885-772d0a6389b6",
+      "comment": "",
+      "command": "type",
+      "target": "id=productForm-name",
+      "targets": [],
+      "value": "REFRIGERANTE COCA COLA ZERO 2 LITROS"
+    }, {
+      "id": "874f15cd-bb3c-4017-aa73-e1598e34b272",
+      "comment": "",
+      "command": "type",
+      "target": "id=productForm-description",
+      "targets": [],
+      "value": "refrigerante de cola sem açucar"
+    }, {
+      "id": "9aab1a64-ca5b-481d-9bcd-31db3a2c4c7c",
+      "comment": "",
+      "command": "type",
+      "target": "id=productForm-weight",
+      "targets": [],
+      "value": "2.00"
+    }, {
+      "id": "1645637a-4584-4d5b-96d3-e1d14082f0eb",
+      "comment": "",
+      "command": "clickAt",
+      "target": "id=productForm-save",
+      "targets": [],
+      "value": "-331,-569"
+    }, {
+      "id": "2eba2840-7850-4906-94ce-316d58afdc59",
+      "comment": "",
+      "command": "assertElementNotPresent",
+      "target": "id=http-error",
+      "targets": [
+        ["css=strong.ng-binding", "css"],
+        ["css=#http-error > .ng-binding", "css:finder"],
+        ["xpath=//div[@id='http-error']/strong", "xpath:idRelative"],
+        ["xpath=//strong", "xpath:position"]
+      ],
+      "value": ""
     }]
   }],
   "suites": [{
     "id": "08cb74cc-4ee3-417f-b0eb-05481b3e747a",
     "name": "Default Suite",
     "parallel": false,
-    "timeout": 300,
+    "timeout": 3000,
     "tests": ["459c824d-1825-4183-90db-145872eac86e", "a634f1aa-1398-4f5e-8b60-14bc2320cbf0", "1e9f3675-4bd4-4450-a7a6-c31b52b5e3b8", "eeb9e8f0-7a60-4b9d-9422-86d8f667fe4d", "a4720c93-1155-49f1-940e-1240e2c6adf6"]
   }],
-  "urls": ["http://192.168.2.139:5000/", "https://192.168.2.139:9443/crud", "https://192.168.2.139:9443/", "https://192.168.2.139:8443/angular-es6-crud-nodejs-j2ee7", "https://192.168.2.139:9443/"],
+  "urls": ["https://192.168.2.139:8443/angular-es6-crud-nodejs-j2ee7", "https://192.168.2.139:8443/", "https://localhost:9443/crud"],
   "plugins": []
 }

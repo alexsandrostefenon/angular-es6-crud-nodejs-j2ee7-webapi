@@ -21,6 +21,7 @@ export class CrudServiceController extends CrudController {
         	var fields = {
         			"type":{"options": types},
         			"service":{"options": serviceOptions},
+        			"fieldNameForeign":{},
         			"primaryKey":{"options": [true, false]},
         			"readOnly":{"options": [true, false]},
         			"hiden":{"options": [true, false]},
@@ -32,6 +33,7 @@ export class CrudServiceController extends CrudController {
         			"precision": {},
         			"scale": {},
         			"options": {},
+        			"optionsStr": {},
         			"flags":{},
         			"title":{},
         			};

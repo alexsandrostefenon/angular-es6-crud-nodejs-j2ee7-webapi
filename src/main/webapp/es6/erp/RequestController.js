@@ -6,8 +6,7 @@ export class RequestController extends CrudController {
     getSumValues(list) {
     	let sum = 0.0;
 
-    	for (let i = 0; i < list.length; i++) {
-    		let item = list[i];
+    	for (let item of list) {
     		let quantity = (item.quantity != undefined && item.quantity != null) ? item.quantity : 1.0;
     		let value = (item.value != undefined && item.value != null) ? item.value : 0.0;
     		item.valueItem = Math.floor(quantity * value * 100.0) / 100.0;
@@ -17,18 +16,32 @@ export class RequestController extends CrudController {
     	return sum;
     }
 
+    getSumDescValues(list) {
+    	let sum = 0.0;
+
+    	for (let item of list) {
+    		sum += item.valueDesc;
+    	}
+
+    	return sum;
+    }
+
     enableRequestProduct() {
         const onProductsChanged = (list) => {
         	this.instance.productsValue = this.getSumValues(list);
-        	this.instance.sumValue = this.instance.productsValue + this.instance.servicesValue + this.instance.transportValue;
+        	this.instance.descValue = this.getSumDescValues(list);
+        	this.instance.sumValue = this.instance.productsValue + this.instance.servicesValue + this.instance.transportValue - this.instance.descValue;
+        	this.instance.sumValue = Math.floor(this.instance.sumValue * 100.0) / 100.0;
         }
         
-        const onProductSelected = (id) => {
-        	const item = this.serverConnection.services.stock.findOne({product:id});
-    		this.crudItemProduct.instance.value = (item != null) ? item.value : 0.0;
+        const onSelected = (fieldName, value) => {
+        	if (fieldName == "product") {
+				const item = this.serverConnection.services.stock.findOne({product:value});
+				this.crudItemProduct.instance.value = (item != null) ? item.value : 0.0;
+        	}
         }
-        
-        this.crudItemProduct = new CrudItem(this.serverConnection, "requestProduct", "request", this.primaryKey, false, 'Produtos', null, list => onProductsChanged(list), (field, id) => onProductSelected(id));
+        // serverConnection, serviceName, fieldName, primaryKeyForeign, title, numMaxItems, queryCallback, selectCallback
+        this.crudItemProduct = new CrudItem(this.serverConnection, "requestProduct", "request", this.primaryKey, 'Produtos', null, list => onProductsChanged(list), onSelected);
 		this.listItemCrud.push(this.crudItemProduct);
     }
     
@@ -38,11 +51,14 @@ export class RequestController extends CrudController {
 		    	this.instance.paymentsValue = this.getSumValues(list);
 		    }
 		    
-		    const onAccountSelected = (id) => {
-				this.crudItemPayment.instance.value = this.instance.sumValue - this.instance.paymentsValue;
+		    const onSelected = (fieldName, value) => {
+	        	if (fieldName == "type") {
+					this.crudItemPayment.instance.dueDate = this.instance.date;
+					this.crudItemPayment.instance.value = this.instance.sumValue - this.instance.paymentsValue;
+	        	}
 		    }
-		    
-	        this.crudItemPayment = new CrudItem(this.serverConnection, "requestPayment", "request", this.primaryKey, false, 'Pagamentos', null, list => onPaymentsChanged(list), (field, id) => onAccountSelected(id));
+	        // serverConnection, serviceName, fieldName, primaryKeyForeign, title, numMaxItems, queryCallback, selectCallback
+	        this.crudItemPayment = new CrudItem(this.serverConnection, "requestPayment", "request", this.primaryKey, 'Pagamentos', null, list => onPaymentsChanged(list), onSelected);
 			this.listItemCrud.push(this.crudItemPayment);
 		}
     }
@@ -53,8 +69,8 @@ export class RequestController extends CrudController {
 		    	this.instance.transportValue = this.getSumValues(list);
 		    	this.instance.sumValue = this.instance.productsValue + this.instance.servicesValue + this.instance.transportValue;
 		    }
-		    
-	        this.crudItemFreight = new CrudItem(this.serverConnection, "requestFreight", "request", this.primaryKey, false, 'Transportador', 1, list => onTransportChanged(list));
+	        // serverConnection, serviceName, fieldName, primaryKeyForeign, title, numMaxItems, queryCallback, selectCallback
+	        this.crudItemFreight = new CrudItem(this.serverConnection, "requestFreight", "request", this.primaryKey, 'Transportador', 1, list => onTransportChanged(list));
 			this.listItemCrud.push(this.crudItemFreight);
 		}
     }
@@ -69,14 +85,9 @@ export class RequestController extends CrudController {
 		const filterResults = [];
 		const list = this.fields.state.crudService.list;
 
-		for (let j = 0; j < list.length; j++) {
-			let itemRef = list[j];
-
+		for (let itemRef of list) {
 			if (itemRef.id == this.instance.state) {
-
-				for (let i = 0; i < list.length; i++) {
-					let item = list[i];
-
+				for (let item of list) {
 					if ((item.next == itemRef.id) ||
 						(item.id == itemRef.prev) ||
 						(item.id == itemRef.id) ||
@@ -135,11 +146,9 @@ export class RequestController extends CrudController {
 		}
 
 		this.fields.type.readOnly = true;
-		let count = 3;
 
 		if (this.serverConnection.services.requestFreight == undefined) {
 			this.fields.transportValue.hiden = true;
-			count--;
 		}
 
 		if (this.serverConnection.services.requestPayment == undefined) {
@@ -148,11 +157,6 @@ export class RequestController extends CrudController {
 
 		if (this.serverConnection.services.requestService == undefined) {
 			this.fields.servicesValue.hiden = true;
-			count--;
-		}
-
-		if (count == 1) {
-			this.fields.sumValue.hiden = true;
 		}
     }
 

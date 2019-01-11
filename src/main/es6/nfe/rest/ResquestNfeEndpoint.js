@@ -1,25 +1,20 @@
 import express from "express";
 
-class Endpoint {
+export class ResquestNfeEndpoint {
 	
-	constructor(path, appRestExpress, dbClient) {
+	constructor(appRestExpress, dbClient) {
 		this.dbClient = dbClient;
 		this.router = express.Router();
-		appRestExpress.use(path, this.router);
+		appRestExpress.use("/erp/request_nfe", this.router);
+		this.router.get("/import_nfec", this.extract);
+	}
+	
+	extract(req, res, next) {
+		res.send('respond with a resource');
 	}
 	
 }
 
-export class ResquestNfeEndpoint extends Endpoint {
-	
-	constructor(appRestExpress, dbClient) {
-		super("/erp/request_nfe", appRestExpress, dbClient);
-
-		this.router.get("/import_nfec", this.importNfec);
-	}
-	
-	importNfec(req, res, next) {
-		res.send('respond with a resource');
-	}
-	
+export function setup(appRestExpress, dbClient) {
+	let instance = new ResquestNfeEndpoint(appRestExpress, dbClient);
 }

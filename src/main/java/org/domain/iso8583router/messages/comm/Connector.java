@@ -174,7 +174,7 @@ public class Connector implements Logger, ModuleManager {
 		Module instance = null;
 
 		try {
-			instance = (Module) _class.newInstance();
+			instance = (Module) _class.getConstructor().newInstance();
 		} catch (InstantiationException e) {
 			throw new Exception("instanciation exception");
 		}

@@ -1,23 +1,22 @@
 CREATE TABLE iso8583_router_message_adapter (
     name character varying(64) primary key,
     parent character varying(64) references iso8583_router_message_adapter, -- iso8583default
-    adapter_class character varying(255) NOT NULL, -- MessageAdapterISO8583
-    compress boolean,
-    tag_prefix character varying(32)
+    adapter_class character varying(255) NOT NULL -- MessageAdapterISO8583
 );
 
 CREATE TABLE iso8583_router_message_adapter_item (
-    id SERIAL primary key,
-    message_adapter character varying(64) references iso8583_router_message_adapter, -- iso8583default
+    message_adapter character varying(64) references iso8583_router_message_adapter NOT NULL, -- iso8583default
+    order_index integer,
+    root_pattern character varying(255) NOT NULL, -- "\\d\\d\\d\\d";
+    tag character varying(255) NOT NULL,
+    field_name character varying(255),
     alignment integer,  -- ZERO_LEFT
     data_format character varying(255), -- 
     data_type integer NOT NULL, -- Utils.DATA_TYPE_DECIMAL | Utils.DATA_TYPE_ALPHA | Utils.DATA_TYPE_SPECIAL;
-    field_name character varying(255),
-    max_length integer NOT NULL, -- 2 * 999;
-    min_length integer NOT NULL, -- 1
-    root_pattern character varying(255) NOT NULL, -- "\\d\\d\\d\\d";
     size_header integer NOT NULL, -- 0
-    tag character varying(255) NOT NULL
+    min_length integer NOT NULL, -- 1
+    max_length integer NOT NULL, -- 2 * 999;
+    primary key(message_adapter, root_pattern, tag)
 );
 
 CREATE TABLE iso8583_router_comm (
@@ -29,12 +28,12 @@ CREATE TABLE iso8583_router_comm (
     port integer,
     permanent boolean,
     size_ascii boolean,
-    adapter character varying(64),
+    adapter character varying(64) NOT NULL,
     backlog integer,
     direction integer,
     endian_type integer,
     max_opened_connections integer,
-    message_adapter character varying(255)
+    message_adapter character varying(64) references iso8583_router_message_adapter NOT NULL
 );
 
 CREATE TABLE iso8583_router_transaction (

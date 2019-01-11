@@ -23,7 +23,7 @@ public class JsonConverter implements javax.persistence.AttributeConverter<JsonS
 	    		if (JsonConverter.dbObjectClass == String.class) {
 			    	obj = str;
 	    		} else if (JsonConverter.dbObjectClass.getName().equals("org.postgresql.util.PGobject")) {
-			    	obj = JsonConverter.dbObjectClass.newInstance();
+			    	obj = JsonConverter.dbObjectClass.getConstructor().newInstance();
 			    	Method setType = JsonConverter.dbObjectClass.getDeclaredMethod("setType", String.class);
 			    	Method setValue = JsonConverter.dbObjectClass.getDeclaredMethod("setValue", String.class);
 			    	setType.invoke(obj, "jsonb");

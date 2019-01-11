@@ -12,12 +12,11 @@ CREATE TABLE crud_service (
 
 CREATE TABLE crud_company (
     id SERIAL PRIMARY KEY,
-    name character varying(255) NOT NULL
+    name character varying(255) NOT NULL UNIQUE
 );
 
 CREATE TABLE crud_user (
     company integer references crud_company,
-    id SERIAL,
     authctoken character varying(255),
     ip character varying(255),
     menu character varying(10240),
@@ -29,7 +28,7 @@ CREATE TABLE crud_user (
     config character varying(10240),
     routes character varying(10240),
     routes_jsonb jsonb,
-    PRIMARY KEY(company,id)
+    PRIMARY KEY(company,name)
 );
 
 CREATE TABLE crud_translation (
@@ -41,7 +40,7 @@ CREATE TABLE crud_translation (
 
 CREATE TABLE category ( -- replace to camex_ncm
     id SERIAL PRIMARY KEY,
-    name character varying(100) NOT NULL
+    name character varying(100) NOT NULL UNIQUE
 );
 
 CREATE TABLE category_company ( -- rename to cnae_ncm

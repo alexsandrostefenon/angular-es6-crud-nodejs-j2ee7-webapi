@@ -130,7 +130,8 @@ export class HttpRestRequest {
 
 	constructor(url) {
 		this.url = url;
-		this.message = "";
+		this.messageWorking = "";
+		this.messageError = "";
 	}
 
 	getToken() {
@@ -142,7 +143,6 @@ export class HttpRestRequest {
 	}
 	// private
 	request(path, method, params, objSend) {
-		this.message = "Processando...";
 		let url = this.url + "/" + path;
 		
 		if (params != undefined && params != null) {
@@ -177,8 +177,11 @@ export class HttpRestRequest {
 			promise = _fetch(url, options);
 		}
 		
+		this.messageWorking = "Processing request to " + url;
+		this.messageError = "";
+
 		return promise.then(response => {
-			this.message = "";
+			this.messageWorking = "";
 			const contentType = response.headers.get("content-type");
 			
 			if (response.status === 200) {
@@ -192,10 +195,12 @@ export class HttpRestRequest {
 					return Promise.resolve(null);
 				}
 			} else {
-				throw new Error(response.statusText + " : " + response.text());
+				return response.text().then(message => {
+					throw new Error(response.statusText + " : " + message);
+				});
 			}
 		}).catch(error => {
-			this.message = error.message;
+			this.messageError = error.message;
 			throw error;
 		});
 	}
@@ -263,29 +268,49 @@ export class CrudService {
 		return check;
 	}
 
-	getPrimaryKey(objRef, valueReplace) {
-		var primaryKey = {};
+	getPrimaryKey(obj) {
+		let primaryKey = {};
 
 		for (var fieldName of this.primaryKeys) {
-			primaryKey[fieldName] = objRef[fieldName];
-		}
-
-		if (valueReplace != undefined) {
-			if (this.primaryKeys.indexOf("id") >= 0) {
-				primaryKey.id = valueReplace;
-			} else {
-				for (var fieldName of this.primaryKeys) {
-					if (primaryKey[fieldName] == undefined) {
-						primaryKey[fieldName] = valueReplace;
-						break;
-					}
-				}
-			}
+			primaryKey[fieldName] = obj[fieldName];
 		}
 
 		return primaryKey;
 	}
 
+	getPrimaryKeyFromForeignData(dataForeign, fieldNameForeign, fieldName) {
+		let primaryKey = this.getPrimaryKey(dataForeign);
+
+		if (fieldName != undefined && fieldName != null) {
+			primaryKey[fieldName] = dataForeign[fieldNameForeign];
+		} else if (this.primaryKeys.indexOf(fieldNameForeign) < 0 && this.primaryKeys.indexOf("id") >= 0) {
+			primaryKey["id"] = dataForeign[fieldNameForeign];
+		}
+
+		return primaryKey;
+	}
+	// CrudItem usage 
+	getForeignKeyFromPrimaryKeyForeign(primaryKeyForeign, fieldName) {
+		const field = this.params.fields[fieldName];
+		const foreignKey = {};
+		
+		for (let fieldNameOfPrimaryKeyForeign in primaryKeyForeign) {
+			if (fieldNameOfPrimaryKeyForeign != "id" && this.primaryKeys.indexOf(fieldNameOfPrimaryKeyForeign) >= 0) {
+				foreignKey[fieldNameOfPrimaryKeyForeign] = primaryKeyForeign[fieldNameOfPrimaryKeyForeign];
+			}
+		}
+		
+		if (field.fieldNameForeign != undefined) {
+			foreignKey[fieldName] = primaryKeyForeign[field.fieldNameForeign];
+		} else if (primaryKeyForeign[fieldName] != undefined) {
+			foreignKey[fieldName] = primaryKeyForeign[fieldName];
+		} else if (primaryKeyForeign.id != undefined) {
+			foreignKey[fieldName] = primaryKeyForeign.id;
+		}
+
+		return foreignKey;
+	}
+	
 	find(params) {
         return Filter.find(this.list, params);
 	}
@@ -303,7 +328,7 @@ export class CrudService {
 		return pos >= 0 ? this.list[pos] : null;
 	}
 	// private, use in getRemote, save, update and remove
-	processList(data, oldPos, newPos) {
+	updateList(data, oldPos, newPos) {
 		let findSortedPos = () => {
 			var fieldNames = this.params.orderBy.split(",");
 			var fieldNamesOrderAsc = new Array(fieldNames.length);
@@ -369,7 +394,7 @@ export class CrudService {
 	removeInternal(primaryKey) {
         let pos = this.findPos(primaryKey);
 		console.log("CrudService.removeInternal : pos = ", pos, ", data :", this.list[pos]);
-        return pos >= 0 ? this.processList(this.list[pos], pos) : null;
+        return pos >= 0 ? this.updateList(this.list[pos], pos) : null;
 	}
 	// used by websocket
 	getRemote(primaryKey) {
@@ -377,9 +402,9 @@ export class CrudService {
             let pos = this.findPos(primaryKey);
 
             if (pos < 0) {
-            	return this.processList(data);
+            	return this.updateList(data);
             } else {
-            	return this.processList(data, pos, pos);
+            	return this.updateList(data, pos, pos);
             }
     	});
 	}
@@ -412,22 +437,18 @@ export class CrudService {
 	}
 
 	save(itemSend) {
-    	return this.httpRest.save(this.path + "/create", this.copyFields(itemSend)).then(data => this.processList(data));
+    	return this.httpRest.save(this.path + "/create", this.copyFields(itemSend)).then(data => this.updateList(data));
 	}
 
 	update(primaryKey, itemSend) {
         return this.httpRest.update(this.path + "/update", primaryKey, this.copyFields(itemSend)).then(data => {
             let pos = this.findPos(primaryKey);
-        	return this.processList(data, pos, pos);
+        	return this.updateList(data, pos, pos);
         });
 	}
 
 	remove(primaryKey) {
-        return this.httpRest.remove(this.path + "/delete", primaryKey).then(data => {
-            // data may be null
-            let pos = this.findPos(primaryKey);
-        	return data;//this.processList(data, pos);
-        });
+        return this.httpRest.remove(this.path + "/delete", primaryKey);//.then(data => this.removeInternal(primaryKey));
 	}
 
 	queryRemote(params) {
@@ -471,7 +492,11 @@ export class ServerConnection {
 
             if (service != undefined) {
         		if (item.action == "delete") {
-        			service.removeInternal(item.primaryKey);
+        			if (service.findOne(item.primaryKey) != null) {
+            			service.removeInternal(item.primaryKey);
+        			} else {
+        	            console.log("[ServerConnection] webSocketConnect : onMessage : delete : alread removed", item);
+        			}
         		} else {
         			service.getRemote(item.primaryKey);
         		}

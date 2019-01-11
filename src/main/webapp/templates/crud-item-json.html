@@ -1,10 +1,10 @@
-<div ng-show="edit == true || vm.fields != undefined">
+<div ng-if="edit == true || vm.fields != undefined">
 	<hr/>
 	<h3>{{vm.title}}</h3>
 </div>
 
-<form id="{{vm.formId}}" name="{{vm.formId}}" class="form-horizontal" role="form" ng-show="edit == true">
-    <div ng-show="displayError" class="alert alert-danger">
+<form id="{{vm.formId}}" name="{{vm.formId}}" class="form-horizontal" role="form" ng-if="edit == true">
+    <div ng-if="displayError" class="alert alert-danger">
         <strong>Error!</strong> Something broke. Retry, or cancel and start afresh.
     </div>
 
@@ -21,7 +21,7 @@
 	    </div>
 	</div>
 
-	<div ng-show="vm.instance._name.length > 0" ng-repeat="(fieldName,field) in vm.fields" class="form-group" ng-class="{'has-error': {{vm.formId}}.{{fieldName}}.$invalid}">
+	<div ng-if="vm.instance._name.length > 0" ng-repeat="(fieldName,field) in vm.fields" class="form-group" ng-class="{'has-error': {{vm.formId}}.{{fieldName}}.$invalid}">
 	    <label for="{{fieldName}}" class="col-sm-2 control-label">{{field._label}}</label>
 
 	    <div id="{{vm.formId}}-{{fieldName}}_controls" class="col-sm-10">
@@ -34,7 +34,7 @@
 	    </div>
 	</div>
 
-    <div ng-show="vm.instance._name.length > 0" class="form-group">
+    <div ng-if="vm.instance._name.length > 0" class="form-group">
         <div class="col-sm-offset-2 col-sm-10">
             <button id="{{vm.formId}}-add" name="add" class="btn btn-primary" ng-disabled="{{vm.formId}}.$invalid" ng-click="vm.save()"><span class="glyphicon glyphicon-plus"></span> Add</button>
         </div>

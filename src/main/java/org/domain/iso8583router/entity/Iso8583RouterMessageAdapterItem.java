@@ -3,6 +3,7 @@ package org.domain.iso8583router.entity;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
+import javax.persistence.IdClass;
 import javax.persistence.Table;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
@@ -11,61 +12,48 @@ import org.domain.commom.Utils.DataAlign;
 import org.domain.commom.Utils;
 
 @Entity
+@IdClass(value = Iso8583RouterMessageAdapterItemPK.class)
 @Table(name = "iso8583_router_message_adapter_item", schema = "public")
 public class Iso8583RouterMessageAdapterItem implements java.io.Serializable {
 	private static final long serialVersionUID = -2253404418736276959L;
 	@Id
-	private Integer id;
 	@Column(name="message_adapter") @NotNull
 	private String messageAdapter = "iso8583default"; // iso8583default
-	private DataAlign alignment = DataAlign.ZERO_LEFT;
+	
+	@Id
+	@Column(name="root_pattern") @NotNull
+	private String rootPattern = "\\d\\d\\d\\d";
+	
+	@Id
+	@NotNull
+	private String tag;
+	
+	@Column(name="order_index")
+	private Integer orderIndex;
+	
+	@Column(name="field_name") 
+	private String fieldName;
+	
 	@Column(name="data_type") @NotNull
-	private Integer dataType = Utils.DATA_TYPE_DECIMAL | Utils.DATA_TYPE_ALPHA | Utils.DATA_TYPE_SPECIAL;
-	@Column(name="data_format")
-	private String dataFormat;
+	private Integer dataType = Utils.DATA_TYPE_DECIMAL | Utils.DATA_TYPE_HEX | Utils.DATA_TYPE_MASK | Utils.DATA_TYPE_ALPHA | Utils.DATA_TYPE_SPECIAL;
+	private DataAlign alignment = DataAlign.ZERO_LEFT;
+
+	@Column(name="size_header") @Min(0) @NotNull	
+	private Integer sizeHeader = 0;
 	@Column(name="min_length") @NotNull
 	private Integer minLength = 1;
 	@Column(name="max_length") @NotNull
 	private Integer maxLength = 2 * 999;
-	@Column(name="field_name") 
-	private String fieldName;
-	@NotNull
-	private String tag;
-	@Column(name="size_header") @Min(0) @NotNull	
-	private Integer sizeHeader = 0;
-	@Column(name="root_pattern") @NotNull
-	private String rootPattern = "\\d\\d\\d\\d";
 	
-	public Iso8583RouterMessageAdapterItem(Integer id, String fieldName, String tag, Integer minLength, Integer maxLength,
-			Integer sizeHeader, String rootPattern, String messageAdapterConfName, Integer dataType) {
-		this.id = id;
-		this.fieldName = fieldName;
-		this.tag = tag;
-		this.minLength = minLength;
-		this.maxLength = maxLength;
-		this.sizeHeader = sizeHeader;
-		this.rootPattern = rootPattern;
-		this.messageAdapter = messageAdapterConfName;
-		this.dataType = dataType;
-	}
-
 	public Iso8583RouterMessageAdapterItem() {
 	}
 	
-	public String getMessageAdapterConfName() {
+	public String getMessageAdapter() {
 		return messageAdapter;
 	}
 
-	public void setMessageAdapterConfName(String messageAdapterConfName) {
-		this.messageAdapter = messageAdapterConfName;
-	}
-
-	public Integer getId() {
-		return id;
-	}
-
-	public void setId(Integer id) {
-		this.id = id;
+	public void setMessageAdapter(String messageAdapter) {
+		this.messageAdapter = messageAdapter;
 	}
 
 	public String getRootPattern() {
@@ -124,20 +112,20 @@ public class Iso8583RouterMessageAdapterItem implements java.io.Serializable {
 		this.fieldName = fieldName;
 	}
 
-	public String getDataFormat() {
-		return dataFormat;
-	}
-
-	public void setDataFormat(String dataFormat) {
-		this.dataFormat = dataFormat;
-	}
-
 	public DataAlign getAlignment() {
 		return alignment;
 	}
 
 	public void setAlignment(DataAlign alignment) {
 		this.alignment = alignment;
+	}
+
+	public Integer getOrderIndex() {
+		return orderIndex;
+	}
+
+	public void setOrderIndex(Integer orderIndex) {
+		this.orderIndex = orderIndex;
 	}
 
 }

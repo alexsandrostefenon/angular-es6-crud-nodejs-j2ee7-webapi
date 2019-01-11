@@ -37,22 +37,26 @@ class LoginResponse {
 			// TODO : código temporário para caber o na tela do celular
 			loginResponse.title = user.name;
 
-			for (let serviceName of loginResponse.servicesNames) {
-				loginResponse.crudServices.push (RequestFilter.mapService.get(serviceName));
-			}
-// Add Categories
-			return entityManager.find("category_company", {"company": user.company}, null)
+			return entityManager.find("crud_service", {"name": loginResponse.servicesNames}, null)
 			.catch(error => {
-				throw new Error("don't match request category for user company : " + error.message);
+				throw new Error("don't get user services : " + error.message);
 			})
-			.then(categories => {
-				loginResponse.categories = [];
+			.then(services => {
+				loginResponse.crudServices = services;
+				// Add Categories
+				return entityManager.find("category_company", {"company": user.company}, null)
+				.catch(error => {
+					throw new Error("don't match request category for user company : " + error.message);
+				})
+				.then(categories => {
+					loginResponse.categories = [];
 
-				for (let categoryCompany of categories) {
-					loginResponse.categories.push(categoryCompany.id);
-				}
+					for (let categoryCompany of categories) {
+						loginResponse.categories.push(categoryCompany.id);
+					}
 
-				return loginResponse;
+					return loginResponse;
+				});
 			});
 		});
 	}
@@ -333,6 +337,12 @@ export class RequestFilter {
 					return Response.ok(loginResponse);
 				});
 			});
+		}).catch(err => {
+			if (err.message == "NoResultException") {
+				return Response.unauthorized("Don't match user and password.");
+			} else {
+				return Response.internalServerError(err.message);
+			}
 		});
 	}
 	// filter

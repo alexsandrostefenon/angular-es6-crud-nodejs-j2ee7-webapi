@@ -25,19 +25,8 @@ public class Iso8583RouterMessageAdapter implements java.io.Serializable {
 	@Column(name="adapter_class")
 	private String adapterClass = "org.domain.financial.messages.MessageAdapterISO8583";
 
-	private Boolean compress = false;
-	
-	@Column(name="tag_prefix")
-	private String tagPrefix = null;
-	
 	@Transient
 	private List<Iso8583RouterMessageAdapterItem> items = null;
-	
-	public Iso8583RouterMessageAdapter(String name, String parent) {
-		super();
-		this.name = name;
-		this.parent = parent;
-	}
 	
 	public Iso8583RouterMessageAdapter() {
 		// TODO Auto-generated constructor stub
@@ -68,18 +57,6 @@ public class Iso8583RouterMessageAdapter implements java.io.Serializable {
 	}
 	public void setAdapterClass(String adapter) {
 		this.adapterClass = adapter;
-	}
-	public String getTagPrefix() {
-		return tagPrefix;
-	}
-	public void setTagPrefix(String tagPrefix) {
-		this.tagPrefix = tagPrefix;
-	}
-	public Boolean getCompress() {
-		return compress;
-	}
-	public void setCompress(Boolean compress) {
-		this.compress = compress;
 	}
 
 }

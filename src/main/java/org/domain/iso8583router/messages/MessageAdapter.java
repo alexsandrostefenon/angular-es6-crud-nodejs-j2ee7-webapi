@@ -145,7 +145,7 @@ public interface MessageAdapter {
 				String str = String.format("field [%s] - pos [%d], dataType (%s) : str = %s", fieldName, pos, dataType, data);
 				throw new InvalidParameterException(str);
 			}
-	
+			// Apply data align in fixed size case 
 			if (sizeHeader == 0) {
 				if (length <= maxLength && alignment != Utils.DataAlign.NONE) {
 					// por padrÃ£o Ã© ISO8583Conf.ZERO_LEFT_ALIGNMENT

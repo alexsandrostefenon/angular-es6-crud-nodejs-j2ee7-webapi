@@ -8,6 +8,7 @@ public class Utils {
 	public static enum DataAlign {
 		NONE, ZERO_LEFT, ZERO_RIGHT, SPACE_LEFT, SPACE_RIGHT
 	}
+	
 	public static enum CommRequestDirection {
 		CLIENT_TO_SERVER, SERVER_TO_CLIENT, BIDIRECIONAL
 	}

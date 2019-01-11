@@ -9,7 +9,6 @@ public class RefInt {
 	}
 
 	public String getString() {
-		Integer _value = new Integer(this.value);
-		return _value.toString();
+		return Integer.toString(this.value);
 	}
 }
