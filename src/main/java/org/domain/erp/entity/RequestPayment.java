@@ -2,6 +2,8 @@ package org.domain.erp.entity;
 
 import java.math.BigDecimal;
 import java.util.Date;
+
+import javax.json.bind.annotation.JsonbDateFormat;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
@@ -39,8 +41,10 @@ public class RequestPayment implements java.io.Serializable {
 	@Column(length = 16)
 	private String number;
 	@Column(name = "due_date", length = 29)@Temporal(TemporalType.TIMESTAMP)
+	@JsonbDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'")
 	private Date dueDate;
 	@Column(name = "payday", length = 29)@Temporal(TemporalType.TIMESTAMP)
+	@JsonbDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'")
 	private Date payday;
 	@Column(precision = 9, scale = 3)
 	private BigDecimal balance = new BigDecimal(0.0);

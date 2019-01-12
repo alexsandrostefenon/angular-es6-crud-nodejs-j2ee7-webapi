@@ -694,7 +694,7 @@ namespace org.domain.crud.admin {
 						jsonNewValue.Add("options", (String)filterUIHint.ControlParameters["options"]);
                     }
 
-					if (field.GetCustomAttribute<RequiredAttribute>() != null) {
+					if (field.GetCustomAttribute<RequiredAttribute>() != null || (field.GetCustomAttribute<KeyAttribute> () != null && field.GetCustomAttribute<DatabaseGeneratedAttribute> () == null)) {
                         jsonNewValue.Add("required", true);
                     }
 
@@ -710,10 +710,6 @@ namespace org.domain.crud.admin {
                         jsonNewValue.Add("hiden", true);
                     }
                     
-					if (field.GetCustomAttribute<KeyAttribute> () != null && field.GetCustomAttribute<DatabaseGeneratedAttribute> () == null) {
-						jsonNewValue.Add ("required", true);
-					}
-
 					if (editable != null && editable.AllowEdit == false) {
 						jsonNewValue.Add("readOnly", true);
                     }

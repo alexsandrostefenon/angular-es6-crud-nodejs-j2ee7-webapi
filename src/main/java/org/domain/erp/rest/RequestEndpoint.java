@@ -1,6 +1,6 @@
 package org.domain.erp.rest;
 
-import java.sql.Timestamp;
+import java.time.LocalDateTime;
 import java.util.List;
 
 import javax.annotation.Resource;
@@ -51,7 +51,7 @@ public class RequestEndpoint {
 	public void create(@Context SecurityContext securityContext, @Context UriInfo uriInfo, Request obj, @Suspended AsyncResponse ar) {
 		// TODO : validar se entity.getState() é um State com antecessor vazio.
 		if (obj.getDate() == null) {
-			obj.setDate(new Timestamp(System.currentTimeMillis()));
+			obj.setDate(LocalDateTime.now());
 		}
 
 		RequestFilter.processCreate(securityContext.getUserPrincipal(), this.context.getUserTransaction(), this.entityManager, "request", obj)

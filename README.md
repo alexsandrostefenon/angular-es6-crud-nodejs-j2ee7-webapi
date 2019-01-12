@@ -95,7 +95,7 @@ At terminal prompt ([standalone@localhost:9990 /]) execute one to one of configu
 
 ### WildFly build and deploy
 
-in terminal then command `mvn clean wildfly:deploy` to build and deploy.
+in terminal then command `mvn -f pom-wildfly.xml clean wildfly:deploy` to build and deploy.
 
 ## ASP.NET CORE WebApi + EF CORE based server
 
@@ -104,6 +104,10 @@ Requires mono or dotnet
 ### Build
 
 `nuget restore && msbuild /t:Clean && msbuild`
+
+or
+
+`dotnet build -f netcoreapp2.1`
 
 ### Run server application
 
@@ -131,5 +135,5 @@ For custom service configuration or user edition, use user 'admin' with password
 ## Automated tests
 
 npm install selenium-side-runner &&
-./node_modules/.bin/selenium-side-runner --server http://localhost:4444/wd/hub ./src/test/*.side
+./node_modules/.bin/selenium-side-runner ./src/test/*.side
 

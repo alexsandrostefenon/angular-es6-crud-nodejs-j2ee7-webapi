@@ -126,9 +126,7 @@ namespace AspNetCoreWebApi.Entity
 
             modelBuilder.Entity<CrudUser>(entity =>
             {
-                entity.HasKey(e => new { e.Company, e.Id });
-
-                entity.Property(e => e.Id).ValueGeneratedOnAdd();
+                entity.HasKey(e => new { e.Company, e.Name });
             });
 
             modelBuilder.Entity<IbgeCity>(entity =>
@@ -195,22 +193,9 @@ namespace AspNetCoreWebApi.Entity
                     .HasConstraintName("iso8583_router_log_transaction_id_fkey");
             });
 
-            modelBuilder.Entity<Iso8583RouterMessageAdapter>(entity =>
-            {
-                entity.Property(e => e.Name).ValueGeneratedNever();
-
-                entity.HasOne(d => d.ParentNavigation)
-                    .WithMany(p => p.InverseParentNavigation)
-                    .HasForeignKey(d => d.Parent)
-                    .HasConstraintName("iso8583_router_message_adapter_parent_fkey");
-            });
-
             modelBuilder.Entity<Iso8583RouterMessageAdapterItem>(entity =>
             {
-                entity.HasOne(d => d.MessageAdapterNavigation)
-                    .WithMany(p => p.Iso8583RouterMessageAdapterItem)
-                    .HasForeignKey(d => d.MessageAdapter)
-                    .HasConstraintName("iso8583_router_message_adapter_item_message_adapter_fkey");
+                entity.HasKey(e => new { e.MessageAdapter, e.RootPattern, e.Tag });
             });
 
             modelBuilder.Entity<NfeCfop>(entity =>

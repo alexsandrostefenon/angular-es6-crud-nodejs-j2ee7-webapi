@@ -366,6 +366,7 @@ public class RequestFilter implements ContainerRequestFilter, ContainerResponseF
 						Jsonb jsonb = JsonbBuilder.create();
 						obj = jsonb.fromJson(inputStream, objectClass);
 					} catch (Exception e) {
+						e.printStackTrace();
 						return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(e.getMessage()).build();
 					}
 				}
@@ -663,7 +664,7 @@ public class RequestFilter implements ContainerRequestFilter, ContainerResponseF
 							typeDesc = "n1"; // numero com separação de decimais
 						}
 					}
-				} else if (typeDesc.endsWith(".Timestamp")) {
+				} else if (typeDesc.endsWith(".Timestamp") || typeDesc.endsWith(".LocalDateTime") || typeDesc.endsWith(".ZonedDateTime")) {
 					typeDesc = "datetime-local"; // data e hora completa
 				} else if (typeDesc.endsWith(".Date")) {
 					typeDesc = "date"; // data

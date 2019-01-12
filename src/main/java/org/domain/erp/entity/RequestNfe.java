@@ -5,7 +5,7 @@ import org.domain.erp.entity.RequestNfePK;
 import java.io.Serializable;
 import javax.persistence.*;
 import java.math.BigDecimal;
-import java.sql.Timestamp;
+import java.time.LocalDateTime;
 
 /**
  * The persistent class for the request_nfe database table.
@@ -19,8 +19,8 @@ public class RequestNfe implements Serializable {
 	@EmbeddedId
 	private RequestNfePK id;
 	private Integer cdv;
-	private Timestamp dhemi;
-	private Timestamp dhsaient;
+	private LocalDateTime dhemi;
+	private LocalDateTime dhsaient;
 	private Integer finnfe;
 	private Integer iddest;
 	private Integer indfinal;
@@ -79,20 +79,20 @@ public class RequestNfe implements Serializable {
 	}
 
 
-	public Timestamp getDhemi() {
+	public LocalDateTime getDhemi() {
 		return this.dhemi;
 	}
 
-	public void setDhemi(Timestamp dhemi) {
+	public void setDhemi(LocalDateTime dhemi) {
 		this.dhemi = dhemi;
 	}
 
 
-	public Timestamp getDhsaient() {
+	public LocalDateTime getDhsaient() {
 		return this.dhsaient;
 	}
 
-	public void setDhsaient(Timestamp dhsaient) {
+	public void setDhsaient(LocalDateTime dhsaient) {
 		this.dhsaient = dhsaient;
 	}
 

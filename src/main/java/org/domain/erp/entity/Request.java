@@ -1,7 +1,9 @@
 package org.domain.erp.entity;
 
 import java.math.BigDecimal;
-import java.sql.Timestamp;
+import java.time.LocalDateTime;
+
+import javax.json.bind.annotation.JsonbDateFormat;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
@@ -29,7 +31,8 @@ public class Request {
 	@NotNull
 	private Integer person;
 	@NotNull
-	private Timestamp date;
+	@JsonbDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'")
+	private LocalDateTime date;
 	@NotNull
 	private Integer type;// compra, venda/conserto, orçamento, ...
 	private Integer state;// esperando resposta do cliente/fornecedor, aguardando entrega/coleta, enviar orçamento, ...
@@ -65,10 +68,10 @@ public class Request {
 	public void setPerson(Integer person) {
 		this.person = person;
 	}
-	public Timestamp getDate() {
+	public LocalDateTime getDate() {
 		return date;
 	}
-	public void setDate(Timestamp date) {
+	public void setDate(LocalDateTime date) {
 		this.date = date;
 	}
 	public Integer getType() {

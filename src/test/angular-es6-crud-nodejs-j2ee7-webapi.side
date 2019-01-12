@@ -2,7 +2,7 @@
   "id": "5ebf3ab3-7a16-4ca5-bc32-95e2ddbf6e1b",
   "version": "1.1",
   "name": "angular-es6-crud-nodejs-j2ee7-webapi",
-  "url": "https://localhost:9443/crud",
+  "url": "https://localhost:7443/",
   "tests": [{
     "id": "a634f1aa-1398-4f5e-8b60-14bc2320cbf0",
     "name": "request_buy_new",
@@ -1420,6 +1420,6 @@
     "timeout": 3000,
     "tests": ["459c824d-1825-4183-90db-145872eac86e", "a634f1aa-1398-4f5e-8b60-14bc2320cbf0", "1e9f3675-4bd4-4450-a7a6-c31b52b5e3b8", "eeb9e8f0-7a60-4b9d-9422-86d8f667fe4d", "a4720c93-1155-49f1-940e-1240e2c6adf6"]
   }],
-  "urls": ["https://192.168.2.139:8443/angular-es6-crud-nodejs-j2ee7", "https://192.168.2.139:8443/", "https://localhost:9443/crud"],
+  "urls": ["https://192.168.2.139:8443/angular-es6-crud-nodejs-j2ee7", "https://192.168.2.139:8443/", "https://localhost:9443/crud", "https://localhost:8443/angular-es6-crud-nodejs-j2ee7", "https://localhost:7443/"],
   "plugins": []
 }
