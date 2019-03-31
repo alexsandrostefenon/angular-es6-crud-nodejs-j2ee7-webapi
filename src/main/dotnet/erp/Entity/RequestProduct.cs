@@ -8,8 +8,8 @@ namespace AspNetCoreWebApi.Entity
     [Table("request_product")]
     public partial class RequestProduct
     {
-        [Key][Column("company")][ForeignKey("CrudCompany")]
-        public int? Company { get; set; }
+        [Key][Column("crud_group_owner")][ForeignKey("CrudGroupOwner")]
+        public int? CrudGroupOwner { get; set; }
 		[Key][Column("request")][ForeignKey("Request")]
         public int Request { get; set; }
         [Key][Column("id")][DatabaseGenerated(DatabaseGeneratedOption.Identity)]
@@ -34,21 +34,5 @@ namespace AspNetCoreWebApi.Entity
         public decimal ValueAllTax { get; set; }
         [Column("serials", TypeName = "character varying(255)")]
         public string Serials { get; set; }
-
-        //[ForeignKey("Cfop")]
-        //[InverseProperty("RequestProduct")]
-        //public NfeCfop CfopNavigation { get; set; }
-        //[ForeignKey("Company")]
-        //[InverseProperty("RequestProduct")]
-        //public CrudCompany CompanyNavigation { get; set; }
-        //[ForeignKey("Product")]
-        //[InverseProperty("RequestProduct")]
-        //public Product ProductNavigation { get; set; }
-        //[ForeignKey("Company,Request")]
-        //[InverseProperty("RequestProduct")]
-        //public Request RequestNavigation { get; set; }
-        //[ForeignKey("Tax")]
-        //[InverseProperty("RequestProduct")]
-        //public NfeTaxGroup TaxNavigation { get; set; }
     }
 }

@@ -15,8 +15,8 @@ namespace AspNetCoreWebApi.Entity
             //RequestService = new HashSet<RequestService>();
         }
 
-		[Key][Column("company")][ForeignKey("CrudCompany")]
-        public int? Company { get; set; }
+		[Key][Column("crud_group_owner")][ForeignKey("CrudGroupOwner")]
+        public int? CrudGroupOwner { get; set; }
         [Key][Column("id")][DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int Id { get; set; }
 		[Column("type")][ForeignKey("RequestType")][Required][Editable(false,AllowInitialValue =true)]
@@ -41,32 +41,5 @@ namespace AspNetCoreWebApi.Entity
         public decimal SumValue { get; set; }
 		[Column("payments_value", TypeName = "numeric(19,2)")][Editable(false)][Required][FilterUIHint("", "", "defaultValue", "0.000")]
         public decimal PaymentsValue { get; set; }
-
-        //[ForeignKey("Company")]
-        //[InverseProperty("Request")]
-        //public CrudCompany CompanyNavigation { get; set; }
-        //[ForeignKey("Company,Person")]
-        //[InverseProperty("Request")]
-        //public Person PersonNavigation { get; set; }
-        //[ForeignKey("State")]
-        //[InverseProperty("Request")]
-        //public RequestState StateNavigation { get; set; }
-        //[ForeignKey("Type")]
-        //[InverseProperty("Request")]
-        //public RequestType TypeNavigation { get; set; }
-        //[InverseProperty("RequestNavigation")]
-        //public RequestFreight RequestFreight { get; set; }
-        //[InverseProperty("RequestNavigation")]
-        //public RequestNfe RequestNfe { get; set; }
-        //[InverseProperty("RequestNavigation")]
-        //public RequestRepair RequestRepair { get; set; }
-        //[InverseProperty("RequestNavigation")]
-        //public RequestRepairInmetro RequestRepairInmetro { get; set; }
-        //[InverseProperty("RequestNavigation")]
-        //public ICollection<RequestPayment> RequestPayment { get; set; }
-        //[InverseProperty("RequestNavigation")]
-        //public ICollection<RequestProduct> RequestProduct { get; set; }
-        //[InverseProperty("RequestNavigation")]
-        //public ICollection<RequestService> RequestService { get; set; }
     }
 }

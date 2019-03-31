@@ -2,6 +2,7 @@ import fs from "fs";
 import https from "https";
 import http from "http";
 import express from "express";
+import bodyParser from "body-parser";
 import websocket from "websocket";
 import url from "url";
 import fetch from "node-fetch";
@@ -25,51 +26,75 @@ function getArg(name, defaultValue) {
 	return value;
 }
 
-const dbName = getArg("database", "crud");
+const appName = getArg("name", "");
 const webapp = getArg("www-data", "./src/main/webapp");
-const portListen = getArg("port", "9443");
-const fileNamePrivateKey = getArg("private-key", "key.pem");
-const fileNameCertificate = getArg("certificate", "cert.pem");
 
 const appExpress = express();
-appExpress.use("/" + dbName, express.static(webapp));
+appExpress.use("/" + appName, express.static(webapp));
 
 const appRestExpress = express();
 appRestExpress.use(express.urlencoded({extended:true}));
 appRestExpress.use(express.json());
+appRestExpress.use(bodyParser.raw({type: ["application/octet-stream", "image/jpeg"]}));
 
-appExpress.use("/" + dbName, appRestExpress);
+appExpress.use(`/${appName}/rest`, appRestExpress);
 
-const privateKey  = fs.readFileSync(fileNamePrivateKey, 'utf8');
-const certificate = fs.readFileSync(fileNameCertificate, 'utf8');
-const credentials = {key: privateKey, cert: certificate};
-const server = https.createServer(credentials, appExpress);
+let server;
+let portListen;
 
-const dbClient = new DbClientPostgres(dbName);
+try {
+	portListen = getArg("port", "9443");
+	const fileNamePrivateKey = getArg("private-key", "key.pem");
+	const fileNameCertificate = getArg("certificate", "cert.pem");
+	
+	const privateKey  = fs.readFileSync(fileNamePrivateKey, 'utf8');
+	const certificate = fs.readFileSync(fileNameCertificate, 'utf8');
+	server = https.createServer({key: privateKey, cert: certificate}, appExpress);
+} catch (error) {
+	portListen = getArg("port", "9080");
+	server = http.createServer(appExpress);
+}
 
-RequestFilter.updateCrudServices(dbClient);
+let dbConfig = {};
+dbConfig.host = getArg("db_host");//localhost// Server hosting the postgres database
+dbConfig.port = getArg("db_port");//5432//env var: PGPORT
+dbConfig.database = getArg("db_name");//env var: PGDATABASE
+dbConfig.user = getArg("db_user");//"development", //env var: PGUSER
+dbConfig.password = getArg("db_password");//"123456", //env var: PGPASSWORD
+const dbClient = new DbClientPostgres(dbConfig);
+
 const requestFilter = new RequestFilter(appRestExpress, dbClient);
 
 dbClient.connect().then(() => {
-	server.listen(portListen, () => {
-		const host = server.address().address;
-		const port = server.address().port;
-		
-		console.log('Example app listening at http://%s:%s', host, port);
-		// load modules
-		const modules = getArg("modules", "").split(",");
-		
-		for (let path of modules) {
-			if (path.length > 0) {
-				console.log("loading ", path, "...");
-				
-				let promise = import(path).then(module => {
-					console.log("loaded:", path);
-					module.setup(appRestExpress, dbClient);
-				});
-			}
+	// load modules
+	const modules = getArg("modules", "").split(",");
+	let promises = [];
+
+	for (let path of modules) {
+		if (path.length > 0) {
+			console.log(`loading module ${path}...`);
+
+			let promise = import(path).then(module => {
+				console.log(`...loaded module ${path}\nsetup starting for module ${path} ...`);
+				return module.setup(appRestExpress, dbClient).
+				then(() => console.log(`...setup finished for module ${path}`)).
+				catch(err => console.error(`...setup fail for module ${path}, err :\n`, err));
+			});
+			
+			promises.push(promise);
 		}
-	});
+	}
+	
+	return Promise.all(promises).
+	then(instances => {
+		console.log(`starting updateCrudServices...`);
+		return RequestFilter.updateCrudServices(dbClient).then(() => console.log(`...finished updateCrudServices...`));
+	}).
+	then(() => {
+		console.log(`starting listen in port ${portListen}...`);
+		return server.listen(portListen, () => console.log(`...listening at http://${server.address().address}:${server.address().port}`));
+	}).
+	catch(err => console.error(`Unknow error :`, err));
 });
 
 const wsServer = new WebSocketServer({httpServer: server, autoAcceptConnections: true});
@@ -90,7 +115,7 @@ wsServer.on('connect', (connection) => {
     });
 });
 // COPYRIGHT : copy and past from https://github.com/ccoenraets/cors-proxy/blob/master/server.js
-appExpress.all("/" + dbName + "/proxy", (req, res, next) => {
+appExpress.all("/" + appName + "/proxy", (req, res, next) => {
     res.header("Access-Control-Allow-Origin", "*");
     res.header("Access-Control-Allow-Methods", "GET, PUT, PATCH, POST, DELETE");
     res.header("Access-Control-Allow-Headers", req.header('access-control-request-headers'));
@@ -98,7 +123,6 @@ appExpress.all("/" + dbName + "/proxy", (req, res, next) => {
     if (req.method === 'OPTIONS') {
         res.send();
     } else {
-    	debugger;
         var targetURL = req.header('Target-URL');
         
         if (!targetURL) {
@@ -108,7 +132,6 @@ appExpress.all("/" + dbName + "/proxy", (req, res, next) => {
         
         fetch(targetURL, {method: req.method, body: req.body}).
         then(fetchRes => {
-	    	debugger;
 	    	const type = fetchRes.headers.get("Content-Type");
 	    	
 	    	if (type.startsWith("text")) {

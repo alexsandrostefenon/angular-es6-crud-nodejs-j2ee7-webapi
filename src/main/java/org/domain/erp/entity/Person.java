@@ -7,13 +7,9 @@ import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
-import javax.persistence.IdClass;
 import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 
-import org.domain.crud.entity.CompanyIdPK;
-
-@IdClass(CompanyIdPK.class)
 @Entity
 @Table(name = "person")
 public class Person implements java.io.Serializable {
@@ -21,7 +17,6 @@ public class Person implements java.io.Serializable {
 	 *
 	 */
 	private static final long serialVersionUID = -5971740408816408928L;
-	@Id private Integer company;
 	@Id
 	@SequenceGenerator(name="person_id_seq", sequenceName="person_id_seq", allocationSize=1)
 	@GeneratedValue(strategy=GenerationType.SEQUENCE, generator="person_id_seq")
@@ -72,14 +67,6 @@ public class Person implements java.io.Serializable {
 	public Person() {
 	}
 
-
-	public Integer getCompany() {
-		return company;
-	}
-
-	public void setCompany(Integer company) {
-		this.company = company;
-	}
 
 	public Integer getId() {
 		return id;

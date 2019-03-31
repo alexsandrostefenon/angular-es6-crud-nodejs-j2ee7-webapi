@@ -6,7 +6,7 @@ import javax.persistence.Id;
 import javax.persistence.IdClass;
 import javax.persistence.Table;
 
-@IdClass(CompanyNamePK.class)
+@IdClass(CrudGroupOwnerNamePK.class)
 @Entity
 @Table(name = "crud_user")
 public class CrudUser {
@@ -15,7 +15,8 @@ public class CrudUser {
 	 *
 	 */
 	@Id
-	private Integer company;
+	@Column(name="crud_group_owner")
+	private Integer crudGroupOwner;
 	@Id
 	private String name;
 	private String password;
@@ -37,12 +38,12 @@ public class CrudUser {
 	public CrudUser() {
 	}
 
-	public Integer getCompany() {
-		return company;
+	public Integer getCrudGroupOwner() {
+		return crudGroupOwner;
 	}
 
-	public void setCompany(Integer company) {
-		this.company = company;
+	public void setCrudGroupOwner(Integer crudGroupOwner) {
+		this.crudGroupOwner = crudGroupOwner;
 	}
 
 	public String getRoles() {

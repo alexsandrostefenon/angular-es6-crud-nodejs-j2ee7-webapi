@@ -5,7 +5,7 @@
   <groupId>org.domain</groupId>
   <artifactId>angular-es6-crud-nodejs-j2ee7</artifactId>
   <name>Flexible CRUD WEB Aplication</name>
-  <version>1.0.3</version>
+  <version>1.0.4</version>
   <packaging>war</packaging>
   <description>CRUD Web Application with Angular + ES6 + Bootstrap CSS in browser and NodeJs or J2EE8 or ASPNETCORE server based</description>
   <url>https://github.com/alexsandrostefenon/angular-es6-crud-nodejs-j2ee7</url>

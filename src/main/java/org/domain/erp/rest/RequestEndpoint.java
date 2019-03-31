@@ -74,8 +74,8 @@ public class RequestEndpoint {
 				if (response.getStatusInfo() == Response.Status.OK) {
 					RequestState stateOld = RequestProductEndpoint.getRequestState(this.entityManager, oldObj.getState());
 					RequestState state = RequestProductEndpoint.getRequestState(this.entityManager, newObj.getState());
-					TypedQuery<RequestProduct> query = this.entityManager.createQuery("from RequestProduct o where o.company = :company and o.request = :request", RequestProduct.class);
-					query.setParameter("company", newObj.getCompany());
+					TypedQuery<RequestProduct> query = this.entityManager.createQuery("from RequestProduct o where o.crudGroupOwner = :crudGroupOwner and o.request = :request", RequestProduct.class);
+					query.setParameter("crudGroupOwner", newObj.getCrudGroupOwner());
 					query.setParameter("request", newObj.getId());
 					List<RequestProduct> list = query.getResultList();
 
@@ -103,8 +103,8 @@ public class RequestEndpoint {
 
 				if (response.getStatusInfo() == Response.Status.OK) {
 					RequestState stateOld = RequestProductEndpoint.getRequestState(this.entityManager, obj.getState());
-					TypedQuery<RequestProduct> query = this.entityManager.createQuery("from RequestProduct o where o.company = :company and o.request = :request", RequestProduct.class);
-					query.setParameter("company", obj.getCompany());
+					TypedQuery<RequestProduct> query = this.entityManager.createQuery("from RequestProduct o where o.crudGroupOwner = :crudGroupOwner and o.request = :request", RequestProduct.class);
+					query.setParameter("crudGroupOwner", obj.getCrudGroupOwner());
 					query.setParameter("request", obj.getId());
 					List<RequestProduct> list = query.getResultList();
 

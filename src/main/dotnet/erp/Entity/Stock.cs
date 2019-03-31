@@ -8,8 +8,8 @@ namespace AspNetCoreWebApi.Entity
     [Table("stock")]
     public partial class Stock
     {
-        [Key][Column("company")][ForeignKey("CrudCompany")]
-        public int? Company { get; set; }
+        [Key][Column("crud_group_owner")][ForeignKey("CrudGroupOwner")]
+        public int? CrudGroupOwner { get; set; }
 		[Key][Column("id")][ForeignKey("Product")]
         public int Id { get; set; }
         [Column("count_in", TypeName = "numeric(9,3)")]
@@ -48,12 +48,5 @@ namespace AspNetCoreWebApi.Entity
         public decimal? Value { get; set; }
         [Column("value_wholesale", TypeName = "numeric(9,3)")]
         public decimal? ValueWholesale { get; set; }
-
-        //[ForeignKey("Company")]
-        //[InverseProperty("Stock")]
-        //public CrudCompany CompanyNavigation { get; set; }
-        //[ForeignKey("Id")]
-        //[InverseProperty("Stock")]
-        //public Product IdNavigation { get; set; }
     }
 }

@@ -1,14 +1,13 @@
-﻿INSERT INTO crud_service (name, menu, template, save_and_exit, filter_fields, order_by, is_on_line, title, fields) VALUES ('nfeStCofins', NULL, NULL, NULL, NULL, NULL, NULL, NULL, '{"id":{"type":"i","primaryKey":true,"hiden":true},"name":{"type":"s"}}');
-INSERT INTO crud_service (name, menu, template, save_and_exit, filter_fields, order_by, is_on_line, title, fields) VALUES ('nfeStCsosn', NULL, NULL, NULL, NULL, NULL, NULL, NULL, '{"id":{"type":"i","primaryKey":true,"hiden":true},"name":{"type":"s"},"description":{"type":"s"}}');
-INSERT INTO crud_service (name, menu, template, save_and_exit, filter_fields, order_by, is_on_line, title, fields) VALUES ('nfeStIcms', NULL, NULL, NULL, NULL, NULL, NULL, NULL, '{"id":{"type":"i","primaryKey":true,"hiden":true},"name":{"type":"s"}}');
-INSERT INTO crud_service (name, menu, template, save_and_exit, filter_fields, order_by, is_on_line, title, fields) VALUES ('nfeStIcmsDesoneracao', NULL, NULL, NULL, NULL, NULL, NULL, NULL, '{"id":{"type":"i","primaryKey":true,"hiden":true},"name":{"type":"s"}}');
-INSERT INTO crud_service (name, menu, template, save_and_exit, filter_fields, order_by, is_on_line, title, fields) VALUES ('nfeStIcmsModalidadeBc', NULL, NULL, NULL, NULL, NULL, NULL, NULL, '{"id":{"type":"i","primaryKey":true,"hiden":true},"name":{"type":"s"}}');
-INSERT INTO crud_service (name, menu, template, save_and_exit, filter_fields, order_by, is_on_line, title, fields) VALUES ('nfeStIcmsModalidadeSt', NULL, NULL, NULL, NULL, NULL, NULL, NULL, '{"id":{"type":"i","primaryKey":true,"hiden":true},"name":{"type":"s"}}');
-INSERT INTO crud_service (name, menu, template, save_and_exit, filter_fields, order_by, is_on_line, title, fields) VALUES ('nfeStIcmsOrigem', NULL, NULL, NULL, NULL, NULL, NULL, NULL, '{"id":{"type":"i","primaryKey":true,"hiden":true},"name":{"type":"s"}}');
-INSERT INTO crud_service (name, menu, template, save_and_exit, filter_fields, order_by, is_on_line, title, fields) VALUES ('nfeStIpi', NULL, NULL, NULL, NULL, NULL, NULL, NULL, '{"id":{"type":"i","primaryKey":true,"hiden":true},"name":{"type":"s"}}');
-INSERT INTO crud_service (name, menu, template, save_and_exit, filter_fields, order_by, is_on_line, title, fields) VALUES ('nfeStIpiEnquadramento', NULL, NULL, NULL, NULL, NULL, NULL, NULL, '{"id":{"type":"i","primaryKey":true,"hiden":true},"name":{"type":"s"},"ipiOperacao":{"type":"i"}}');
-INSERT INTO crud_service (name, menu, template, save_and_exit, filter_fields, order_by, is_on_line, title, fields) VALUES ('nfeStIpiOperacao', NULL, NULL, NULL, NULL, NULL, NULL, NULL, '{"id":{"type":"i","primaryKey":true,"hiden":true},"name":{"type":"s"}}');
-INSERT INTO crud_service (name, menu, template, save_and_exit, filter_fields, order_by, is_on_line, title, fields) VALUES ('nfeStPis', NULL, NULL, NULL, NULL, NULL, NULL, NULL, '{"id":{"type":"i","primaryKey":true,"hiden":true},"name":{"type":"s"}}');
+INSERT INTO crud_service (name, menu, title, fields) VALUES ('paymentType', 'requestPayment', 'Tipo de Pagamento', '{}');
+INSERT INTO crud_service (name, menu, title, fields) VALUES ('bacenCountry', 'person', 'Códigos de Países', '{}');
+INSERT INTO crud_service (name, menu, title, fields) VALUES ('ibgeUf', 'person', 'Códigos dos Estados', '{}');
+INSERT INTO crud_service (name, menu, title, fields) VALUES ('ibgeCity', 'person', 'Códigos das Cidades', '{"uf":{"shortDescription":true}}');
+INSERT INTO crud_service (name, menu, title, fields) VALUES ('ibgeCnae', 'person', 'Classificação Nacional de Atividades Econômicas', '{"id":{"shortDescription":true}}');
+INSERT INTO crud_service (name, menu, title, fields) VALUES ('camexNcm', 'product', 'NCM', '{"id":{"shortDescription":true}}');
+INSERT INTO crud_service (name, menu, title, fields) VALUES ('confazCest', 'product', 'Código Especificador da Substituição Tributária', '{"id":{"shortDescription":true}}');
+INSERT INTO crud_service (name, menu, title, fields) VALUES ('nfeCfop', 'requestProduct', 'CFOP', '{"id":{"shortDescription":true}}');
+INSERT INTO crud_service (name, menu, title, fields) VALUES ('nfeStIcmsOrigem', 'product', 'Origem do Produto', '{"id":{"shortDescription":true}}');
+INSERT INTO crud_service (name, menu, title, fields) VALUES ('nfeTaxGroup', 'requestProduct', 'Grupo Tributário', '{}');
 
 INSERT INTO payment_type (id,name) VALUES
 (1, 'Dinheiro'),

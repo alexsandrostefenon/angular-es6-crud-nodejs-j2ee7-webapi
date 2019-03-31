@@ -19,10 +19,10 @@ namespace AspNetCoreWebApi.Entity
         public virtual DbSet<BacenCountry> BacenCountry { get; set; }
         public virtual DbSet<Barcode> Barcode { get; set; }
         public virtual DbSet<CamexNcm> CamexNcm { get; set; }
-        public virtual DbSet<Category> Category { get; set; }
-        public virtual DbSet<CategoryCompany> CategoryCompany { get; set; }
+        public virtual DbSet<CrudGroup> CrudGroup { get; set; }
+        public virtual DbSet<CrudGroupUser> CrudGroupUser { get; set; }
         public virtual DbSet<ConfazCest> ConfazCest { get; set; }
-        public virtual DbSet<CrudCompany> CrudCompany { get; set; }
+        public virtual DbSet<CrudGroupOwner> CrudGroupOwner { get; set; }
         public virtual DbSet<CrudService> CrudService { get; set; }
         public virtual DbSet<CrudTranslation> CrudTranslation { get; set; }
         public virtual DbSet<CrudUser> CrudUser { get; set; }
@@ -65,7 +65,7 @@ namespace AspNetCoreWebApi.Entity
         {
             modelBuilder.Entity<Account>(entity =>
             {
-                entity.HasKey(e => new { e.Company, e.Id });
+                entity.HasKey(e => new { e.CrudGroupOwner, e.Id });
 
 				entity.HasIndex(e => new { e.Bank, e.Agency, e.Number })
                     .HasName("account_bank_agency_account_key")
@@ -107,11 +107,9 @@ namespace AspNetCoreWebApi.Entity
                 entity.Property(e => e.Id).ValueGeneratedNever();
             });
 
-            modelBuilder.Entity<CategoryCompany>(entity =>
+            modelBuilder.Entity<CrudGroupUser>(entity =>
             {
-                entity.HasKey(e => new { e.Company, e.Id });
-
-                entity.Property(e => e.Id).ValueGeneratedOnAdd();
+                entity.HasKey(e => new { e.CrudUser, e.CrudGroup });
             });
 
             modelBuilder.Entity<ConfazCest>(entity =>
@@ -126,7 +124,7 @@ namespace AspNetCoreWebApi.Entity
 
             modelBuilder.Entity<CrudUser>(entity =>
             {
-                entity.HasKey(e => new { e.Company, e.Name });
+                entity.HasKey(e => new { e.CrudGroupOwner, e.Name });
             });
 
             modelBuilder.Entity<IbgeCity>(entity =>
@@ -292,24 +290,6 @@ namespace AspNetCoreWebApi.Entity
 
             modelBuilder.Entity<Person>(entity =>
             {
-                entity.HasKey(e => new { e.Company, e.Id });
-
-                entity.HasIndex(e => new { e.Company, e.CnpjCpf })
-                    .HasName("person_company_cnpj_cpf_key")
-                    .IsUnique();
-
-                entity.HasIndex(e => new { e.Company, e.Fantasy })
-                    .HasName("person_company_fantasy_key")
-                    .IsUnique();
-
-                entity.HasIndex(e => new { e.Company, e.IeRg })
-                    .HasName("person_company_ie_rg_key")
-                    .IsUnique();
-
-                entity.HasIndex(e => new { e.Company, e.Name })
-                    .HasName("person_company_name_key")
-                    .IsUnique();
-
                 entity.Property(e => e.Id).ValueGeneratedOnAdd();
 
                 entity.Property(e => e.City).HasDefaultValueSql("4304606");
@@ -336,14 +316,14 @@ namespace AspNetCoreWebApi.Entity
 
             modelBuilder.Entity<Request>(entity =>
             {
-                entity.HasKey(e => new { e.Company, e.Id });
+                entity.HasKey(e => new { e.CrudGroupOwner, e.Id });
 
                 entity.Property(e => e.Id).ValueGeneratedOnAdd();
             });
 
             modelBuilder.Entity<RequestNfe>(entity =>
             {
-                entity.HasKey(e => new { e.Company, e.Request });
+                entity.HasKey(e => new { e.CrudGroupOwner, e.Request });
 
                 entity.Property(e => e.Dhemi).HasDefaultValueSql("now()");
 
@@ -400,7 +380,7 @@ namespace AspNetCoreWebApi.Entity
 
             modelBuilder.Entity<RequestPayment>(entity =>
             {
-                entity.HasKey(e => new { e.Company, e.Id });
+                entity.HasKey(e => new { e.CrudGroupOwner, e.Id });
 
                 entity.Property(e => e.Id).ValueGeneratedOnAdd();
 
@@ -411,7 +391,7 @@ namespace AspNetCoreWebApi.Entity
 
             modelBuilder.Entity<RequestProduct>(entity =>
             {
-                entity.HasKey(e => new { e.Company, e.Id });
+                entity.HasKey(e => new { e.CrudGroupOwner, e.Id });
 
                 entity.Property(e => e.Id).ValueGeneratedOnAdd();
 
@@ -432,7 +412,7 @@ namespace AspNetCoreWebApi.Entity
 
             modelBuilder.Entity<Stock>(entity =>
             {
-                entity.HasKey(e => new { e.Company, e.Id });
+                entity.HasKey(e => new { e.CrudGroupOwner, e.Id });
 
                 entity.Property(e => e.CountIn).HasDefaultValueSql("0.000");
 

@@ -14,14 +14,15 @@ import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import javax.validation.constraints.NotNull;
 
-import org.domain.crud.entity.CompanyIdPK;
+import org.domain.crud.entity.CrudGroupOwnerIdPK;
 
-@IdClass(CompanyIdPK.class)
+@IdClass(CrudGroupOwnerIdPK.class)
 @Entity
 @Table(name = "request")
 public class Request {
 	@Id
-	private Integer company;
+	@Column(name="crud_group_owner")
+	private Integer crudGroupOwner;
 	@Id
 	@SequenceGenerator(name="request_id_seq", sequenceName="request_id_seq", allocationSize=1)
 	@GeneratedValue(strategy=GenerationType.SEQUENCE, generator="request_id_seq")
@@ -50,12 +51,6 @@ public class Request {
 	private BigDecimal descValue = new BigDecimal(0.0);
 	@Column(name = "payments_value")
 	private BigDecimal paymentsValue = new BigDecimal(0.0);
-	public Integer getCompany() {
-		return company;
-	}
-	public void setCompany(Integer company) {
-		this.company = company;
-	}
 	public Integer getId() {
 		return id;
 	}
@@ -121,6 +116,18 @@ public class Request {
 	}
 	public void setPaymentsValue(BigDecimal paymentsValue) {
 		this.paymentsValue = paymentsValue;
+	}
+	public Integer getCrudGroupOwner() {
+		return crudGroupOwner;
+	}
+	public void setCrudGroupOwner(Integer crudGroupOwner) {
+		this.crudGroupOwner = crudGroupOwner;
+	}
+	public BigDecimal getDescValue() {
+		return descValue;
+	}
+	public void setDescValue(BigDecimal descValue) {
+		this.descValue = descValue;
 	}
 
 

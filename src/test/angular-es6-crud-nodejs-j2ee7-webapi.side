@@ -1,8 +1,8 @@
 {
   "id": "5ebf3ab3-7a16-4ca5-bc32-95e2ddbf6e1b",
-  "version": "1.1",
+  "version": "2.0",
   "name": "angular-es6-crud-nodejs-j2ee7-webapi",
-  "url": "https://localhost:7443/",
+  "url": "http://localhost:9080/crud",
   "tests": [{
     "id": "a634f1aa-1398-4f5e-8b60-14bc2320cbf0",
     "name": "request_buy_new",
@@ -33,6 +33,13 @@
       ],
       "value": ""
     }, {
+      "id": "2d031dfa-658f-4b6e-8b12-47099564cc4d",
+      "comment": "",
+      "command": "select",
+      "target": "id=requestForm-person",
+      "targets": [],
+      "value": "index=1"
+    }, {
       "id": "9ba4eda4-76f2-4a55-a783-953def696f57",
       "comment": "",
       "command": "assertValue",
@@ -62,13 +69,6 @@
         ["xpath=//select", "xpath:position"]
       ],
       "value": "string:Solicitar Orçamento"
-    }, {
-      "id": "2d031dfa-658f-4b6e-8b12-47099564cc4d",
-      "comment": "",
-      "command": "select",
-      "target": "id=requestForm-person",
-      "targets": [],
-      "value": "index=1"
     }, {
       "id": "e97162a7-edce-4ad1-a64b-72c1b58c4054",
       "comment": "",
@@ -230,6 +230,13 @@
       ],
       "value": "15.92"
     }, {
+      "id": "85231d53-6ed1-4fc3-ba5f-b8cde5cf7f19",
+      "comment": "",
+      "command": "assertSelectedValue",
+      "target": "id=requestPaymentForm-account",
+      "targets": [],
+      "value": "string:Caixa Interno"
+    }, {
       "id": "876d0341-3fad-4e4c-8e5c-c490a730a2bb",
       "comment": "",
       "command": "assertValue",
@@ -245,26 +252,20 @@
       ],
       "value": "2018-05-18T20:08:34.000"
     }, {
-      "id": "85231d53-6ed1-4fc3-ba5f-b8cde5cf7f19",
-      "comment": "",
-      "command": "select",
-      "target": "id=requestPaymentForm-account",
-      "targets": [],
-      "value": "index=1"
-    }, {
       "id": "3f6420b4-9bcf-42cb-9ada-4a362e091955",
       "comment": "",
-      "command": "type",
-      "target": "id=requestPaymentForm-dueDate",
+      "command": "assertValue",
+      "target": "id=requestPaymentForm-payday",
       "targets": [
-        ["id=requestPaymentForm-dueDate", "id"],
-        ["name=dueDate", "name"],
-        ["css=#requestPaymentForm-dueDate", "css"],
-        ["xpath=//input[@id='requestPaymentForm-dueDate']", "xpath:attributes"],
-        ["xpath=//div[@id='requestPaymentForm-dueDate_controls']/input", "xpath:idRelative"],
-        ["xpath=//crud-item[2]/form/div[2]/div[5]/div/div/input", "xpath:position"]
+        ["id=requestPaymentForm-payday", "id"],
+        ["name=payday", "name"],
+        ["css=#requestPaymentForm-payday", "css"],
+        ["css=#requestPaymentForm-payday", "css:finder"],
+        ["xpath=//input[@id='requestPaymentForm-payday']", "xpath:attributes"],
+        ["xpath=//div[@id='requestPaymentForm-payday_controls']/input", "xpath:idRelative"],
+        ["xpath=//crud-item[2]/form/div/div[6]/div/div/input", "xpath:position"]
       ],
-      "value": "2018-05-18T20:08:34"
+      "value": "2018-05-18T20:08:34.000"
     }, {
       "id": "b189939b-f34a-41cb-a175-5209b5a0a6e2",
       "comment": "",
@@ -284,6 +285,20 @@
         ["xpath=//strong", "xpath:position"]
       ],
       "value": ""
+    }, {
+      "id": "85e6a828-4cee-4001-802f-7bfe1ad3c0c4",
+      "comment": "",
+      "command": "assertText",
+      "target": "xpath=//crud-item[2]/crud-table/div/div/table/tbody/tr/td[8]/a",
+      "targets": [
+        ["linkText=-15.92", "linkText"],
+        ["css=#requestPaymentForm-crud-table-body .ng-scope:nth-child(8) > .ng-binding", "css:finder"],
+        ["xpath=//a[contains(text(),'-15.92')]", "xpath:link"],
+        ["xpath=//tbody[@id='requestPaymentForm-crud-table-body']/tr/td[8]/a", "xpath:idRelative"],
+        ["xpath=(//a[contains(@href, '#!/app/request_payment/view?crudGroupOwner=2&request=19&id=12')])[5]", "xpath:href"],
+        ["xpath=//crud-item[2]/crud-table/div/div/table/tbody/tr/td[8]/a", "xpath:position"]
+      ],
+      "value": "-15.92"
     }]
   }, {
     "id": "459c824d-1825-4183-90db-145872eac86e",
@@ -418,116 +433,141 @@
       "id": "2d7f0b0e-ac26-498f-8145-2f81f8fe57f2",
       "comment": "",
       "command": "click",
-      "target": "xpath=//a[contains(@href, '#!/app/crud_user/edit?company=2&name=spending')]",
+      "target": "xpath=//a[contains(@href, '#!/app/crud_user/edit?primaryKey=%7B%22id%22%3A2%7D')]",
       "targets": [
         ["css=.ng-scope:nth-child(2) > td > .ng-scope:nth-child(1)", "css:finder"],
         ["xpath=(//a[contains(text(),'Edit')])[2]", "xpath:link"],
         ["xpath=//tbody[@id='crudUserForm-crud-table-body']/tr[2]/td/a", "xpath:idRelative"],
-        ["xpath=//a[contains(@href, '#!/app/crud_user/edit?company=2&name=spending')]", "xpath:href"],
+        ["xpath=//a[contains(@href, '#!/app/crud_user/edit?primaryKey=%7B%22id%22%3A2%7D')]", "xpath:href"],
         ["xpath=//tr[2]/td/a", "xpath:position"]
       ],
       "value": ""
     }, {
-      "id": "16c9843e-acb1-49da-93be-0a706d5fc4f3",
-      "comment": "",
-      "command": "clickAt",
-      "target": "xpath=(//a[contains(text(),'Edit')])[7]",
-      "targets": [],
-      "value": "27,10"
-    }, {
-      "id": "1be337de-388d-403a-ac19-9857f311d31a",
-      "comment": "",
-      "command": "select",
-      "target": "id=roles-delete",
-      "targets": [],
-      "value": "label=true"
-    }, {
-      "id": "600e8799-5ce2-429c-a3e3-d4207b214626",
-      "comment": "",
-      "command": "clickAt",
-      "target": "id=roles-add",
-      "targets": [],
-      "value": "33,16"
-    }, {
-      "id": "8bcb0570-893a-422d-9da8-79c54684b20c",
-      "comment": "",
-      "command": "clickAt",
-      "target": "xpath=(//a[contains(text(),'Edit')])[12]",
-      "targets": [],
-      "value": "26,7"
-    }, {
-      "id": "a30f58d8-fa35-4386-a214-7112aba6ec5a",
-      "comment": "",
-      "command": "select",
-      "target": "id=roles-delete",
-      "targets": [],
-      "value": "label=true"
-    }, {
-      "id": "485c0c74-bffb-4ec3-9215-f8542fe67f40",
-      "comment": "",
-      "command": "clickAt",
-      "target": "id=roles-add",
-      "targets": [],
-      "value": "33,17"
-    }, {
       "id": "aa27b5c8-48c6-4e04-a2ab-a218317e2923",
       "comment": "",
       "command": "clickAt",
-      "target": "xpath=(//a[contains(text(),'Edit')])[13]",
-      "targets": [],
+      "target": "id=rolesForm-edit-request",
+      "targets": [
+        ["id=rolesForm-edit-request", "id"],
+        ["css=#rolesForm-edit-request", "css:finder"],
+        ["xpath=(//a[contains(text(),'Edit')])[21]", "xpath:link"],
+        ["xpath=//a[@id='rolesForm-edit-request']", "xpath:attributes"],
+        ["xpath=//tbody[@id='rolesForm-crud-table-body']/tr[20]/td/a[2]", "xpath:idRelative"],
+        ["xpath=(//a[contains(@href, '')])[228]", "xpath:href"],
+        ["xpath=//tr[20]/td/a[2]", "xpath:position"]
+      ],
       "value": "28,8"
     }, {
       "id": "1e8a5ee0-0e52-4f5b-85c9-84a1bfafb0f6",
       "comment": "",
-      "command": "select",
-      "target": "id=roles-delete",
+      "command": "click",
+      "target": "id=rolesForm-delete",
       "targets": [],
-      "value": "label=true"
+      "value": ""
     }, {
       "id": "70ac6aa6-734f-413c-ae3c-fe2770699fde",
       "comment": "",
       "command": "clickAt",
-      "target": "id=roles-add",
+      "target": "id=rolesForm-add",
       "targets": [],
       "value": "34,20"
     }, {
       "id": "bce13a6f-2270-4e8f-8e00-852fb00d6c60",
       "comment": "",
       "command": "clickAt",
-      "target": "xpath=(//a[contains(text(),'Edit')])[15]",
-      "targets": [],
+      "target": "id=rolesForm-edit-product",
+      "targets": [
+        ["id=rolesForm-edit-product", "id"],
+        ["css=#rolesForm-edit-product", "css:finder"],
+        ["xpath=(//a[contains(text(),'Edit')])[19]", "xpath:link"],
+        ["xpath=//a[@id='rolesForm-edit-product']", "xpath:attributes"],
+        ["xpath=//tbody[@id='rolesForm-crud-table-body']/tr[18]/td/a", "xpath:idRelative"],
+        ["xpath=(//a[contains(@href, '')])[207]", "xpath:href"],
+        ["xpath=//tr[18]/td/a", "xpath:position"]
+      ],
       "value": "28,9"
     }, {
       "id": "0ad141f2-c2c3-4181-b21f-1b130e3f03ab",
       "comment": "",
-      "command": "select",
-      "target": "id=roles-delete",
+      "command": "click",
+      "target": "id=rolesForm-delete",
       "targets": [],
-      "value": "label=true"
+      "value": ""
     }, {
       "id": "4841d0b6-f7ac-4ccb-bed7-4574943a8aac",
       "comment": "",
       "command": "clickAt",
-      "target": "id=roles-add",
+      "target": "id=rolesForm-add",
       "targets": [],
       "value": "36,17"
     }, {
-      "id": "45da2b8b-14f8-433f-b6ac-988b29003f6f",
+      "id": "210c4a6c-f7d3-4b9e-a2d3-b4a78b1b57fe",
       "comment": "",
       "command": "clickAt",
-      "target": "id=crudUserForm-update",
-      "targets": [],
-      "value": "39,20"
-    }, {
-      "id": "10d22df6-97d1-4095-935c-7e016b5ec12a",
-      "comment": "",
-      "command": "assertElementNotPresent",
-      "target": "id=http-error",
+      "target": "id=rolesForm-edit-person",
       "targets": [
-        ["css=strong.ng-binding", "css"],
-        ["css=#http-error > .ng-binding", "css:finder"],
-        ["xpath=//div[@id='http-error']/strong", "xpath:idRelative"],
-        ["xpath=//strong", "xpath:position"]
+        ["id=rolesForm-edit-person", "id"],
+        ["css=#rolesForm-edit-person", "css:finder"],
+        ["xpath=(//a[contains(text(),'Edit')])[17]", "xpath:link"],
+        ["xpath=//a[@id='rolesForm-edit-person']", "xpath:attributes"],
+        ["xpath=//tbody[@id='rolesForm-crud-table-body']/tr[16]/td/a[2]", "xpath:idRelative"],
+        ["xpath=(//a[contains(@href, '')])[188]", "xpath:href"],
+        ["xpath=//tr[16]/td/a[2]", "xpath:position"]
+      ],
+      "value": "28,9"
+    }, {
+      "id": "51216490-5382-43b8-a0d2-00a51e96c865",
+      "comment": "",
+      "command": "click",
+      "target": "id=rolesForm-delete",
+      "targets": [],
+      "value": ""
+    }, {
+      "id": "1037d518-96fb-464e-a820-b51aaac9e4c0",
+      "comment": "",
+      "command": "clickAt",
+      "target": "id=rolesForm-add",
+      "targets": [],
+      "value": "36,17"
+    }, {
+      "id": "3df5c5b6-714d-4fa6-81a2-074e9a3554ec",
+      "comment": "",
+      "command": "click",
+      "target": "id=rolesForm-edit-account",
+      "targets": [
+        ["id=rolesForm-edit-account", "id"],
+        ["css=#rolesForm-edit-account", "css:finder"],
+        ["xpath=(//a[contains(text(),'Edit')])[12]", "xpath:link"],
+        ["xpath=//a[@id='rolesForm-edit-account']", "xpath:attributes"],
+        ["xpath=//tbody[@id='rolesForm-crud-table-body']/tr[11]/td/a[2]", "xpath:idRelative"],
+        ["xpath=(//a[contains(@href, '')])[138]", "xpath:href"],
+        ["xpath=//tr[11]/td/a[2]", "xpath:position"]
+      ],
+      "value": ""
+    }, {
+      "id": "59f70122-16fb-464b-9734-a9f74553c294",
+      "comment": "",
+      "command": "click",
+      "target": "id=rolesForm-delete",
+      "targets": [
+        ["id=rolesForm-delete", "id"],
+        ["css=#rolesForm-delete", "css:finder"],
+        ["xpath=//input[@id='rolesForm-delete']", "xpath:attributes"],
+        ["xpath=//div[@id='rolesForm-delete_controls']/input", "xpath:idRelative"],
+        ["xpath=//div[2]/div[5]/div/div/input", "xpath:position"]
+      ],
+      "value": ""
+    }, {
+      "id": "fb728f00-575a-4e9b-8fb8-102f53190e2f",
+      "comment": "",
+      "command": "click",
+      "target": "id=rolesForm-add",
+      "targets": [
+        ["id=rolesForm-add", "id"],
+        ["css=#rolesForm-add", "css:finder"],
+        ["xpath=//button[@id='rolesForm-add']", "xpath:attributes"],
+        ["xpath=//form[@id='rolesForm']/div[3]/div/button", "xpath:idRelative"],
+        ["xpath=//div[3]/div/button", "xpath:position"]
       ],
       "value": ""
     }]
@@ -844,11 +884,11 @@
       "id": "b47286d4-dcf3-4e20-8d5d-9cf2022f801a",
       "comment": "",
       "command": "click",
-      "target": "xpath=//a[contains(@href, '#!/app/crud_user/edit?company=2&id=2')]",
+      "target": "xpath=//a[contains(@href, '#!/app/crud_user/edit?crudGroupOwner=2&id=2')]",
       "targets": [
         ["xpath=(//a[contains(text(),'Edit')])[2]", "xpath:link"],
         ["xpath=//tbody[@id='crudUserForm-crud-table-body']/tr[2]/td/a", "xpath:idRelative"],
-        ["xpath=//a[contains(@href, '#!/app/crud_user/edit?company=2&id=2')]", "xpath:href"],
+        ["xpath=//a[contains(@href, '#!/app/crud_user/edit?crudGroupOwner=2&id=2')]", "xpath:href"],
         ["xpath=//tr[2]/td/a", "xpath:position"]
       ],
       "value": ""
@@ -953,7 +993,7 @@
         ["css=a.ng-binding.ng-scope", "css"],
         ["xpath=//a[contains(text(),'Edit')]", "xpath:link"],
         ["xpath=//tbody[@id='requestForm-crud-table-body']/tr/td/a", "xpath:idRelative"],
-        ["xpath=//a[contains(@href, '#!/app/request/edit?company=2&id=6')]", "xpath:href"],
+        ["xpath=//a[contains(@href, '#!/app/request/edit?crudGroupOwner=2&id=6')]", "xpath:href"],
         ["xpath=//td/a", "xpath:position"]
       ],
       "value": "22,7"
@@ -961,11 +1001,12 @@
       "id": "eab4bd4f-0468-4a6f-b87e-c1ab1df86a20",
       "comment": "",
       "command": "clickAt",
-      "target": "xpath=(//a[contains(text(),'Delete')])[2]",
+      "target": "css=#requestPaymentForm-crud-table-body .ng-binding:nth-child(2)",
       "targets": [
+        ["css=#requestPaymentForm-crud-table-body .ng-binding:nth-child(2)", "css:finder"],
         ["xpath=(//a[contains(text(),'Delete')])[2]", "xpath:link"],
         ["xpath=//tbody[@id='requestPaymentForm-crud-table-body']/tr/td/a[2]", "xpath:idRelative"],
-        ["xpath=(//a[contains(@href, '')])[26]", "xpath:href"],
+        ["xpath=(//a[contains(@href, '')])[82]", "xpath:href"],
         ["xpath=//crud-item[2]/crud-table/div/div/table/tbody/tr/td/a[2]", "xpath:position"]
       ],
       "value": "52,8"
@@ -985,13 +1026,15 @@
       "id": "d245a86a-2d19-4739-a5c2-0e97213bf6ad",
       "comment": "",
       "command": "clickAt",
-      "target": "linkText=Delete",
+      "target": "css=#requestProductForm-crud-table-body .ng-binding:nth-child(2)",
       "targets": [
         ["linkText=Delete", "linkText"],
+        ["css=#requestProductForm-crud-table-body .ng-binding:nth-child(2)", "css:finder"],
         ["xpath=//a[contains(text(),'Delete')]", "xpath:link"],
         ["xpath=//tbody[@id='requestProductForm-crud-table-body']/tr/td/a[2]", "xpath:idRelative"],
-        ["xpath=(//a[contains(@href, '')])[11]", "xpath:href"],
-        ["xpath=//a[2]", "xpath:position"]
+        ["xpath=(//a[contains(@href, '')])[47]", "xpath:href"],
+        ["xpath=//td/a[2]", "xpath:position"],
+        ["xpath=//a[contains(.,' Delete')]", "xpath:innerText"]
       ],
       "value": "41,8"
     }, {
@@ -1150,21 +1193,21 @@
       "command": "type",
       "target": "id=personForm-country",
       "targets": [],
-      "value": "1058 - Brazil"
+      "value": "Brazil"
     }, {
       "id": "047bdbc1-0f89-49bf-8779-9b6b25518c5b",
       "comment": "",
       "command": "type",
       "target": "id=personForm-uf",
       "targets": [],
-      "value": "0043 - Rio Grande do Sul"
+      "value": "Rio Grande do Sul"
     }, {
       "id": "3777e4e9-ba62-4f0a-830b-e0ea18a05101",
       "comment": "",
       "command": "type",
       "target": "id=personForm-city",
       "targets": [],
-      "value": "4304606 - Canoas"
+      "value": "Canoas - Rio Grande do Sul"
     }, {
       "id": "35187401-fae8-421a-a1ff-33612fd8e120",
       "comment": "",
@@ -1244,7 +1287,7 @@
         ["css=.ng-scope > .ng-scope:nth-child(2) > .ng-binding", "css:finder"],
         ["xpath=//a[contains(text(),'WMS SUPERMERCADOS DO BRASIL LTDA')]", "xpath:link"],
         ["xpath=//tbody[@id='personForm-crud-table-body']/tr/td[2]/a", "xpath:idRelative"],
-        ["xpath=//a[contains(@href, '#!/app/person/view?company=2&id=2')]", "xpath:href"],
+        ["xpath=//a[contains(@href, '#!/app/person/view?crudGroupOwner=2&id=2')]", "xpath:href"],
         ["xpath=//td[2]/a", "xpath:position"]
       ],
       "value": ""
@@ -1289,21 +1332,21 @@
       "command": "assertValue",
       "target": "id=personForm-country",
       "targets": [],
-      "value": "1058 - Brazil"
+      "value": "Brazil"
     }, {
       "id": "8356d2d6-6ddb-4679-829c-96d44ce3f82d",
       "comment": "",
       "command": "assertValue",
       "target": "id=personForm-uf",
       "targets": [],
-      "value": "0043 - Rio Grande do Sul"
+      "value": "Rio Grande do Sul"
     }, {
       "id": "1e3b1f60-93aa-49c9-98fe-858568ffdeb0",
       "comment": "",
       "command": "assertValue",
       "target": "id=personForm-city",
       "targets": [],
-      "value": "4304606 - Canoas"
+      "value": "Canoas - Rio Grande do Sul"
     }, {
       "id": "f082b70d-7389-47b1-b3a8-58edb4de9557",
       "comment": "",
@@ -1354,7 +1397,7 @@
       "id": "3273579d-f4d8-4fb3-a8b7-75c800f3f744",
       "comment": "",
       "command": "select",
-      "target": "id=productForm-category",
+      "target": "id=productForm-crudGroup",
       "targets": [],
       "value": "label=Mercado"
     }, {
@@ -1370,7 +1413,7 @@
       "command": "select",
       "target": "id=productForm-orig",
       "targets": [],
-      "value": "label=0"
+      "value": "label=0000 - Nacional, exceto as indicadas nos códigos de 3 a 5"
     }, {
       "id": "5b3946c8-746f-4f80-8885-772d0a6389b6",
       "comment": "",
@@ -1412,14 +1455,120 @@
       ],
       "value": ""
     }]
+  }, {
+    "id": "bcc3dc1b-75c9-4b9d-af0f-657ccc9dbc56",
+    "name": "login_wrong",
+    "commands": [{
+      "id": "53eebdd1-8983-4c47-8b41-ba9295b35aad",
+      "comment": "",
+      "command": "open",
+      "target": "",
+      "targets": [],
+      "value": ""
+    }, {
+      "id": "d7cc8424-0d93-48fe-bb2d-cb6f79d66f6d",
+      "comment": "",
+      "command": "type",
+      "target": "id=user",
+      "targets": [
+        ["id=user", "id"],
+        ["name=user", "name"],
+        ["css=#user", "css"],
+        ["css=#user", "css:finder"],
+        ["xpath=//input[@id='user']", "xpath:attributes"],
+        ["xpath=//div[@id='main']/form/div[2]/input", "xpath:idRelative"],
+        ["xpath=//div[2]/input", "xpath:position"]
+      ],
+      "value": "spending"
+    }, {
+      "id": "9e7f1d12-bb7d-4c1e-a2b6-5d41da660710",
+      "comment": "",
+      "command": "sendKeys",
+      "target": "id=password",
+      "targets": [
+        ["id=password", "id"],
+        ["name=password", "name"],
+        ["css=#password", "css"],
+        ["css=#password", "css:finder"],
+        ["xpath=//input[@id='password']", "xpath:attributes"],
+        ["xpath=//div[@id='main']/form/div[3]/input", "xpath:idRelative"],
+        ["xpath=//div[3]/input", "xpath:position"]
+      ],
+      "value": "123 + ${KEY_ENTER}"
+    }, {
+      "id": "0b82a961-ab5e-4484-8735-7a48f2d99ca5",
+      "comment": "",
+      "command": "assertText",
+      "target": "id=http-error",
+      "targets": [
+        ["css=strong.ng-binding", "css"],
+        ["css=.ng-binding", "css:finder"],
+        ["xpath=//div[@id='http-error']/strong", "xpath:idRelative"],
+        ["xpath=//strong", "xpath:position"]
+      ],
+      "value": "Unauthorized : Don't match user and password."
+    }]
+  }, {
+    "id": "abf68466-c657-48ac-96de-5400f8a9090f",
+    "name": "login_wrong_password_empty",
+    "commands": [{
+      "id": "8c358155-c6b2-418e-9e87-b3b3a9b7d3e5",
+      "comment": "",
+      "command": "open",
+      "target": "",
+      "targets": [],
+      "value": ""
+    }, {
+      "id": "9d0901dd-3ab0-469a-979e-76aec5557144",
+      "comment": "",
+      "command": "type",
+      "target": "id=user",
+      "targets": [
+        ["id=user", "id"],
+        ["name=user", "name"],
+        ["css=#user", "css"],
+        ["css=#user", "css:finder"],
+        ["xpath=//input[@id='user']", "xpath:attributes"],
+        ["xpath=//div[@id='main']/form/div[2]/input", "xpath:idRelative"],
+        ["xpath=//div[2]/input", "xpath:position"]
+      ],
+      "value": "spending"
+    }, {
+      "id": "f089200d-dbc3-41d2-af18-435f43017d73",
+      "comment": "",
+      "command": "sendKeys",
+      "target": "id=password",
+      "targets": [
+        ["id=password", "id"],
+        ["name=password", "name"],
+        ["css=#password", "css"],
+        ["css=#password", "css:finder"],
+        ["xpath=//input[@id='password']", "xpath:attributes"],
+        ["xpath=//div[@id='main']/form/div[3]/input", "xpath:idRelative"],
+        ["xpath=//div[3]/input", "xpath:position"]
+      ],
+      "value": "${KEY_ENTER}"
+    }, {
+      "id": "94ca9233-c12c-4aed-822c-601369b1d232",
+      "comment": "",
+      "command": "assertText",
+      "target": "id=http-error",
+      "targets": [
+        ["css=strong.ng-binding", "css"],
+        ["css=.ng-binding", "css:finder"],
+        ["xpath=//div[@id='http-error']/strong", "xpath:idRelative"],
+        ["xpath=//strong", "xpath:position"]
+      ],
+      "value": "Unauthorized : Don't match user and password."
+    }]
   }],
   "suites": [{
     "id": "08cb74cc-4ee3-417f-b0eb-05481b3e747a",
     "name": "Default Suite",
     "parallel": false,
     "timeout": 3000,
-    "tests": ["459c824d-1825-4183-90db-145872eac86e", "a634f1aa-1398-4f5e-8b60-14bc2320cbf0", "1e9f3675-4bd4-4450-a7a6-c31b52b5e3b8", "eeb9e8f0-7a60-4b9d-9422-86d8f667fe4d", "a4720c93-1155-49f1-940e-1240e2c6adf6"]
+    "tests": ["bcc3dc1b-75c9-4b9d-af0f-657ccc9dbc56", "459c824d-1825-4183-90db-145872eac86e", "a634f1aa-1398-4f5e-8b60-14bc2320cbf0", "1e9f3675-4bd4-4450-a7a6-c31b52b5e3b8", "eeb9e8f0-7a60-4b9d-9422-86d8f667fe4d", "a4720c93-1155-49f1-940e-1240e2c6adf6"]
   }],
-  "urls": ["https://192.168.2.139:8443/angular-es6-crud-nodejs-j2ee7", "https://192.168.2.139:8443/", "https://localhost:9443/crud", "https://localhost:8443/angular-es6-crud-nodejs-j2ee7", "https://localhost:7443/"],
+  "urls": ["https://192.168.2.139:8443/angular-es6-crud-nodejs-j2ee7", "https://192.168.2.139:8443/", "https://localhost:9443/crud", "https://localhost:8443/angular-es6-crud-nodejs-j2ee7", "https://localhost:7443/", "http://localhost:8080/crud", "http://localhost:9080/crud"],
   "plugins": []
 }

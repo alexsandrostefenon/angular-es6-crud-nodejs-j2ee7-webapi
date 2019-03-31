@@ -8,9 +8,9 @@ import javax.persistence.Id;
 import javax.persistence.IdClass;
 import javax.persistence.Table;
 
-import org.domain.crud.entity.CompanyIdPK;
+import org.domain.crud.entity.CrudGroupOwnerIdPK;
 
-@IdClass(CompanyIdPK.class)
+@IdClass(CrudGroupOwnerIdPK.class)
 @Entity
 @Table(name = "stock")
 public class Stock implements java.io.Serializable {
@@ -19,7 +19,9 @@ public class Stock implements java.io.Serializable {
 	 *
 	 */
 	private static final long serialVersionUID = -8377367856010010641L;
-	@Id private Integer company;
+	@Id
+	@Column(name="crud_group_owner")
+	private Integer crudGroupOwner;
 	@Id private Integer id; // mesmo número do id do Product
 
 	@Column(name = "count_in", precision = 9, scale = 3)
@@ -63,12 +65,6 @@ public class Stock implements java.io.Serializable {
 	@Column(name = "value_wholesale", precision = 9, scale = 3)
 	private BigDecimal valueWholesale;
 
-	public Integer getCompany() {
-		return company;
-	}
-	public void setCompany(Integer company) {
-		this.company = company;
-	}
 	public Integer getId() {
 		return id;
 	}
@@ -182,6 +178,12 @@ public class Stock implements java.io.Serializable {
 	}
 	public void setValueWholesale(BigDecimal valueWholesale) {
 		this.valueWholesale = valueWholesale;
+	}
+	public Integer getCrudGroupOwner() {
+		return crudGroupOwner;
+	}
+	public void setCrudGroupOwner(Integer crudGroupOwner) {
+		this.crudGroupOwner = crudGroupOwner;
 	}
 
 }

@@ -17,8 +17,8 @@ namespace AspNetCoreWebApi.Entity
  */
         }
 
-        [Key][Column("company")][ForeignKey("CrudCompany")]
-        public int? Company { get; set; }
+        [Column("crud_group_owner")]
+        public int? CrudGroupOwner { get; set; }
         [Key][Column("id")][DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int Id { get; set; }
         [Required]
@@ -74,9 +74,6 @@ namespace AspNetCoreWebApi.Entity
         [ForeignKey("Cnae")]
         [InverseProperty("Person")]
         public IbgeCnae CnaeNavigation { get; set; }
-        [ForeignKey("Company")]
-        [InverseProperty("Person")]
-        public CrudCompany CompanyNavigation { get; set; }
         [ForeignKey("Country")]
         [InverseProperty("Person")]
         public BacenCountry CountryNavigation { get; set; }

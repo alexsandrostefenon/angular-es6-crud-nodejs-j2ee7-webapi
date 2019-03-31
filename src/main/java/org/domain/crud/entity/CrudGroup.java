@@ -9,16 +9,18 @@ import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 
 @Entity
-@Table(name = "crud_company")
-public class CrudCompany {
-
+@Table(name="crud_group")
+public class CrudGroup {
 	@Id
-	@SequenceGenerator(name="crud_company_id_seq", sequenceName="crud_company_id_seq", allocationSize=1)
-	@GeneratedValue(strategy=GenerationType.SEQUENCE, generator="crud_company_id_seq")
+	@SequenceGenerator(name="crud_group_id_seq", sequenceName="crud_group_id_seq", allocationSize=1)
+	@GeneratedValue(strategy=GenerationType.SEQUENCE, generator="crud_group_id_seq")
 	@Column(columnDefinition="serial")
 	private Integer id;
-	@Column(unique = true, nullable = false)
+	@Column(name = "name", length = 32, unique = true, nullable = false)
 	private String name;
+
+	public CrudGroup() {
+	}
 
 	public Integer getId() {
 		return this.id;
@@ -29,7 +31,7 @@ public class CrudCompany {
 	}
 
 	public String getName() {
-		return name;
+		return this.name;
 	}
 
 	public void setName(String name) {

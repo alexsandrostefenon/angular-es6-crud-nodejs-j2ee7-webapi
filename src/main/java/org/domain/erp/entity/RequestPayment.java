@@ -16,9 +16,9 @@ import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
 import javax.persistence.UniqueConstraint;
 
-import org.domain.crud.entity.CompanyIdPK;
+import org.domain.crud.entity.CrudGroupOwnerIdPK;
 
-@IdClass(CompanyIdPK.class)
+@IdClass(CrudGroupOwnerIdPK.class)
 @Entity
 @Table(name = "request_payment", uniqueConstraints = @UniqueConstraint(columnNames = {"request", "number"}))
 public class RequestPayment implements java.io.Serializable {
@@ -27,7 +27,9 @@ public class RequestPayment implements java.io.Serializable {
 	 *
 	 */
 	private static final long serialVersionUID = -8921880901269127764L;
-	@Id private Integer company;
+	@Id
+	@Column(name="crud_group_owner")
+	private Integer crudGroupOwner;
 	private Integer request;
 	@Id
 	@SequenceGenerator(name="request_payment_id_seq", sequenceName="request_payment_id_seq", allocationSize=1)
@@ -48,14 +50,6 @@ public class RequestPayment implements java.io.Serializable {
 	private Date payday;
 	@Column(precision = 9, scale = 3)
 	private BigDecimal balance = new BigDecimal(0.0);
-
-	public Integer getCompany() {
-		return company;
-	}
-
-	public void setCompany(Integer company) {
-		this.company = company;
-	}
 
 	public RequestPayment() {
 	}
@@ -130,6 +124,14 @@ public class RequestPayment implements java.io.Serializable {
 
 	public void setBalance(BigDecimal balance) {
 		this.balance = balance;
+	}
+
+	public Integer getCrudGroupOwner() {
+		return crudGroupOwner;
+	}
+
+	public void setCrudGroupOwner(Integer crudGroupOwner) {
+		this.crudGroupOwner = crudGroupOwner;
 	}
 
 }

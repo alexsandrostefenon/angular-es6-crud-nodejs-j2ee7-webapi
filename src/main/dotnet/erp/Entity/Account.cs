@@ -10,13 +10,10 @@ namespace AspNetCoreWebApi.Entity
     {
         public Account()
         {
-/*
-            RequestPayment = new HashSet<RequestPayment>();
- */
         }
 
-        [Key][Column("company")][ForeignKey("CrudCompany")]
-        public int? Company { get; set; }
+        [Key][Column("crud_group_owner")][ForeignKey("CrudGroupOwner")]
+        public int? CrudGroupOwner { get; set; }
         [Key][Column("id")][DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int Id { get; set; }
         [Column("number", TypeName = "character varying(20)")]
@@ -27,12 +24,5 @@ namespace AspNetCoreWebApi.Entity
         public string Bank { get; set; }
         [Column("description", TypeName = "character varying(255)")]
         public string Description { get; set; }
-/*
-        [ForeignKey("Company")]
-        [InverseProperty("Account")]
-        public CrudCompany CompanyNavigation { get; set; }
-        [InverseProperty("AccountNavigation")]
-        public ICollection<RequestPayment> RequestPayment { get; set; }
-*/
     }
 }

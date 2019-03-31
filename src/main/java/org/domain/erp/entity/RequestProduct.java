@@ -11,9 +11,9 @@ import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import javax.validation.constraints.NotNull;
 
-import org.domain.crud.entity.CompanyIdPK;
+import org.domain.crud.entity.CrudGroupOwnerIdPK;
 
-@IdClass(CompanyIdPK.class)
+@IdClass(CrudGroupOwnerIdPK.class)
 @Entity
 @Table(name = "request_product")
 public class RequestProduct implements java.io.Serializable {
@@ -22,7 +22,9 @@ public class RequestProduct implements java.io.Serializable {
 	 *
 	 */
 	private static final long serialVersionUID = 5749645992706339825L;
-	@Id private Integer company;
+	@Id
+	@Column(name="crud_group_owner")
+	private Integer crudGroupOwner;
 	private Integer request;
 	@Id
 	@SequenceGenerator(name="request_product_id_seq", sequenceName="request_product_id_seq", allocationSize=1)
@@ -50,12 +52,6 @@ public class RequestProduct implements java.io.Serializable {
 	@Column(name = "serials", length = 64)
 	private String serial;
 	
-	public Integer getCompany() {
-		return company;
-	}
-	public void setCompany(Integer company) {
-		this.company = company;
-	}
 	public Integer getRequest() {
 		return request;
 	}
@@ -127,5 +123,11 @@ public class RequestProduct implements java.io.Serializable {
 	}
 	public void setSerial(String serial) {
 		this.serial = serial;
+	}
+	public Integer getCrudGroupOwner() {
+		return crudGroupOwner;
+	}
+	public void setCrudGroupOwner(Integer crudGroupOwner) {
+		this.crudGroupOwner = crudGroupOwner;
 	}
 }

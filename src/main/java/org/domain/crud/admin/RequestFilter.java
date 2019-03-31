@@ -51,8 +51,8 @@ import org.domain.commom.CaseConvert;
 import org.domain.commom.DbUtils;
 import org.domain.commom.ReflectionUtils;
 import org.domain.commom.Utils;
-import org.domain.crud.entity.CategoryCompany;
-import org.domain.crud.entity.CrudCompany;
+import org.domain.crud.entity.CrudGroupUser;
+import org.domain.crud.entity.CrudGroupOwner;
 import org.domain.crud.entity.CrudService;
 import org.domain.crud.entity.CrudUser;
 
@@ -85,39 +85,39 @@ public class RequestFilter implements ContainerRequestFilter, ContainerResponseF
 		private List<CrudService> crudServices;
 		private List<String> websocketServices;
 		private List<String> servicesNames;
-		private List<Integer> categories;
+		private List<Integer> groups;
 
 		@Override
 		public String getName() {
 			return this.user.getName();
 		}
 
-// Load Company, Services and Categories
+// Load crudGroupOwner, Services and Groups
 		public static CompletableFuture<LoginResponse> load(CrudUser user, EntityManager entityManager) {
 			LoginResponse loginResponse = new LoginResponse (user);
-			return DbUtils.findOne(entityManager, CrudCompany.class, DbUtils.QueryMap.create().add("id", user.getCompany()))
+			return DbUtils.findOne(entityManager, CrudGroupOwner.class, DbUtils.QueryMap.create().add("id", user.getCrudGroupOwner()))
 			.exceptionally(error -> {
-				throw new RuntimeException("don't get user company : " + error.getMessage());
+				throw new RuntimeException("don't get user crudGroupOwner : " + error.getMessage());
 			})
-			.thenCompose(company -> {
-				loginResponse.setTitle(company.getName() + " - " + user.getName());
+			.thenCompose(crudGroupOwner -> {
+				loginResponse.setTitle(crudGroupOwner.getName() + " - " + user.getName());
 				// TODO : código temporário para caber o na tela do celular
 				loginResponse.setTitle(user.getName());
 
 				for(String serviceName : loginResponse.servicesNames) {
 					loginResponse.crudServices.add (RequestFilter.mapService.get(serviceName));
 				}
-// Add Categories
-				DbUtils.QueryMap queryCat = DbUtils.QueryMap.create().add("company", user.getCompany());
-				return DbUtils.find(entityManager, CategoryCompany.class, queryCat, null, null, null)
+// Add Groups
+				DbUtils.QueryMap queryCat = DbUtils.QueryMap.create().add("crudGroupOwner", user.getCrudGroupOwner());
+				return DbUtils.find(entityManager, CrudGroupUser.class, queryCat, null, null, null)
 				.exceptionally(error -> {
-					throw new RuntimeException("don't match request category for user company : " + error.getMessage());
+					throw new RuntimeException("don't match request crudGroup for user : " + error.getMessage());
 				})
-				.thenApply(categories -> {
-					loginResponse.categories = new ArrayList<Integer>(categories.size());
+				.thenApply(groups -> {
+					loginResponse.groups = new ArrayList<Integer>(groups.size());
 
-					for (CategoryCompany categoryCompany : categories) {
-						loginResponse.categories.add(categoryCompany.getId());
+					for (CrudGroupUser crudGroupUser : groups) {
+						loginResponse.groups.add(crudGroupUser.getCrudGroup());
 					}
 
 					return loginResponse;
@@ -178,26 +178,26 @@ public class RequestFilter implements ContainerRequestFilter, ContainerResponseF
 		LoginResponse login = (LoginResponse) user;
 		JsonObject serviceFields = Json.createReader(new StringReader(service.getFields())).readObject();
 		Response response = null;
-		Integer userCompany = login.user.getCompany();
+		Integer userCrudGroupOwner = login.user.getCrudGroupOwner();
 
-		if (userCompany > 1 && serviceFields.containsKey("company")) {
-			Integer objCompany = (Integer) ReflectionUtils.readField(obj, "company");
+		if (userCrudGroupOwner > 1 && serviceFields.containsKey("crudGroupOwner")) {
+			Integer objCrudGroupOwner = (Integer) ReflectionUtils.readField(obj, "crudGroupOwner");
 
-			if (objCompany == null) {
-				ReflectionUtils.writeField(obj, "company", userCompany);
-				objCompany = userCompany;
+			if (objCrudGroupOwner == null) {
+				ReflectionUtils.writeField(obj, "crudGroupOwner", userCrudGroupOwner);
+				objCrudGroupOwner = userCrudGroupOwner;
 			}
 
-			if (objCompany == userCompany) {
-				if (serviceFields.containsKey("category")) {
-					Integer category = (Integer) ReflectionUtils.readField(obj, "category");
+			if (objCrudGroupOwner == userCrudGroupOwner) {
+				if (serviceFields.containsKey("crudGroup")) {
+					Integer crudGroup = (Integer) ReflectionUtils.readField(obj, "crudGroup");
 
-					if (login.categories.indexOf(category) < 0) {
-						response = Response.status(Response.Status.UNAUTHORIZED).entity("unauthorized object category").build();
+					if (login.groups.indexOf(crudGroup) < 0) {
+						response = Response.status(Response.Status.UNAUTHORIZED).entity("unauthorized object crudGroup").build();
 					}
 				}
 			} else {
-				response = Response.status(Response.Status.UNAUTHORIZED).entity("unauthorized object company").build();
+				response = Response.status(Response.Status.UNAUTHORIZED).entity("unauthorized object crudGroupOwner").build();
 			}
 		}
 
@@ -232,7 +232,7 @@ public class RequestFilter implements ContainerRequestFilter, ContainerResponseF
 		Class<T> entityClass = (Class<T>) RequestFilter.mapClass.get(CaseConvert.convertCaseUnderscoreToCamel (serviceName, false));
 		return DbUtils.findOne(entityManager, entityClass, parseQueryParameters((LoginResponse)user, serviceName, uriInfo.getQueryParameters()))
 		.exceptionally(error -> {
-			throw new RuntimeException("fail to find object with company, category and query parameters related : " + error.getMessage());
+			throw new RuntimeException("fail to find object with crudGroupOwner, crudGroup and query parameters related : " + error.getMessage());
 		});
 	}
 	// public processRead
@@ -288,14 +288,14 @@ public class RequestFilter implements ContainerRequestFilter, ContainerResponseF
 					}
 				}
 			}
-			// se não for admin, limita os resultados para as categorias vinculadas a empresa do usuário
-			Integer company = login.user.getCompany();
+			// se não for admin, limita os resultados para as crudGroup vinculadas a empresa do usuário
+			Integer crudGroupOwner = login.user.getCrudGroupOwner();
 			
-			if (company != 1) {
-				if (serviceFields.containsKey("company")) {
-					queryFields.put("company", company);
-				} else if (serviceFields.containsKey("category")) {
-					queryFields.put("category", login.categories);
+			if (crudGroupOwner != 1) {
+				if (serviceFields.containsKey("crudGroupOwner")) {
+					queryFields.put("crudGroupOwner", crudGroupOwner);
+				} else if (serviceFields.containsKey("crudGroup")) {
+					queryFields.put("crudGroup", login.groups);
 				}
 			}
 		}
@@ -596,20 +596,20 @@ public class RequestFilter implements ContainerRequestFilter, ContainerResponseF
 		}
 
     	String str = msg.build().toString();
-    	Integer objCompany = primaryKey.containsKey("company") ? primaryKey.getInt("company") : null;
-    	Integer category = null;
+    	Integer objCrudGroupOwner = primaryKey.containsKey("crudGroupOwner") ? primaryKey.getInt("crudGroupOwner") : null;
+    	Integer crudGroup = null;
 
-		if (serviceFields.containsKey("category")) {
-			category = (Integer) ReflectionUtils.readField(obj, "category");
+		if (serviceFields.containsKey("crudGroup")) {
+			crudGroup = (Integer) ReflectionUtils.readField(obj, "crudGroup");
 		}
 		
 		for (Map.Entry<String, Session> item : RequestFilter.clients.entrySet()) {
 			RequestFilter.LoginResponse login = RequestFilter.logins.get(item.getKey());
-			Integer userCompany = login.getUser().getCompany();
-			// enviar somente para os clients de "company"
-			if (objCompany == null || userCompany == 1 || objCompany == userCompany) {
-				// restrição de categoria
-				if (category == null || login.categories.indexOf(category) >= 0) {
+			Integer userCrudGroupOwner = login.getUser().getCrudGroupOwner();
+			// enviar somente para os clients de "crudGroupOwner"
+			if (objCrudGroupOwner == null || userCrudGroupOwner == 1 || objCrudGroupOwner == userCrudGroupOwner) {
+				// restrição de crudGroup
+				if (crudGroup == null || login.groups.indexOf(crudGroup) >= 0) {
 					// envia somente para os usuários com acesso ao serviço alterado
 					if (login.getWebsocketServices().contains(serviceName)) {
 						CompletableFuture.runAsync(() -> {

@@ -1,6 +1,4 @@
-const Client = require("mongodb").MongoClient;
-
-module.exports =
+import {MongoClient} from "mongodb";
 
 class DbClientMongo {
 
@@ -9,7 +7,7 @@ class DbClientMongo {
 	}
 
 	connect() {
-		return Client.connect().then((clent) => {this.db = client.db(dbname)}.bind(this));
+		return MongoClient.connect().then((clent) => {this.db = client.db(dbname)}.bind(this));
 	}
 
 	find(table, matchExact, matchIn, callback) {
@@ -53,3 +51,4 @@ class DbClientMongo {
 	}
 }
 
+exports {DbClientMongo}

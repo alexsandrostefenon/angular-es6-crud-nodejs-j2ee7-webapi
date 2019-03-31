@@ -45,42 +45,42 @@ namespace org.domain.crud.admin {
 			public List<CrudService> crudServices;
 			public List<String> websocketServices;
 			public List<String> servicesNames;
-			public List<int> categories;
+			public List<int> groups;
 
 			override public string AuthenticationType => "Kerberos";
 
 			override public bool IsAuthenticated => this.user != null;
 
 			override public string Name => this.user.Name;
-// Load Company, Services and Categories
+// Load crudGroupOwner, Services and Groups
 			public static Task<LoginResponse> Load (CrudUser user, DbContext entityManager) {
 				LoginResponse loginResponse = new LoginResponse (user);
-				DbUtils.QueryMap query = DbUtils.QueryMap.Create ().AddNext ("id", loginResponse.user.Company);
-				return DbUtils.FindOne<CrudCompany> (entityManager, null, query)
-				.ContinueWith<LoginResponse> (company => {
-					if (company.Exception != null) {
-						throw new AggregateException ("don't get user company : " + company.Exception.Message);
+				DbUtils.QueryMap query = DbUtils.QueryMap.Create ().AddNext ("id", loginResponse.user.CrudGroupOwner);
+				return DbUtils.FindOne<CrudGroupOwner> (entityManager, null, query)
+				.ContinueWith<LoginResponse> (crudGroupOwner => {
+					if (crudGroupOwner.Exception != null) {
+						throw new AggregateException ("don't get user crudGroupOwner : " + crudGroupOwner.Exception.Message);
 					}
 
-					loginResponse.title = company.Result.Name + " - " + user.Name;
+					loginResponse.title = crudGroupOwner.Result.Name + " - " + user.Name;
 					// TODO : código temporário para caber o na tela do celular
 					loginResponse.title = user.Name;
 
 					foreach(String serviceName in loginResponse.servicesNames) {
 						loginResponse.crudServices.Add (RequestFilter.mapService [serviceName]);
 					}
-// Add Categories
-					DbUtils.QueryMap queryCat = DbUtils.QueryMap.Create ().AddNext ("company", loginResponse.user.Company);
-					return DbUtils.Find<CategoryCompany> (entityManager, null, queryCat, null, null, null)
-					.ContinueWith<LoginResponse> (taskCategories => {
-						if (taskCategories.Exception != null) {
-							throw new AggregateException ("don't match request category for user company : " + taskCategories.Exception.Message);
+// Add Groups
+					DbUtils.QueryMap queryCat = DbUtils.QueryMap.Create ().AddNext ("crud_user", loginResponse.user.Name);
+					return DbUtils.Find<CrudGroupUser> (entityManager, null, queryCat, null, null, null)
+					.ContinueWith<LoginResponse> (taskGroups => {
+						if (taskGroups.Exception != null) {
+							throw new AggregateException ("don't match request crudGroup for user : " + taskGroups.Exception.Message);
 						}
 
-						loginResponse.categories = new List<int> (taskCategories.Result.Count);
+						loginResponse.groups = new List<int> (taskGroups.Result.Count);
 
-						foreach (CategoryCompany categoryCompany in taskCategories.Result) {
-							loginResponse.categories.Add (categoryCompany.Id);
+						foreach (CrudGroupUser crudGroupUser in taskGroups.Result) {
+							loginResponse.groups.Add (crudGroupUser.CrudGroup);
 						}
 
 						return loginResponse;
@@ -118,26 +118,26 @@ namespace org.domain.crud.admin {
 			LoginResponse login = (LoginResponse) user;
 			JObject serviceFields = JObject.Parse (service.Fields);
 			ActionResult response = null;
-            int? userCompany = login.user.Company;
+            int? userCrudGroupOwner = login.user.CrudGroupOwner;
 
-			if (userCompany > 1 && serviceFields.ContainsKey("company")) {
-				int? objCompany = (int?)obj.GetType().GetProperty("Company").GetValue(obj);
+			if (userCrudGroupOwner > 1 && serviceFields.ContainsKey("crudGroupOwner")) {
+				int? objCrudGroupOwner = (int?)obj.GetType().GetProperty("CrudGroupOwner").GetValue(obj);
 
-                if (objCompany == null) {
-					obj.GetType ().GetProperty ("Company").SetValue (obj, userCompany);
-                    objCompany = userCompany;
+                if (objCrudGroupOwner == null) {
+					obj.GetType ().GetProperty ("CrudGroupOwner").SetValue (obj, userCrudGroupOwner);
+                    objCrudGroupOwner = userCrudGroupOwner;
                 }
 
-                if (objCompany == userCompany) {
-                    if (serviceFields.ContainsKey("category")) {
-						int category = (int)obj.GetType ().GetProperty ("Category").GetValue (obj);
+                if (objCrudGroupOwner == userCrudGroupOwner) {
+                    if (serviceFields.ContainsKey("crudGroup")) {
+						int crudGroup = (int)obj.GetType ().GetProperty ("CrudGroup").GetValue (obj);
 
-                        if (login.categories.IndexOf(category) < 0) {
-							response = Response.Unauthorized("unauthorized object category");
+                        if (login.groups.IndexOf(crudGroup) < 0) {
+							response = Response.Unauthorized("unauthorized object crudGroup");
                         }
                     }
                 } else {
-					response = Response.Unauthorized("unauthorized object company");
+					response = Response.Unauthorized("unauthorized object crudGroupOwner");
                 }
             }
 
@@ -171,7 +171,7 @@ namespace org.domain.crud.admin {
 			Type entityClass = RequestFilter.mapClass[serviceName];
 			return DbUtils.FindOne<T>(entityManager, entityClass, ParseQueryParameters((LoginResponse)user, serviceName, uriInfo.Query)).ContinueWith<T>(taskFind => {
 				if (taskFind.Exception != null) {
-					throw new Exception("fail to find object with company, category and query parameters related : " + taskFind.Exception);
+					throw new Exception("fail to find object with crudGroupOwner, crudGroup and query parameters related : " + taskFind.Exception);
 				}
 
 				return taskFind.Result;
@@ -231,14 +231,14 @@ namespace org.domain.crud.admin {
 					}
 				}
 			}
-			// se não for admin, limita os resultados para as categorias vinculadas a empresa do usuário
-			int? company = login.user.Company;
+			// se não for admin, limita os resultados para as crudGroup vinculadas a empresa do usuário
+			int? crudGroupOwner = login.user.CrudGroupOwner;
 
-			if (company != 1) {
-				if (serviceFields.ContainsKey ("company")) {
-					queryFields["company"] = company;
-				} else if (serviceFields.ContainsKey ("category")) {
-					queryFields["category"] = login.categories;
+			if (crudGroupOwner != 1) {
+				if (serviceFields.ContainsKey ("crudGroupOwner")) {
+					queryFields["crudGroupOwner"] = crudGroupOwner;
+				} else if (serviceFields.ContainsKey ("crudGroup")) {
+					queryFields["crudGroup"] = login.groups;
 				}
 			}
 
@@ -577,20 +577,20 @@ namespace org.domain.crud.admin {
 			}
 
 			String str = msg.ToString(Formatting.Indented);
-			int? objCompany = primaryKey.ContainsKey ("company") ? primaryKey.Value<int?>("company") : null;
-			int? category = null;
+			int? objCrudGroupOwner = primaryKey.ContainsKey ("crudGroupOwner") ? primaryKey.Value<int?>("crudGroupOwner") : null;
+			int? crudGroup = null;
 
-			if (serviceFields.ContainsKey("category")) {
-				category = (int) obj.GetType().GetProperty("Category").GetValue(obj);
+			if (serviceFields.ContainsKey("crudGroup")) {
+				crudGroup = (int) obj.GetType().GetProperty("CrudGroup").GetValue(obj);
 			}
 
 			foreach (var item in RequestFilter.clients) {
 				RequestFilter.LoginResponse login = RequestFilter.logins[item.Key];
-				int? userCompany = login.user.Company;
-				// enviar somente para os clients de "company"
-				if (objCompany == null || userCompany == 1 || objCompany == userCompany) {
-					// restrição de categoria
-					if (category == null || login.categories.IndexOf((int)category) >= 0) {
+				int? userCrudGroupOwner = login.user.CrudGroupOwner;
+				// enviar somente para os clients de "crudGroupOwner"
+				if (objCrudGroupOwner == null || userCrudGroupOwner == 1 || objCrudGroupOwner == userCrudGroupOwner) {
+					// restrição de crudGroup
+					if (crudGroup == null || login.groups.IndexOf((int)crudGroup) >= 0) {
 						// envia somente para os usuários com acesso ao serviço alterado
 						if (login.websocketServices.Contains (serviceName)) {
 							var bytes = System.Text.Encoding.UTF8.GetBytes (str);
@@ -674,7 +674,7 @@ namespace org.domain.crud.admin {
 					//	jsonBuilderValue.Add("scale", column.scale());
 					//}
 
-					if (fieldName.Equals("company") && entityClass.Name.Equals("Company") == false) {
+					if (fieldName.Equals("crudGroupOwner") && entityClass.Name.Equals("CrudGroupOwner") == false) {
                         jsonNewValue.Add("hiden", true);
                     }
                     

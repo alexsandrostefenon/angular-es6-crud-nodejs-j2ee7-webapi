@@ -11,18 +11,11 @@ import javax.persistence.*;
 public class RequestNfePK implements Serializable {
 	//default serial version id, required for serializable classes.
 	private static final long serialVersionUID = 1L;
-	private Integer company;
+	@Column(name="crud_group_owner")
+	private Integer crudGroupOwner;
 	private Integer request;
 
 	public RequestNfePK() {
-	}
-
-	@Column(insertable=false, updatable=false)
-	public Integer getCompany() {
-		return this.company;
-	}
-	public void setCompany(Integer company) {
-		this.company = company;
 	}
 
 	@Column(insertable=false, updatable=false)
@@ -42,16 +35,24 @@ public class RequestNfePK implements Serializable {
 		}
 		RequestNfePK castOther = (RequestNfePK)other;
 		return 
-			this.company.equals(castOther.company)
+			this.crudGroupOwner.equals(castOther.crudGroupOwner)
 			&& this.request.equals(castOther.request);
 	}
 
 	public int hashCode() {
 		final int prime = 31;
 		int hash = 17;
-		hash = hash * prime + this.company.hashCode();
+		hash = hash * prime + this.crudGroupOwner.hashCode();
 		hash = hash * prime + this.request.hashCode();
 		
 		return hash;
+	}
+
+	public Integer getCrudGroupOwner() {
+		return crudGroupOwner;
+	}
+
+	public void setCrudGroupOwner(Integer crudGroupOwner) {
+		this.crudGroupOwner = crudGroupOwner;
 	}
 }

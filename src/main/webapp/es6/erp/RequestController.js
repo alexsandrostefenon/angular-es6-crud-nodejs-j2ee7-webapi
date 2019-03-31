@@ -1,5 +1,5 @@
-import {CrudController} from "../CrudController.js";
-import {CrudItem} from "../CrudItem.js";
+import {CrudController} from "../crud/CrudController.js";
+import {CrudItem} from "../crud/CrudItem.js";
 
 export class RequestController extends CrudController {
 
@@ -46,15 +46,46 @@ export class RequestController extends CrudController {
     }
     
     enableRequestPayment() {
-		if (this.serverConnection.services.requestPayment != undefined && this.serverConnection.services.requestPayment.params.access.update != false) {
+		if (this.serverConnection.services.requestPayment != undefined && this.serverConnection.services.requestPayment.params.access.update == true) {
 		    const onPaymentsChanged = (list) => {
 		    	this.instance.paymentsValue = this.getSumValues(list);
 		    }
 		    
 		    const onSelected = (fieldName, value) => {
 	        	if (fieldName == "type") {
-					this.crudItemPayment.instance.dueDate = this.instance.date;
+						//(1, 'Dinheiro'),
+						//(2, 'Cheque'),
+						//(3, 'Cartão de Crédito'),
+						//(4, 'Cartão de Débito'),
+						//(5, 'Crédito Loja'),
+						//(10, 'Vale Alimentação'),
+						//(11, 'Vale Refeição'),
+						//(12, 'Vale Presente'),
+						//(13, 'Vale Combustível'),
+						//(14, 'Duplicata Mercantil'),
+						//(15, 'Boleto Bancario'),
+	        		// value
 					this.crudItemPayment.instance.value = this.instance.sumValue - this.instance.paymentsValue;
+	        		// account
+	        		if (value == 1) {
+	        			if (this.crudItemPayment.fields.account.filterResults.length > 0) {
+			        		this.crudItemPayment.instance.account = this.crudItemPayment.fields.account.filterResults[0].id;
+	        			}
+	        		} else {
+	        			if (this.crudItemPayment.fields.account.filterResults.length > 1) {
+			        		this.crudItemPayment.instance.account = this.crudItemPayment.fields.account.filterResults[1].id;
+	        			}
+	        		}
+	        		// due_date
+					if ([1,4,10,11,12,13].indexOf(value) >= 0) {
+						this.crudItemPayment.instance.dueDate = this.instance.date;
+					}
+					// payday
+					if ([1,4,10,11,12,13].indexOf(value) >= 0) {
+						this.crudItemPayment.instance.payday = this.instance.date;
+					}
+					// update UI
+					this.crudItemPayment.setValues(this.crudItemPayment.instance);
 	        	}
 		    }
 	        // serverConnection, serviceName, fieldName, primaryKeyForeign, title, numMaxItems, queryCallback, selectCallback
@@ -64,7 +95,7 @@ export class RequestController extends CrudController {
     }
     
     enableRequestFreight() {
-		if (this.serverConnection.services.requestFreight != undefined && this.serverConnection.services.requestFreight.params.access.update != false) {
+		if (this.serverConnection.services.requestFreight != undefined && this.serverConnection.services.requestFreight.params.access.update == true) {
 		    const onTransportChanged = (list) => {
 		    	this.instance.transportValue = this.getSumValues(list);
 		    	this.instance.sumValue = this.instance.productsValue + this.instance.servicesValue + this.instance.transportValue;
@@ -82,31 +113,33 @@ export class RequestController extends CrudController {
     }
 
 	filterRequestState() {
-		const filterResults = [];
-		const list = this.fields.state.crudService.list;
+		this.fields.state.filterResults = [];
+		this.fields.state.filterResultsStr = [];
+		const list = this.serverConnection.services.requestState.list;
 
 		for (let itemRef of list) {
 			if (itemRef.id == this.instance.state) {
-				for (let item of list) {
+				for (let i = 0; i < list.length; i++) {
+					let item = list[i];
+					
 					if ((item.next == itemRef.id) ||
 						(item.id == itemRef.prev) ||
 						(item.id == itemRef.id) ||
 						(item.id == itemRef.next) ||
 						(item.prev == itemRef.id)) {
-						filterResults.push(item);
+						this.fields.state.filterResults.push(item);
+						this.fields.state.filterResultsStr.push(this.serverConnection.services.requestState.listStr[i]);
 					}
 				}
 
 				break;
 			}
 		}
-
-		this.setFieldOptions("state", filterResults);
 	}
 
 	generateNFE(request) {
 		const ide = {};
-		const company = {};
+		const crudGroupOwner = {};
 		const nfe = {};
 		nfe.nfeProc = {};
 		nfe.nfeProc.NFe = {};
@@ -132,16 +165,11 @@ export class RequestController extends CrudController {
     	});
     }
 
-    constructor(serverConnection, $scope) {
-    	super(serverConnection, $scope);
-    	this.saveAndExit = false;
+    process(action, params) {
+    	super.process(action, params);
+    	this.crudService.params.saveAndExit = false;
 
-    	if (this.action == "new") {
-    		if (this.instance.date == undefined) {
-				this.instance.date = new Date();
-				this.instance.date.setMilliseconds(0);
-    		}
-    		
+    	if (action == "new") {
 	    	this.filterRequestState();
 		}
 

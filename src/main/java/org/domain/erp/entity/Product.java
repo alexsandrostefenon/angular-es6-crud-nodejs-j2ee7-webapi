@@ -18,7 +18,8 @@ public class Product implements Serializable {
 	@GeneratedValue(strategy=GenerationType.SEQUENCE, generator="product_id_seq")
 	@Column(columnDefinition="serial")
 	private Integer id;
-	private Integer category;
+	@Column(name="crud_group")
+	private Integer crudGroup;
 	private Integer ncm;
 	private Integer orig;
 	private String name;
@@ -40,14 +41,6 @@ public class Product implements Serializable {
 
 	public void setId(Integer id) {
 		this.id = id;
-	}
-
-	public Integer getCategory() {
-		return category;
-	}
-
-	public void setCategory(Integer category) {
-		this.category = category;
 	}
 
 	public Integer getNcm() {
@@ -120,6 +113,14 @@ public class Product implements Serializable {
 
 	public void setAdditionalData(String additionalData) {
 		this.additionalData = additionalData;
+	}
+
+	public Integer getCrudGroup() {
+		return crudGroup;
+	}
+
+	public void setCrudGroup(Integer crudGroup) {
+		this.crudGroup = crudGroup;
 	}
 
 }

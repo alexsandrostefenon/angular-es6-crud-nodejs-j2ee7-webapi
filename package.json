@@ -1,17 +1,17 @@
 {
   "name": "angular-es6-crud",
-  "version": "1.0.0",
+  "version": "1.0.4",
   "private": true,
   "scripts": {
-    "start": "node app.js"
+    "start": "nodejs --experimental-modules --loader ./src/main/es6/custom-loader.mjs ./src/main/es6/app.js"
   },
   "dependencies": {
-    "encoding": "^0.1.12",
     "express": "^4.16.3",
-    "mongodb": "^2.0.43",
+    "websocket": "^1.0.23",
+    "encoding": "^0.1.12",
     "node-fetch": "^2.1.2",
     "pg": "^7.3.0",
     "pg-camelcase": "^0.0.3",
-    "websocket": "^1.0.23"
+    "unzip": "^0.1.11"
   }
 }

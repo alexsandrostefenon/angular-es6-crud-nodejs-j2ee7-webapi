@@ -6,19 +6,19 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.SequenceGenerator;
+import javax.persistence.Table;
 
 @Entity
-public class Category {
+@Table(name = "crud_group_owner")
+public class CrudGroupOwner {
+
 	@Id
-	@SequenceGenerator(name="category_id_seq", sequenceName="category_id_seq", allocationSize=1)
-	@GeneratedValue(strategy=GenerationType.SEQUENCE, generator="category_id_seq")
+	@SequenceGenerator(name="crud_group_owner_id_seq", sequenceName="crud_group_owner_id_seq", allocationSize=1)
+	@GeneratedValue(strategy=GenerationType.SEQUENCE, generator="crud_group_owner_id_seq")
 	@Column(columnDefinition="serial")
 	private Integer id;
-	@Column(name = "name", length = 100, unique = true, nullable = false)
+	@Column(unique = true, nullable = false)
 	private String name;
-
-	public Category() {
-	}
 
 	public Integer getId() {
 		return this.id;
@@ -29,7 +29,7 @@ public class Category {
 	}
 
 	public String getName() {
-		return this.name;
+		return name;
 	}
 
 	public void setName(String name) {

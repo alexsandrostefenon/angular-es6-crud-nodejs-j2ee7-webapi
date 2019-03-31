@@ -1,5 +1,6 @@
 import {Response} from "./server-utils.js";
-import {CaseConvert} from "../../../webapp/es6/CaseConvert.js";
+import {CaseConvert} from "../../../webapp/es6/crud/CaseConvert.js";
+import {DbClientPostgres} from "./dbClientPostgres.js";
 
 function getPrimaryKeys(service) {
 	var orderBy = [];
@@ -23,36 +24,40 @@ function guid() {
 
   return s4() + s4() + '-' + s4() + '-' + s4() + '-' + s4() + '-' + s4() + s4() + s4();
 }
-	// Class LoginResponse
+// Class LoginResponse
+// Response with login data access to client
 class LoginResponse {
-// Load Company, Services and Categories
+// Load crudGroupOwner, Services and Groups
 	static load(user, entityManager) {
 		let loginResponse = new LoginResponse (user);
-		return entityManager.findOne("crud_company", {"id": user.company})
+		const foreignKey = RequestFilter.getForeignKey("crudUser", "crudGroupOwner", user);
+		return entityManager.findOne("crud_group_owner", foreignKey)
 		.catch(error => {
-			throw new Error("don't get user company : " + error.message);
+			throw new Error("don't get user crudGroupOwner : " + error.message);
 		})
-		.then(company => {
-			loginResponse.title = company.name + " - " + user.name;
+		.then(crudGroupOwner => {
+			loginResponse.title = crudGroupOwner.name + " - " + user.name;
 			// TODO : código temporário para caber o na tela do celular
 			loginResponse.title = user.name;
-
-			return entityManager.find("crud_service", {"name": loginResponse.servicesNames}, null)
+			loginResponse.roles = JSON.parse(user.roles);
+			const serviceNames = Object.keys(loginResponse.roles);
+			return entityManager.find("crud_service", {"name": serviceNames}, null)
 			.catch(error => {
 				throw new Error("don't get user services : " + error.message);
 			})
 			.then(services => {
+				services.sort((a,b) => serviceNames.indexOf(a.name) - serviceNames.indexOf(b.name));
 				loginResponse.crudServices = services;
-				// Add Categories
-				return entityManager.find("category_company", {"company": user.company}, null)
+				// Add Groups
+				return entityManager.find("crud_group_user", {"crudUser": user.id}, null)
 				.catch(error => {
-					throw new Error("don't match request category for user company : " + error.message);
+					throw new Error("don't match request crud_group for user : " + error.message);
 				})
-				.then(categories => {
-					loginResponse.categories = [];
+				.then(userGroups => {
+					loginResponse.groups = [];
 
-					for (let categoryCompany of categories) {
-						loginResponse.categories.push(categoryCompany.id);
+					for (let userGroup of userGroups) {
+						loginResponse.groups.push(userGroup.crudGroup);
 					}
 
 					return loginResponse;
@@ -63,35 +68,40 @@ class LoginResponse {
 
 	constructor(user) {
 		this.user = user;
-		this.servicesNames = [];
 		this.crudServices = [];
-		this.websocketServices = [];
-		var roles = JSON.parse(user.roles);
-
-		for (let key in roles) {
-			this.servicesNames.push(key);
-			var jsonAccess = roles[key];
-			// verfica a permissao de aviso de alterações via websocket
-			if (jsonAccess.read == true) {
-				this.websocketServices.push(key);
-			}
-		}
 	}
 
 }
 
-export class RequestFilter {
+class RequestFilter {
+	static getForeignKeyEntries(serviceName, foreignServiceName) {
+		const serviceFields = JSON.parse(RequestFilter.mapService.get(serviceName).fields);
+		let foreignKeyEntries = [];
+
+		for (let [fieldName, field] of Object.entries(serviceFields)) {
+			if (field.foreignKeysImport != undefined && field.foreignKeysImport.table == foreignServiceName) {
+				foreignKeyEntries.push({fieldName, field});
+			}
+		}
+
+		return foreignKeyEntries;
+	}
+
+	static getForeignKey(serviceName, foreignServiceName, obj) {
+		const foreignKeyEntries = RequestFilter.getForeignKeyEntries(serviceName, foreignServiceName);
+		let foreignKey = {};
+
+		for (let foreignKeyEntry of foreignKeyEntries) {
+			foreignKey[foreignKeyEntry.field.foreignKeysImport.field] = obj[foreignKeyEntry.fieldName];
+		}
+
+		return foreignKey;
+	}
 
 	constructor(appRestExpress, entityManager) {
-//		debugger;
+		this.appRestExpress = appRestExpress;
 		this.entityManager = entityManager;
 		appRestExpress.all("*", (req, res, next) => this.filter(req, res, next));
-		
-		appRestExpress.options("/", (req, res, next) => {
-			return next();
-		});
-		//Add headers
-		appRestExpress.use((req, res, next) => this.filterHeaders(req, res, next));
 	}
 // private to create,update,delete,read
 	static checkObjectAccess(user, serviceName, obj) { // LoginResponse login, EntityManager entityManager, Object obj
@@ -106,37 +116,39 @@ export class RequestFilter {
 		const login = user;
 		const serviceFields = JSON.parse(service.fields);
 		let response = null;
-		const userCompany = login.user.company;
+		const userCrudGroupOwner = RequestFilter.getForeignKey("crudUser", "crudGroupOwner", login.user);
+		const crudGroupOwnerEntries = RequestFilter.getForeignKeyEntries(serviceName, "crudGroupOwner");
 
-		if (userCompany > 1 && serviceFields.company != undefined) {
-			let objCompany = obj.company;
+		if (userCrudGroupOwner.id > 1 && crudGroupOwnerEntries.length > 0) {
+			const objCrudGroupOwner = RequestFilter.getForeignKey(serviceName, "crudGroupOwner", obj);
 
-			if (objCompany == undefined) {
-				obj.company = userCompany;
-				objCompany = userCompany;
+			if (objCrudGroupOwner.id == undefined) {
+				obj.crudGroupOwner = userCrudGroupOwner.id;
+				objCrudGroupOwner.id = userCrudGroupOwner.id;
 			}
 
-			if (objCompany == userCompany) {
-				if (serviceFields.category != undefined) {
-					const category = obj["category"];
+			if (objCrudGroupOwner.id == userCrudGroupOwner.id) {
+				const crudGroupEntries = RequestFilter.getForeignKeyEntries(serviceName, "crudGroup");
 
-					if (login.categories.indexOf(category) < 0) {
-						response = Response.unauthorized("unauthorized object category");
+				if (crudGroupEntries.length > 0) {
+					const crudGroup = RequestFilter.getForeignKey(serviceName, "crudGroup", obj);
+
+					if (login.groups.indexOf(crudGroup.id) < 0) {
+						response = Response.unauthorized("unauthorized object crudGroup");
 					}
 				}
 			} else {
-				response = Response.unauthorized("unauthorized object company");
+				response = Response.unauthorized("unauthorized object crudGroupOwner");
 			}
 		}
 
 		return response;
 	}
 	//
-	static getService(user, serviceName) {
+	static getService(login, serviceName) {
 		serviceName = CaseConvert.underscoreToCamel (serviceName, false);
-		const login = user;
 
-		if (login.servicesNames.indexOf (serviceName) < 0) {
+		if (login.roles[serviceName] == undefined) {
 			throw new Exception ("Unauthorized service Access");
 		}
 
@@ -150,14 +162,15 @@ export class RequestFilter {
 		if (response != null) Promise.resolve(response);
 
 		return entityManager.insert(serviceName, obj).then(newObj => {
-			RequestFilter.notify(newObj, serviceName, false);
-			return Response.ok(newObj);
+			const primaryKey = RequestFilter.notify(newObj, serviceName, false);
+			// force read, cases of triggers before break result value
+			return entityManager.findOne(serviceName, primaryKey).then(_obj => Response.ok(_obj));
 		});
 	}
 	// public
 	static getObject(user, uriInfo, entityManager, serviceName) {
 		return entityManager.findOne(serviceName, RequestFilter.parseQueryParameters(user, serviceName, uriInfo.query)).catch(error => {
-			throw new Error("fail to find object with company, category and query parameters related : " + error.message);
+			throw new Error("fail to find object with crudGroup and query parameters related : " + error.message);
 		});
 	}
 	// public processRead
@@ -172,8 +185,9 @@ export class RequestFilter {
 			if (response != null) return Promise.resolve(response);
 
 			return entityManager.update(serviceName, RequestFilter.parseQueryParameters(user, serviceName, uriInfo.query), obj).then(newObj => {
-				RequestFilter.notify(newObj, serviceName, false);
-				return Response.ok(newObj);
+				const primaryKey = RequestFilter.notify(newObj, serviceName, false);
+				// force read, cases of triggers before break result value
+				return entityManager.findOne(serviceName, primaryKey).then(_obj => Response.ok(_obj));
 			});
 		});
 	}
@@ -211,15 +225,14 @@ export class RequestFilter {
 				}
 			}
 		}
-		// se não for admin, limita os resultados para as categorias vinculadas a empresa do usuário
-		let company = login.user.company;
+		// se não for admin, limita os resultados para as crudGroup vinculadas a empresa do usuário
+		const userCrudGroupOwner = RequestFilter.getForeignKey("crudUser", "crudGroupOwner", login.user);
+		const crudGroupOwnerEntries = RequestFilter.getForeignKeyEntries(serviceName, "crudGroupOwner");
+		const crudGroupEntries = RequestFilter.getForeignKeyEntries(serviceName, "crudGroup");
 
-		if (company != 1) {
-			if (fields["company"] != undefined) {
-				queryFields["company"] = company;
-			} else if (fields["category"] != undefined) {
-				queryFields["category"] = login.categories;
-			}
+		if (userCrudGroupOwner.id > 1) {
+			if (crudGroupOwnerEntries.length > 0) queryFields[crudGroupOwnerEntries[0].fieldName] = userCrudGroupOwner.id;
+			if (crudGroupEntries.length > 0) queryFields[crudGroupEntries[0].fieldName] = login.groups;
 		}
 
 		return queryFields;
@@ -242,8 +255,27 @@ export class RequestFilter {
 			Response.ok(results)
 		);
 	}
+	// verify for dedicated EndPoint
+	verifyDedicatedRoute(req) {
+		let found = false;
+		
+		mainLoop: for (let item of this.appRestExpress._router.stack) {
+			if (item.name == "router" && req.path.match(item.regexp) != null) {
+				for (let subItem of item.handle.stack) {
+					const path = req.path.substring(req.path.lastIndexOf("/"));
+//					console.log(`${path} match (${subItem.regexp}) :`, path.match(subItem.regexp), "subItem :", subItem);
+					if (path.match(subItem.regexp) != null) {
+						found = true;
+						break mainLoop;
+					}
+				}
+			}
+		}
+		
+		return found;
+	}
 	// processRequest
-	processRequest(req, entityManager, serviceName, uriPath) {
+	processRequest(req, res, next, entityManager, serviceName, uriPath) {
 		// crudProcess
 		let crudProcess = login => {
 			const uriInfo = req;
@@ -275,15 +307,18 @@ export class RequestFilter {
 			});
 		};
 
-		let authorization = user => {
+		let authorization = login => {
+			// TODO : if serviceName in crudServices, returned access must be true or false !!!
 			let access = null;
-			const json = JSON.parse(user.roles);
+			const serviceAuth = login.roles[serviceName];
 			// verfica a permissao de acesso
-			if (json[serviceName] != undefined) {
-				const serviceAuth = json[serviceName];
+			if (serviceAuth != undefined) {
+				const defaultAccess = {query: true, read: true, create: true, update: false, delete: false};
 
 				if (serviceAuth[uriPath] != undefined) {
 					access = serviceAuth[uriPath];
+				} else {
+					access = defaultAccess[uriPath];
 				}
 			}
 
@@ -299,13 +334,15 @@ export class RequestFilter {
 				const login = RequestFilter.logins.get(token);
 
 				if (login != null) {
-					const access = authorization(login.user);
+					const access = authorization(login);
 
 					if (access != false) {
 						req.user = login;
 
 						if (access == true) {
-							return crudProcess(login);
+							if (this.verifyDedicatedRoute(req) == false) {
+								return crudProcess(login);
+							}
 						} else {
 							response = null;
 						}
@@ -351,18 +388,18 @@ export class RequestFilter {
 		const method = req.method;
 		console.log("method : ", method);
 		const ip = req.ip;
-		const uri = req.originalUrl;
-		const paths =  req.path.split("/");
-		const root = paths [1];
+		const uri = req.baseUrl + req.path;
+		const paths =  uri.split("/");
+		const root = paths [2];
 		let resource = null;
 		let action = null;
 
 		if (root == "rest") {
-			if (paths.length > 2) {
-				resource = CaseConvert.underscoreToCamel (paths [2], false);
+			if (paths.length > 3) {
+				resource = CaseConvert.underscoreToCamel (paths [3], false);
 
-				if (paths.length > 3) {
-					action = paths [3];
+				if (paths.length > 4) {
+					action = paths [4];
 				}
 			}
 		}
@@ -372,6 +409,16 @@ export class RequestFilter {
 		console.log ("root : ", root);
 		console.log ("resource : ", resource);
 		console.log ("action : ", action);
+
+		res.header("Access-Control-Allow-Origin", "*");
+		res.header("Access-Control-Allow-Methods", "GET, PUT, OPTIONS, POST, DELETE");
+		res.header("Access-Control-Allow-Headers", req.header('Access-Control-Request-Headers'));
+		
+		if (req.method === 'OPTIONS') {
+			res.send("Ok");
+			return;
+		}
+
 		// no login pede usuário e senha
 		if (root == "rest") {
 			if (resource == "authc") {
@@ -379,7 +426,7 @@ export class RequestFilter {
 				promisseResponse.then(response => res.status(response.status).send(response.data));
 				// em qualquer outro método pede o token
 			} else {
-				const promisseResponse = this.processRequest(req, this.entityManager, resource, action);
+				const promisseResponse = this.processRequest(req, res, next, this.entityManager, resource, action);
 				promisseResponse.then(response => {
 					if (response != null) {
 						res.status(response.status).send(response.data);
@@ -390,16 +437,6 @@ export class RequestFilter {
 			}
 		}
 
-	}
-
-	filterHeaders(req, res, next) {
-	    // Website you wish to allow to connect
-	    res.setHeader('Access-Control-Allow-Origin', '*');
-	    // Request methods you wish to allow
-	    res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS');
-	    // Request headers you wish to allow
-	    res.setHeader('Access-Control-Allow-Headers', 'X-Requested-With,Content-Type,Authorization,Origin');
-	    next();
 	}
 
     onMessage(session, token) {
@@ -452,41 +489,41 @@ export class RequestFilter {
 		}
 
 		let str = JSON.stringify(msg);
-		let objCompany = primaryKey["company"];
-		let category = undefined;
-
-		if (serviceFields["category"]) {
-			category = obj["category"];
-		}
+		const objCrudGroupOwner = RequestFilter.getForeignKey(serviceName, "crudGroupOwner", obj);
+		const crudGroup = RequestFilter.getForeignKey(serviceName, "crudGroup", obj);
 
 		for (let [key, value] of RequestFilter.clients) {
 			let login = RequestFilter.logins.get(key);
-			let userCompany = login.user.company;
-			// enviar somente para os clients de "company"
-			if (objCompany == undefined || userCompany == 1 || objCompany == userCompany) {
-				// restrição de categoria
-				if (category == undefined || login.categories.indexOf(category) >= 0) {
-					// envia somente para os usuários com acesso ao serviço alterado
-					if (login.websocketServices.indexOf(serviceName) >= 0) {
-						Promise.resolve().then(() => {
-							console.log("notify user ", login.user.name, ":", msg);
-							value.sendUTF(str)
-						});
-					}
+			const userCrudGroupOwner = RequestFilter.getForeignKey("crudUser", "crudGroupOwner", login.user);
+			// enviar somente para os clients de "crudGroupOwner"
+			let checkCrudGroupOwner = objCrudGroupOwner.id == undefined || objCrudGroupOwner.id == userCrudGroupOwner.id;
+			let checkCrudGroup = crudGroup.id == undefined || login.groups.indexOf(crudGroup.id) >= 0;
+			// restrição de crudGroup
+			if (userCrudGroupOwner.id == 1 || (checkCrudGroupOwner && checkCrudGroup)) {
+				let role = login.roles[serviceName];
+
+				if (role != undefined && role.read != false) {
+					Promise.resolve().then(() => {
+						console.log("notify user ", login.user.name, ":", msg);
+						value.sendUTF(str)
+					});
 				}
 			}
 		}
+
+		return primaryKey;
     }
-    // public
+    
     static updateCrudServices(entityManager) {
-        return entityManager.find("crud_service").then(services => {
-            for (let service of services) {
-                RequestFilter.mapService.set(service.name, service);
-            }
-        });
+		return entityManager.find("crudService").then(rows => {
+			for (let crudService of rows) RequestFilter.mapService.set(crudService.name, crudService);
+		});
 	}
+	
 }
 
 RequestFilter.logins = new Map();
 RequestFilter.mapService = new Map();
 RequestFilter.clients = new Map();
+
+export {RequestFilter}

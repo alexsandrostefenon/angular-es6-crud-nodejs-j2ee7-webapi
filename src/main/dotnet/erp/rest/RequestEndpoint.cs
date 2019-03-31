@@ -44,7 +44,7 @@ public class RequestEndpoint : ControllerBase {
 				if (response is OkResult) {
 					RequestState stateOld = RequestProductEndpoint.GetRequestState(this.entityManager, taskOldObj.Result.State);
 					RequestState state = RequestProductEndpoint.GetRequestState(this.entityManager, newObj.State);
-					List<RequestProduct> list = DbUtils.Find<RequestProduct>(this.entityManager, null, QueryMap.Create().AddNext("company", newObj.Company).AddNext("request", newObj.Id), null, null, null).Result;
+					List<RequestProduct> list = DbUtils.Find<RequestProduct>(this.entityManager, null, QueryMap.Create().AddNext("crudGroupOwner", newObj.CrudGroupOwner).AddNext("request", newObj.Id), null, null, null).Result;
 
 					foreach (RequestProduct requestProduct in list) {
 					}
@@ -68,7 +68,7 @@ public class RequestEndpoint : ControllerBase {
 				if (response is OkResult) {
 					RequestState stateOld = RequestProductEndpoint.GetRequestState (this.entityManager, obj.State);
 					RequestState state = RequestProductEndpoint.GetRequestState (this.entityManager, obj.State);
-					List<RequestProduct> list = DbUtils.Find<RequestProduct> (this.entityManager, null, QueryMap.Create ().AddNext ("company", obj.Company).AddNext ("request", obj.Id), null, null, null).Result;
+					List<RequestProduct> list = DbUtils.Find<RequestProduct> (this.entityManager, null, QueryMap.Create ().AddNext ("crudGroupOwner", obj.CrudGroupOwner).AddNext ("request", obj.Id), null, null, null).Result;
 
 					foreach (RequestProduct requestProduct in list) {
 					}

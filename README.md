@@ -22,27 +22,29 @@ sudo su postgres;
 export PGDATABASE=postgres;
 psql -c 'CREATE USER development WITH CREATEDB LOGIN PASSWORD '\''123456'\''';
 psql -c 'CREATE DATABASE crud WITH OWNER development';
-psql -c 'CREATE DATABASE development WITH OWNER development';
+psql -c 'CREATE DATABASE crud_dev WITH OWNER development';
 exit;
 
-Note, database "development" is only for testing purposes.
+Note, database "crud_dev" is only for testing purposes.
 
 import default configuration data with commands :
 
 export PGHOST=localhost;
 export PPORT=5432;
-export PGDATABASE=crud;
-export PGUSER=development;
 export PGPASSWORD=123456;
+export PGUSER=development;
+export PGDATABASE=crud;
 
-psql < ./sql/database_schema.sql;
+psql < ./sql/crud/database_schema.sql;
+psql < ./sql/crud/database_first_data.sql;
+
 psql < ./sql/nfe/database_schema.sql;
-psql < ./sql/erp/database_schema.sql;
-psql < ./sql/iso8583router/database_schema.sql;
-
-psql < ./sql/database_first_data.sql;
 psql < ./sql/nfe/database_first_data.sql;
+
+psql < ./sql/erp/database_schema.sql;
 psql < ./sql/erp/database_first_data.sql;
+
+psql < ./sql/iso8583router/database_schema.sql;
 psql < ./sql/iso8583router/database_first_data.sql;
 
 ## NodeJs based server
@@ -61,7 +63,7 @@ openssl req -newkey rsa:2048 -new -nodes -x509 -days 3650 -keyout key.pem -out c
 
 execute :
 
-`nodejs --inspect --experimental-modules --loader ./src/main/es6/custom-loader.mjs ./src/main/es6/app.js`
+`nodejs --inspect --experimental-modules --loader ./src/main/es6/custom-loader.mjs ./src/main/es6/app.js --name=crud --modules="./crud/rest/CrudServiceEndPoint.js"`
 
 ## J2EE7 based server
 

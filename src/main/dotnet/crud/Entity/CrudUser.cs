@@ -8,8 +8,8 @@ namespace AspNetCoreWebApi.Entity
     [Table("crud_user")]
     public partial class CrudUser
     {
-		[Key][Column("company")][ForeignKey("CrudCompany")]
-        public int? Company { get; set; }
+		[Key][Column("crud_group_owner")][ForeignKey("CrudGroupOwner")]
+        public int? CrudGroupOwner { get; set; }
 		[Key][Column("name", TypeName = "character varying(255)")]
         public string Name { get; set; }
 		[Column("path", TypeName = "character varying(255)")]
@@ -30,12 +30,5 @@ namespace AspNetCoreWebApi.Entity
         public string Config { get; set; }
 		[Column("password", TypeName = "character varying(255)")]
         public string Password { get; set; }
-/*
-        [Column("routes_jsonb", TypeName = "jsonb")]
-        public string RoutesJsonb { get; set; }
-        [ForeignKey("Company")]
-        [InverseProperty("CrudUser")]
-        public CrudCompany CompanyNavigation { get; set; }
-*/
     }
 }

@@ -11,9 +11,9 @@ import javax.persistence.SequenceGenerator;
 import javax.persistence.Table;
 import javax.persistence.UniqueConstraint;
 
-import org.domain.crud.entity.CompanyIdPK;
+import org.domain.crud.entity.CrudGroupOwnerIdPK;
 
-@IdClass(CompanyIdPK.class)
+@IdClass(CrudGroupOwnerIdPK.class)
 @Entity
 @Table(name = "account", uniqueConstraints = @UniqueConstraint(columnNames = {"bank", "agency", "number"}))
 public class Account implements java.io.Serializable {
@@ -24,7 +24,8 @@ public class Account implements java.io.Serializable {
 	private static final long serialVersionUID = 5284750958346901988L;
 	
 	@Id
-	private Integer company;
+	@Column(name="crud_group_owner")
+	private Integer crudGroupOwner;
 	
 	@Id
 	@SequenceGenerator(name="account_id_seq", sequenceName="account_id_seq", allocationSize=1)
@@ -36,14 +37,6 @@ public class Account implements java.io.Serializable {
 	private String agency;
 	private String number;
 	private String description;
-
-	public Integer getCompany() {
-		return company;
-	}
-
-	public void setCompany(Integer company) {
-		this.company = company;
-	}
 
 	public Account() {
 	}
@@ -94,6 +87,14 @@ public class Account implements java.io.Serializable {
 
 	public void setDescription(String description) {
 		this.description = description;
+	}
+
+	public Integer getCrudGroupOwner() {
+		return crudGroupOwner;
+	}
+
+	public void setCrudGroupOwner(Integer crudGroupOwner) {
+		this.crudGroupOwner = crudGroupOwner;
 	}
 
 }

@@ -13,8 +13,8 @@ namespace AspNetCoreWebApi.Entity
             //RequestRepair = new HashSet<RequestRepair>();
         }
 
-        [Key][Column("company")][ForeignKey("CrudCompany")]
-        public int? Company { get; set; }
+        [Key][Column("crud_group_owner")][ForeignKey("CrudGroupOwner")]
+        public int? CrudGroupOwner { get; set; }
 		[Key][Column("request")][ForeignKey("Request")]
         public int Request { get; set; }
         [Column("person")]
@@ -77,17 +77,5 @@ namespace AspNetCoreWebApi.Entity
         public decimal? ValueIssqn { get; set; }
         [Column("value_tax", TypeName = "numeric(9,2)")]
         public decimal? ValueTax { get; set; }
-
-        //[ForeignKey("Company")]
-        //[InverseProperty("RequestNfe")]
-        //public CrudCompany CompanyNavigation { get; set; }
-        //[ForeignKey("Company,Person")]
-        //[InverseProperty("RequestNfe")]
-        //public Person PersonNavigation { get; set; }
-        //[ForeignKey("Company,Request")]
-        //[InverseProperty("RequestNfe")]
-        //public Request RequestNavigation { get; set; }
-        //[InverseProperty("RequestNfe")]
-        //public ICollection<RequestRepair> RequestRepair { get; set; }
     }
 }
