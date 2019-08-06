@@ -1,70 +1,37 @@
 import {Response} from "./server-utils.js";
 import {CaseConvert} from "../../../webapp/es6/crud/CaseConvert.js";
+import {Filter} from "../../../webapp/es6/crud/DataStore.js";
 import {DbClientPostgres} from "./dbClientPostgres.js";
+import fs from "fs";
 
-function getPrimaryKeys(service) {
-	var orderBy = [];
-	const fields = JSON.parse(service.fields);
+const fsPromises = fs.promises;
 
-	for (var fieldName in fields) {
-		var field = fields[fieldName];
-
-		if (field.primaryKey == true) {
-			orderBy.push(fieldName);
-		}
-	}
-
-	return orderBy;
-}
-
-function guid() {
-  function s4() {
-    return Math.floor((1 + Math.random()) * 0x10000).toString(16).substring(1);
-  }
-
-  return s4() + s4() + '-' + s4() + '-' + s4() + '-' + s4() + '-' + s4() + s4() + s4();
-}
 // Class LoginResponse
 // Response with login data access to client
 class LoginResponse {
 // Load crudGroupOwner, Services and Groups
-	static load(user, entityManager) {
+    static load(user, dbConnInfo) {
 		let loginResponse = new LoginResponse (user);
 		const foreignKey = RequestFilter.getForeignKey("crudUser", "crudGroupOwner", user);
-		return entityManager.findOne("crud_group_owner", foreignKey)
-		.catch(error => {
-			throw new Error("don't get user crudGroupOwner : " + error.message);
-		})
-		.then(crudGroupOwner => {
-			loginResponse.title = crudGroupOwner.name + " - " + user.name;
-			// TODO : código temporário para caber o na tela do celular
-			loginResponse.title = user.name;
-			loginResponse.roles = JSON.parse(user.roles);
-			const serviceNames = Object.keys(loginResponse.roles);
-			return entityManager.find("crud_service", {"name": serviceNames}, null)
-			.catch(error => {
-				throw new Error("don't get user services : " + error.message);
-			})
-			.then(services => {
-				services.sort((a,b) => serviceNames.indexOf(a.name) - serviceNames.indexOf(b.name));
-				loginResponse.crudServices = services;
-				// Add Groups
-				return entityManager.find("crud_group_user", {"crudUser": user.id}, null)
-				.catch(error => {
-					throw new Error("don't match request crud_group for user : " + error.message);
-				})
-				.then(userGroups => {
-					loginResponse.groups = [];
+        const crudGroupOwner = Filter.findOne(RequestFilter.listGroupOwner, foreignKey);
+        if (crudGroupOwner != null) loginResponse.title = crudGroupOwner.name + " - " + user.name;
+        loginResponse.dbConnInfo = dbConnInfo;
+        // TODO : código temporário para caber o na tela do celular
+        loginResponse.title = user.name;
+        loginResponse.roles = JSON.parse(user.roles);
+        loginResponse.crudServices = [];
+        loginResponse.groups = [];
 
-					for (let userGroup of userGroups) {
-						loginResponse.groups.push(userGroup.crudGroup);
-					}
+        for (let serviceName of Object.keys(loginResponse.roles)) {
+        	let service = Filter.findOne(RequestFilter.listService, {"name": serviceName});
+			loginResponse.crudServices.push(service);
+        }
 
-					return loginResponse;
-				});
-			});
-		});
-	}
+        // Add Groups
+        const userGroups = Filter.find(RequestFilter.listGroupUser, {"crudUser": user.id});
+        for (let userGroup of userGroups) loginResponse.groups.push(userGroup.crudGroup);
+        return loginResponse;
+    }
 
 	constructor(user) {
 		this.user = user;
@@ -75,10 +42,11 @@ class LoginResponse {
 
 class RequestFilter {
 	static getForeignKeyEntries(serviceName, foreignServiceName) {
-		const serviceFields = JSON.parse(RequestFilter.mapService.get(serviceName).fields);
+        const service = Filter.findOne(RequestFilter.listService, {"name": serviceName});
+		if (service.jsonFields == undefined) service.jsonFields = JSON.parse(service.fields);
 		let foreignKeyEntries = [];
 
-		for (let [fieldName, field] of Object.entries(serviceFields)) {
+		for (let [fieldName, field] of Object.entries(service.jsonFields)) {
 			if (field.foreignKeysImport != undefined && field.foreignKeysImport.table == foreignServiceName) {
 				foreignKeyEntries.push({fieldName, field});
 			}
@@ -114,7 +82,6 @@ class RequestFilter {
 		}
 
 		const login = user;
-		const serviceFields = JSON.parse(service.fields);
 		let response = null;
 		const userCrudGroupOwner = RequestFilter.getForeignKey("crudUser", "crudGroupOwner", login.user);
 		const crudGroupOwnerEntries = RequestFilter.getForeignKeyEntries(serviceName, "crudGroupOwner");
@@ -152,7 +119,8 @@ class RequestFilter {
 			throw new Exception ("Unauthorized service Access");
 		}
 
-		const service = RequestFilter.mapService.get(serviceName);
+        const service = Filter.findOne(RequestFilter.listService, {"name": serviceName});
+		if (service.jsonFields == undefined) service.jsonFields = JSON.parse(service.fields);
 		return service;
 	}
 	// public
@@ -202,25 +170,22 @@ class RequestFilter {
 	}
 	// private
 	static parseQueryParameters(login, serviceName, queryParameters) {
-		const service = RequestFilter.getService (login, serviceName);
 		let queryFields = {};
-		const fields = JSON.parse(service.fields);
+		const service = RequestFilter.getService (login, serviceName);
 
-		for (var fieldName in fields) {
-			var field = fields[fieldName];
-
+		for (let [fieldName, field] of Object.entries(service.jsonFields)) {
 			if (field.primaryKey == true) {
 				const value = queryParameters[fieldName];
-				
+
 				if (value != undefined) {
 					const type = field["type"];
 					
 					if (type == undefined || type == "s") {
-		    			queryFields[fieldName] = value;
+						queryFields[fieldName] = value;
 					} else if (type == "n" || type == "i") {
-		    			queryFields[fieldName] = Number.parseInt(value);
+						queryFields[fieldName] = Number.parseInt(value);
 					} else if (type == "b") {
-		    			queryFields[fieldName] = (value == "true");
+						queryFields[fieldName] = (value == "true");
 					}
 				}
 			}
@@ -240,16 +205,18 @@ class RequestFilter {
 	// public
 	static processQuery(user, uriInfo, entityManager, serviceName) {
 		const fields = RequestFilter.parseQueryParameters(user, serviceName, uriInfo.query);
-		let orderBy = null;
+		let orderBy = [];
+		const service = RequestFilter.getService (user, serviceName);
 
-		{
-			const service = RequestFilter.getService (user, serviceName);
+		for (let [fieldName, field] of Object.entries(service.jsonFields)) {
+			const type = field.type;
 
-			if (service.orderBy != undefined && service.orderBy != null) {
-				orderBy = service.orderBy.split(",");
+			if (field.primaryKey == true && type != undefined) {
+				if (type == "i" || type.includes("date") || type.includes("time")) {
+					orderBy.push(fieldName + " desc");
+				}
 			}
 		}
-
 
 		return entityManager.find(serviceName, fields, orderBy).then(results =>
 			Response.ok(results)
@@ -278,6 +245,11 @@ class RequestFilter {
 	processRequest(req, res, next, entityManager, serviceName, uriPath) {
 		// crudProcess
 		let crudProcess = login => {
+			if (RequestFilter.dbConnMap.get(login.dbConnInfo) != undefined) {
+				entityManager = RequestFilter.dbConnMap.get(login.dbConnInfo);
+				console.log(`[RequestFilter.processRequest] : using connection ${login.dbConnInfo}`);
+			}
+
 			const uriInfo = req;
 			let obj = null;
 
@@ -362,25 +334,39 @@ class RequestFilter {
 		return authWithToken();
 	}
 	// private
-	authenticateByUserAndPassword(entityManager, req, ip) {
-		const userQuery = {"name":req.body.userId, "password":req.body.password};
-		return entityManager.findOne("crud_user", userQuery).then(user => {
-			const token = guid();
-			user.authctoken = token;
-			user.ip = ip;
-			return entityManager.update("crud_user", userQuery, {"authctoken": user.authctoken}).then(userAfterUpdate => {
-				return LoginResponse.load(userAfterUpdate, entityManager).then(loginResponse => {
-					RequestFilter.logins.set(token, loginResponse);
-					return Response.ok(loginResponse);
+    authenticateByUserAndPassword(req, ip) {
+        let user = Filter.findOne(RequestFilter.listUser, {"name": req.body.userId});
+
+        if (user != undefined && user.password == req.body.password) {
+            function guid() {
+                function s4() {
+                    return Math.floor((1 + Math.random()) * 0x10000).toString(16).substring(1);
+                }
+
+                return s4() + s4() + '-' + s4() + '-' + s4() + '-' + s4() + '-' + s4() + s4() + s4();
+            }
+
+            const token = guid();
+            user.authctoken = token;
+            user.ip = ip;
+            const loginResponse = LoginResponse.load(user, req.body.dbUri);
+            RequestFilter.logins.set(token, loginResponse);
+
+            if (RequestFilter.dbConnMap.get(loginResponse.dbConnInfo) == undefined) {
+            	const dbClient = new DbClientPostgres({connectionString: loginResponse.dbConnInfo});
+				dbClient.connect().then(() => {
+					RequestFilter.dbConnMap.set(loginResponse.dbConnInfo, dbClient);
+					console.log(`[RequestFilter.authenticateByUserAndPassword] : added db connection to ${loginResponse.dbConnInfo}`);
+				}).
+				catch(err => {
+					console.error(`[RequestFilter.authenticateByUserAndPassword] : fail connection to ${loginResponse.dbConnInfo} : ${err}`);
 				});
-			});
-		}).catch(err => {
-			if (err.message == "NoResultException") {
-				return Response.unauthorized("Don't match user and password.");
-			} else {
-				return Response.internalServerError(err.message);
-			}
-		});
+            }
+
+            return Response.ok(loginResponse);
+        } else {
+            return Response.unauthorized("Don't match user and password.");
+        }
 	}
 	// filter
 	filter(req, res, next) {
@@ -413,7 +399,7 @@ class RequestFilter {
 		res.header("Access-Control-Allow-Origin", "*");
 		res.header("Access-Control-Allow-Methods", "GET, PUT, OPTIONS, POST, DELETE");
 		res.header("Access-Control-Allow-Headers", req.header('Access-Control-Request-Headers'));
-		
+
 		if (req.method === 'OPTIONS') {
 			res.send("Ok");
 			return;
@@ -422,7 +408,7 @@ class RequestFilter {
 		// no login pede usuário e senha
 		if (root == "rest") {
 			if (resource == "authc") {
-				const promisseResponse = this.authenticateByUserAndPassword(this.entityManager, req, ip);
+                const promisseResponse = Promise.resolve(this.authenticateByUserAndPassword(req, ip));
 				promisseResponse.then(response => res.status(response.status).send(response.data));
 				// em qualquer outro método pede o token
 			} else {
@@ -436,48 +422,45 @@ class RequestFilter {
 				});
 			}
 		}
-
 	}
 
-    onMessage(session, token) {
-    	const login = RequestFilter.logins.get(token);
+	onMessage(session, token) {
+		const login = RequestFilter.logins.get(token);
 
 		if (login != null) {
 			session.token = token;
-	        RequestFilter.clients.set(token, session);
-		    console.log("New websocket session opened: token : ", token, ", id : ", session.id);
+			RequestFilter.clients.set(token, session);
+			console.log("New websocket session opened: token : ", token, ", id : ", session.id);
 		}
-    }
-    // remove the session after it's closed
-    onClose(session) {
-    	const token = session.token;
-        const login = RequestFilter.logins.get(token);
+	}
+	// remove the session after it's closed
+	onClose(session) {
+		const token = session.token;
+		const login = RequestFilter.logins.get(token);
 
 		if (login != null) {
-		    console.log("Websoket session closed: " + token);
+			console.log("Websoket session closed: " + token);
 			RequestFilter.clients.delete(token);
 			RequestFilter.logins.delete(token);
 		}
-    }
-    // This method sends the same Bidding object to all opened sessions
-    static notify(obj, serviceName, isRemove) {
-		const serviceFields = JSON.parse(RequestFilter.mapService.get(serviceName).fields);
+	}
+	// This method sends the same Bidding object to all opened sessions
+	static notify(obj, serviceName, isRemove) {
+        const service = Filter.findOne(RequestFilter.listService, {"name": serviceName});
 
-        let getPrimaryKey = () => {
-    		let primaryKeyBuilder = {};
-    		
-    		for (let fieldName in serviceFields) {
-    			let field = serviceFields[fieldName];
-
-    			if (field["primaryKey"] == true) {
-    				primaryKeyBuilder[fieldName] = obj[fieldName];
-    			}
-    		}
-    		
-    		return primaryKeyBuilder;
-        };
-        
-    	let primaryKey = getPrimaryKey();
+		let getPrimaryKey = () => {
+			let primaryKeyBuilder = {};
+			
+			for (let [fieldName, field] of Object.entries(service.jsonFields)) {
+				if (field["primaryKey"] == true) {
+					primaryKeyBuilder[fieldName] = obj[fieldName];
+				}
+			}
+			
+			return primaryKeyBuilder;
+		};
+		
+		let primaryKey = getPrimaryKey();
 		var msg = {};
 		msg.service = serviceName;
 		msg.primaryKey = primaryKey;
@@ -512,18 +495,29 @@ class RequestFilter {
 		}
 
 		return primaryKey;
-    }
-    
-    static updateCrudServices(entityManager) {
-		return entityManager.find("crudService").then(rows => {
-			for (let crudService of rows) RequestFilter.mapService.set(crudService.name, crudService);
-		});
 	}
-	
+
+	static updateCrudServices(entityManager) {
+        const loadTable = name => entityManager.find(name).catch(() => fsPromises.readFile(name + ".json").then(data => JSON.parse(data)));
+        return loadTable("crudService").then(rows => {
+            RequestFilter.listService = rows;
+        }).then(() => loadTable("crudUser")).then(rows => {
+            RequestFilter.listUser = rows;
+        }).then(() => loadTable("crudGroupUser")).then(rows => {
+            RequestFilter.listGroupUser = rows;
+        }).then(() => loadTable("crudGroupOwner")).then(rows => {
+            RequestFilter.listGroupOwner = rows;
+        });
+	}
+
 }
 
+RequestFilter.dbConnMap = new Map();
 RequestFilter.logins = new Map();
-RequestFilter.mapService = new Map();
 RequestFilter.clients = new Map();
+RequestFilter.listService = [];
+RequestFilter.listUser = [];
+RequestFilter.listGroupUser = [];
+RequestFilter.listGroupOwner = [];
 
 export {RequestFilter}

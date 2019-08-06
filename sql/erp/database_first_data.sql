@@ -1,7 +1,7 @@
 INSERT INTO crud_service (name, menu, title, fields) VALUES ('account', 'requestPayment', 'Contas Bancárias', '{}');
 INSERT INTO crud_service (name, menu, title, fields) VALUES ('person', 'person', 'Cadastros de Clientes e Fornecedores', '{}');
 INSERT INTO crud_service (name, menu, title, fields) VALUES ('product', 'product', 'Produtos, Peças e Componentes', '{}');
-INSERT INTO crud_service (name, menu, title, fields) VALUES ('barcode', 'product', 'Código de Barras de fornecedores de produtos', '{"product":{"isClonable":false}}');
+INSERT INTO crud_service (name, menu, title, fields) VALUES ('barcode', 'product', 'Código de Barras de fornecedores de produtos', '{"product":{"isClonable":false,"title":"Código de Barras dos fornecedores"}}');
 INSERT INTO crud_service (name, menu, title, fields) VALUES ('requestType', 'request', 'Tipo de Requisição', '{}');
 INSERT INTO crud_service (name, menu, title, fields) VALUES ('stockAction', 'requestProduct', 'Ação sobre o Estoque', '{}');
 INSERT INTO crud_service (name, menu, title, fields) VALUES ('requestState', 'request', 'Situação da Requisição', '{"name":{"shortDescription":true},"type":{"shortDescription":true}}');
@@ -10,7 +10,9 @@ INSERT INTO crud_service (name, menu, title, fields) VALUES ('requestNfe', 'repo
 INSERT INTO crud_service (name, menu, title, fields) VALUES ('requestFreight', 'report', 'Frete', '{}');
 INSERT INTO crud_service (name, menu, title, fields) VALUES ('requestProduct', 'report', 'Entrada e Saída de Produtos', '{}');
 INSERT INTO crud_service (name, menu, title, fields) VALUES ('requestPayment', 'report', 'Pagamentos', '{"balance":{"readOnly":true}}');
-INSERT INTO crud_service (name, menu, title, fields) VALUES ('stock', 'requestProduct', 'Estoque de Produtos', '{"id":{"hiden":false}}');
+INSERT INTO crud_service (name, menu, title, fields) VALUES ('stock', 'requestProduct', 'Estoque de Produtos', '{"id":{"hiden":false,"isClonable":false,"title":"Estoque"}}');
+
+UPDATE crud_service SET save_and_exit = false WHERE name = 'product';
 
 INSERT INTO request_type (id, description, name) VALUES (1, NULL, 'Compra');
 INSERT INTO request_type (id, description, name) VALUES (2, NULL, 'Venda');
@@ -103,6 +105,6 @@ INSERT INTO crud_group_owner (name) VALUES ('HOME');
 
 INSERT INTO crud_group (name) VALUES ('Mercado');
 
-INSERT INTO crud_user (crud_group_owner, name, password, path, menu, roles, show_system_menu, routes) SELECT id, 'spending', '123456', 'request/search', '{"buy":{"menu":"actions","label":"Compra","path":"request/new?overwrite={\"type\":1,\"state\":10}"},"requestPayment":{"menu":"form","label":"Financeiro","path":"request_payment/search"},"stock":{"menu":"form","label":"Estoque","path":"stock/search"},"product":{"menu":"form","label":"Produtos","path":"product/search"},"person":{"menu":"form","label":"Clientes e Fornecedores","path":"person/search"},"requests":{"menu":"form","label":"Requisições","path":"request/search"},"account":{"menu":"form","label":"Contas","path":"account/search"}}', '{"crudTranslation":{},"crudGroupOwner":{},"crudGroup":{},"nfeCfop":{},"bacenCountry":{},"ibgeUf":{},"ibgeCity":{},"ibgeCnae":{},"nfeTaxGroup":{},"camexNcm":{},"account":{"create":true},"stockAction":{},"requestType":{},"requestState":{},"paymentType":{},"person":{"create":true,"update":true},"nfeStIcmsOrigem":{},"product":{"create":true,"update":true},"barcode":{"create":true,"update":true},"request":{"create":true,"update":true},"requestProduct":{"create":true,"update":true,"delete":true},"requestPayment":{"create":true,"update":true,"delete":true},"stock":{"create":true,"update":true}}', false, '[{"path":"/app/request/:action","controller":"erp/RequestController"}]' FROM crud_group_owner WHERE name='HOME';
+INSERT INTO crud_user (crud_group_owner, name, password, path, menu, roles, show_system_menu, routes) SELECT id, 'spending', '123456', 'request/search', '{"buy":{"menu":"actions","label":"Compra","path":"request/new?overwrite={\"type\":1,\"state\":10}"},"sale":{"menu":"actions","label":"Venda","path":"request/new?overwrite={\"type\":2,\"state\":10}"},"requestPayment":{"menu":"form","label":"Financeiro","path":"request_payment/search"},"stock":{"menu":"form","label":"Estoque","path":"stock/search"},"product":{"menu":"form","label":"Produtos","path":"product/search"},"person":{"menu":"form","label":"Clientes e Fornecedores","path":"person/search"},"requests":{"menu":"form","label":"Requisições","path":"request/search"},"account":{"menu":"form","label":"Contas","path":"account/search"}}', '{"crudTranslation":{},"crudGroupOwner":{},"crudGroup":{},"nfeCfop":{},"bacenCountry":{},"ibgeUf":{},"ibgeCity":{},"ibgeCnae":{},"nfeTaxGroup":{},"camexNcm":{},"account":{"create":true},"stockAction":{},"requestType":{},"requestState":{},"paymentType":{},"person":{"create":true,"update":true},"nfeStIcmsOrigem":{},"product":{"create":true,"update":true},"barcode":{"create":true,"update":true},"request":{"create":true,"update":true},"requestProduct":{"create":true,"update":true,"delete":true},"requestPayment":{"create":true,"update":true,"delete":true},"stock":{"create":true,"update":true}}', false, '[{"path":"/app/request/:action","controller":"erp/RequestController"}]' FROM crud_group_owner WHERE name='HOME';
 
 INSERT INTO crud_group_user (crud_user, crud_group) SELECT u.id, g.id FROM crud_user AS u, crud_group AS g WHERE u.name='spending' AND g.name='Mercado';

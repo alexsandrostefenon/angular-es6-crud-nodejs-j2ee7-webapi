@@ -15,7 +15,6 @@ class CrudServiceController extends CrudController {
     			"sortType":{"options": ["asc", "desc"]},
     			"orderIndex":{"type": "i"},
     			"tableVisible":{"type": "b"},
-    			"shortDescription":{"type": "b"},
     			"required":{"type": "b"},
     			"length":{"type": "i"},
     			"precision":{"type": "i"},
@@ -23,6 +22,8 @@ class CrudServiceController extends CrudController {
     			"primaryKey":{"type": "b"},
     			"identityGeneration":{"options": ["ALWAYS", "BY DEFAULT"]},
     			"foreignKeysImport":{}, // [table, field]
+    			"shortDescription":{"type": "b"},
+    			"comment":{},
     			"title":{},
     			"isClonable":{"type": "b"},
     			"unique":{"type": "b"},

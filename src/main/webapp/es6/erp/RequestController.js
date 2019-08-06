@@ -67,14 +67,18 @@ export class RequestController extends CrudController {
 	        		// value
 					this.crudItemPayment.instance.value = this.instance.sumValue - this.instance.paymentsValue;
 	        		// account
-	        		if (value == 1) {
-	        			if (this.crudItemPayment.fields.account.filterResults.length > 0) {
-			        		this.crudItemPayment.instance.account = this.crudItemPayment.fields.account.filterResults[0].id;
-	        			}
-	        		} else {
-	        			if (this.crudItemPayment.fields.account.filterResults.length > 1) {
-			        		this.crudItemPayment.instance.account = this.crudItemPayment.fields.account.filterResults[1].id;
-	        			}
+	        		{
+						const accounts = this.crudItemPayment.fields.account.filterResults;
+
+						if (value == 1) {
+							if (accounts.length > 0) {
+								this.crudItemPayment.instance.account = accounts[accounts.length-1].id;
+							}
+						} else {
+							if (accounts.length > 1) {
+								this.crudItemPayment.instance.account = accounts[accounts.length-2].id;
+							}
+						}
 	        		}
 	        		// due_date
 					if ([1,4,10,11,12,13].indexOf(value) >= 0) {
@@ -169,7 +173,7 @@ export class RequestController extends CrudController {
     	super.process(action, params);
     	this.crudService.params.saveAndExit = false;
 
-    	if (action == "new") {
+    	if (action == "new" || action == "edit") {
 	    	this.filterRequestState();
 		}
 

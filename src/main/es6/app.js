@@ -36,6 +36,7 @@ const appRestExpress = express();
 appRestExpress.use(express.urlencoded({extended:true}));
 appRestExpress.use(express.json());
 appRestExpress.use(bodyParser.raw({type: ["application/octet-stream", "image/jpeg"]}));
+appRestExpress.use(bodyParser.text({type: ["application/text"]}));
 
 appExpress.use(`/${appName}/rest`, appRestExpress);
 

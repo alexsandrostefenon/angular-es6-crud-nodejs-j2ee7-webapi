@@ -1,5 +1,4 @@
 import {CrudUiSkeleton} from "./CrudUiSkeleton.js";
-import {DatabaseUiAdapter} from "./ServerConnectionUI.js";
 import {CaseConvert} from "./CaseConvert.js";
 import {Utils} from "./Utils.js";
 
@@ -16,7 +15,7 @@ class CrudItemJson extends CrudUiSkeleton {
 		}
 		
 		for (let fieldName in fields) _fields[fieldName] = fields[fieldName];
-		super(serverConnection, fieldNameExternal, new DatabaseUiAdapter(serverConnection, _fields));
+		super(serverConnection, fieldNameExternal, _fields);
 		this.parent = parent;
 		this.fieldNameExternal = fieldNameExternal;
 		this.title = title;

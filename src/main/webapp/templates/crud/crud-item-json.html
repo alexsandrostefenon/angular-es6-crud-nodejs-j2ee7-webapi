@@ -34,7 +34,7 @@
 					<a href ng-click="vm.moveDown($index)" id="{{vm.formId}}-move_down-{{item._name}}"><span class="glyphicon glyphicon-arrow-down"></span> Down</a>
 				</td>
                 <td ng-repeat="fieldName in vm.fieldsTable">
-					<a href="{{vm.goToField(fieldName, 'view', item, false)}}">{{vm.databaseUiAdapter.buildFieldStr(fieldName, item)}}</a>
+					<a href="{{vm.goToField(fieldName, 'view', item, false)}}">{{vm.buildFieldStr(fieldName, item)}}</a>
 	            </td>
 	        </tr>
 	    </tbody>

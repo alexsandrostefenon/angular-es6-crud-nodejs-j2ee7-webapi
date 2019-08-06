@@ -24,10 +24,11 @@
 			<div ng-include="'templates/crud/crud-model_form_body_filter.html'"></div>
 
 			<div class="form-group">
-			  <div class="col-sm-offset-2 col-sm-10">
-					<button id="{{vm.formId}}-cancel" name="cancel" class="btn btn-default" ng-click="vm.clearFilter(); vm.isCollapsedForm = !vm.isCollapsedForm"><span class="glyphicon glyphicon-remove"></span> {{vm.translation.exit}}</button>
+				<div class="col-sm-offset-2 col-sm-10">
 					<button id="{{vm.formId}}-filter" name="filter" class="btn btn-primary" ng-click="vm.applyFilter()"><span class="glyphicon glyphicon-search"></span> {{vm.translation.filter}}</button>
-			  </div>
+					<button id="{{vm.formId}}-cancel" name="cancel" class="btn btn-default" ng-click="vm.clearFilter()"><span class="glyphicon glyphicon-remove"></span> {{vm.translation.clear}}</button>
+					<button id="{{vm.formId}}-exit" name="exit" class="btn btn-default" ng-click="vm.activeTab = 0"><span class="glyphicon glyphicon-remove"></span> {{vm.translation.exit}}</button>
+				</div>
 			</div>
 		</form>
 	</div>
@@ -37,10 +38,11 @@
 			<div ng-include="'templates/crud/crud-model_form_body_aggregate.html'"></div>
 
 			<div class="form-group">
-			  <div class="col-sm-offset-2 col-sm-10">
-					<button id="{{vm.formId}}-aggregate-cancel" name="cancel" class="btn btn-default" ng-click="vm.clearAggregate(); vm.isCollapsedFormAggregate = !vm.isCollapsedFormAggregate"><span class="glyphicon glyphicon-remove"></span> {{vm.translation.exit}}</button>
+				<div class="col-sm-offset-2 col-sm-10">
 					<button id="{{vm.formId}}-aggregate-apply" name="aggregate" class="btn btn-primary" ng-click="vm.applyAggregate()"><span class="glyphicon glyphicon-search"></span> Gerar Relatório</button>
-			  </div>
+					<button id="{{vm.formId}}-aggregate-cancel" name="cancel" class="btn btn-default" ng-click="vm.clearAggregate()"><span class="glyphicon glyphicon-remove"></span> {{vm.translation.clear}}</button>
+					<button id="{{vm.formId}}-aggregate-exit" name="exit" class="btn btn-default" ng-click="vm.activeTab = 0"><span class="glyphicon glyphicon-exit"></span> {{vm.translation.exit}}</button>
+				</div>
 			</div>
 		</form>
 	</div>
@@ -50,10 +52,11 @@
 			<div ng-include="'templates/crud/crud-model_form_body_sort.html'"></div>
 
 			<div class="form-group">
-			  <div class="col-sm-offset-2 col-sm-10">
-					<button id="{{vm.formId}}-sort-cancel" name="cancel" class="btn btn-default" ng-click="vm.clearSort(); vm.isCollapsedFormSort = !vm.isCollapsedFormSort"><span class="glyphicon glyphicon-remove"></span> {{vm.translation.exit}}</button>
+				<div class="col-sm-offset-2 col-sm-10">
 					<button id="{{vm.formId}}-sort-apply" name="sort" class="btn btn-primary" ng-click="vm.applySort()"><span class="glyphicon glyphicon-search"></span> Ordenar Tabela</button>
-			  </div>
+					<button id="{{vm.formId}}-sort-cancel" name="cancel" class="btn btn-default" ng-click="vm.clearSort()"><span class="glyphicon glyphicon-remove"></span> {{vm.translation.clear}}</button>
+					<button id="{{vm.formId}}-sort-exit" name="exit" class="btn btn-default" ng-click="vm.activeTab = 0"><span class="glyphicon glyphicon-exit"></span> {{vm.translation.exit}}</button>
+				</div>
 			</div>
 		</form>
 	</div>

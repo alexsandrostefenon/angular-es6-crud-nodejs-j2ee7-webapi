@@ -1,4 +1,4 @@
-export class CaseConvert {
+class CaseConvert {
 
     static camelToUnderscore(str) {
 		var ret = "";
@@ -67,3 +67,5 @@ export class CaseConvert {
     }
 
 }
+
+export {CaseConvert}

@@ -4,6 +4,9 @@ import fetch from "node-fetch";
 
 import {RequestFilter} from "../../crud/admin/RequestFilter.js";
 import {CaseConvert} from "../../../webapp/es6/crud/CaseConvert.js";
+import {Filter} from "../../../webapp/es6/crud/DataStore.js";
+
+const fsPromises = fs.promises;
 
 class CrudServiceDbSync {
 	
@@ -17,7 +20,7 @@ class CrudServiceDbSync {
 		}
 
 		let pos = this.entityManager.crudTypes.indexOf(field.type);
-		if (pos < 0) throw new Error(`DbClientPostgres.createTable() : table ${name}, field ${fieldName} : unknow type : ${field.type}`);
+        if (pos < 0) throw new Error(`DbClientPostgres.genSqlColumnDescription() : table ${name}, field ${fieldName} : unknow type : ${field.type}`);
 		let sqlType = this.entityManager.sqlTypes[pos];
 		if (field.type == "s" && field.length < 32) sqlType = "character";
 
@@ -37,7 +40,8 @@ class CrudServiceDbSync {
 		}
 
 		let sqlDefault = "";
-		if (field.identityGeneration != undefined) sqlDefault = `GENERATED ${field.identityGeneration} AS IDENTITY`;
+//		if (field.identityGeneration != undefined) sqlDefault = `GENERATED ${field.identityGeneration} AS IDENTITY`;
+		if (field.identityGeneration != undefined) sqlType = `SERIAL`;
 
 		if (field.defaultValue != undefined) {
 			if (field.type == "s") sqlDefault = ` DEFAULT '${field.defaultValue}'`; else sqlDefault = " DEFAULT " + field.defaultValue;
@@ -91,7 +95,7 @@ class CrudServiceDbSync {
 			tableBody = tableBody.substring(0, tableBody.length-2) + `)`;
 			let tableName = CaseConvert.camelToUnderscore(name);
 			const sql = `CREATE TABLE ${tableName} (${tableBody})`;
-			console.log(`CrudServiceDbSync.createTable() : table ${name}, sql : \n${sql}\n`, mapTables);
+			console.log(`CrudServiceDbSync.createTable() : table ${name}, sql : \n${sql}\n`);
 			return sql;
 		};
 		
@@ -143,7 +147,7 @@ class CrudServiceDbSync {
 	}
 
 	generateFieldsStr(tabelName, newFields, oldFields) {
-		if (newFields == undefined) throw new Error(`RequestFilter.generateFieldsStr(${tabelName}, ${newFields}) : newFields : Invalid Argument Exception`);
+		if (newFields == undefined) throw new Error(`crudServiceDbSync.generateFieldsStr(${tabelName}, ${newFields}) : newFields : Invalid Argument Exception`);
 		if (typeof(newFields) == "string") newFields = Object.entries(JSON.parse(newFields));
 		if (typeof(oldFields) == "string") oldFields = JSON.parse(oldFields);
 		let jsonBuilder = {}; 
@@ -197,7 +201,7 @@ class CrudServiceDbSync {
 					}
 
 					if (field.foreignKeysImport.length > 1) {
-						console.error(`RequestFilter.generateFieldsStr() : table [${tabelName}], field [${fieldName}], conflict foreignKeysImport : `, field.foreignKeysImport);
+						console.error(`crudServiceDbSync.generateFieldsStr() : table [${tabelName}], field [${fieldName}], conflict foreignKeysImport : `, field.foreignKeysImport);
 					}
 
 					jsonBuilderValue["foreignKeysImport"] = field.foreignKeysImport[0];
@@ -213,6 +217,7 @@ class CrudServiceDbSync {
 			jsonBuilderValue["isClonable"] = field.isClonable;
 			jsonBuilderValue["hiden"] = field.hiden;
 			jsonBuilderValue["readOnly"] = field.readOnly;
+			jsonBuilderValue["comment"] = field.comment;
 			// oculta tipos incompatíveis
 			if (jsonBuilderValue["type"] != "s") {
 				delete jsonBuilderValue["length"];
@@ -246,7 +251,7 @@ class CrudServiceDbSync {
 
 				for (let subFieldName in fieldOriginal) {
 					if (exceptions.indexOf(subFieldName) < 0 && fieldOriginal[subFieldName] != jsonBuilderValue[subFieldName]) {
-						console.warn(`RequestFilter.generateFieldsStr() : table [${tabelName}], field [${fieldName}], property [${subFieldName}] conflict previous declared [${fieldOriginal[subFieldName]}] new [${jsonBuilderValue[subFieldName]}]\nold:\n`, fieldOriginal, "\nnew:\n", jsonBuilderValue);
+						console.warn(`crudServiceDbSync.generateFieldsStr() : table [${tabelName}], field [${fieldName}], property [${subFieldName}] conflict previous declared [${fieldOriginal[subFieldName]}] new [${jsonBuilderValue[subFieldName]}]\nold:\n`, fieldOriginal, "\nnew:\n", jsonBuilderValue);
 					}
 				}
 				// copia do original os campos PARCIALMENTE não SQL
@@ -270,11 +275,11 @@ class CrudServiceDbSync {
 			jsonBuilder[fieldName] = jsonBuilderValue;
 		}
 
-		console.log(`RequestFilter.generateFieldsStr() : tableInfo(${tabelName}) :`, jsonBuilder);
+		console.log(`crudServiceDbSync.generateFieldsStr() : tableInfo(${tabelName}) :`, jsonBuilder);
 		// TODO : NEXT LINE ONLY IN DEBUG
 //		jsonBuilder = oldFields;
 		return JSON.stringify(jsonBuilder);
-	};
+    }
 
     updateCrudServices() {
 		return this.entityManager.getTablesInfo().then(map => {
@@ -307,7 +312,7 @@ class CrudServiceDbSync {
 			};
 			
 			return process(iterator.next());
-		});
+        });
 	}
 
 }
@@ -370,46 +375,46 @@ class CrudServiceEndPoint {
 }
 
 let tablesCrud = {
-		crudService: {
-		    name: {primaryKey: true},
-		    menu: {},
-		    template:{},
-		    saveAndExit: {type: "b"},
-		    isOnLine: {type: "b"},
-		    title: {},
-		    fields: {length: 10240}
-		},
-		crudGroupOwner: {
-		    id: {type: "i", identityGeneration: "BY DEFAULT", primaryKey: true},
-		    name: {notNull: true, unique:true}
-		},
-		crudUser: {
-		    id: {type: "i", identityGeneration: "BY DEFAULT", primaryKey: true},
-		    crudGroupOwner: {type: "i", notNull: true, foreignKeysImport: {table: "crudGroupOwner", field: "id"}},
-		    name: {length: 32, notNull: true, unique:true},
-		    password: {notNull: true},
-		    roles: {length: 10240},
-		    routes: {length: 10240},
-		    path: {},
-		    menu: {length: 10240},
-		    showSystemMenu: {type: "b", defaultValue: false},
-		    authctoken: {}
-		},
-		crudGroup: {
-		    id: {type: "i", identityGeneration: "BY DEFAULT", primaryKey: true},
-		    name: {notNull: true, unique:true}
-		},
-		crudGroupUser: {
-		    crudUser: {type: "i", primaryKey: true, foreignKeysImport: {table: "crudUser", field: "id"}},
-		    crudGroup: {type: "i", primaryKey: true, foreignKeysImport: {table: "crudGroup", field: "id"}}
-		},
-		crudTranslation: {
-		    id: {type: "i", identityGeneration: "BY DEFAULT", primaryKey: true},
-		    locale: {notNull: true, defaultValue: "pt-br"},
-		    name: {notNull: true},
-		    translation: {}
-		}
-	};
+	crudService: {
+		name: {primaryKey: true},
+		menu: {},
+		template:{},
+		saveAndExit: {type: "b"},
+		isOnLine: {type: "b"},
+		title: {},
+		fields: {length: 30000}
+	},
+	crudGroupOwner: {
+		id: {type: "i", identityGeneration: "BY DEFAULT", primaryKey: true},
+		name: {notNull: true, unique:true}
+	},
+	crudUser: {
+		id: {type: "i", identityGeneration: "BY DEFAULT", primaryKey: true},
+		crudGroupOwner: {type: "i", notNull: true, foreignKeysImport: {table: "crudGroupOwner", field: "id"}},
+		name: {length: 32, notNull: true, unique:true},
+		password: {notNull: true},
+		roles: {length: 10240},
+		routes: {length: 10240},
+		path: {},
+		menu: {length: 10240},
+		showSystemMenu: {type: "b", defaultValue: false},
+		authctoken: {}
+	},
+	crudGroup: {
+		id: {type: "i", identityGeneration: "BY DEFAULT", primaryKey: true},
+		name: {notNull: true, unique:true}
+	},
+	crudGroupUser: {
+		crudUser: {type: "i", primaryKey: true, foreignKeysImport: {table: "crudUser", field: "id"}},
+		crudGroup: {type: "i", primaryKey: true, foreignKeysImport: {table: "crudGroup", field: "id"}}
+	},
+	crudTranslation: {
+		id: {type: "i", identityGeneration: "BY DEFAULT", primaryKey: true},
+		locale: {notNull: true, defaultValue: "pt-br"},
+		name: {notNull: true},
+		translation: {}
+	}
+};
 
 function setup(appRestExpress, entityManager) {
 	let instance = new CrudServiceEndPoint(appRestExpress, entityManager);
@@ -417,7 +422,7 @@ function setup(appRestExpress, entityManager) {
 	return entityManager.getTablesInfo().then(tablesExistents => {
 		let tablesMissing = new Map();
 		for (let tableName in tablesCrud) if (tablesExistents.has(tableName) == false) tablesMissing.set(tableName, tablesCrud[tableName]);
-		
+
 		const createTable = iterator => {
 			let it = iterator.next();
 			if (it.done == true) return Promise.resolve();
@@ -426,14 +431,19 @@ function setup(appRestExpress, entityManager) {
 			return instance.crudServiceDbSync.createTable(name, fields).then(() => createTable(iterator));
 		};
 		const userAdmin = {
-				name: "admin", crudGroupOwner: 1, password: "admin", path: "crud_service/search", showSystemMenu: true,
-				roles: '{"crudService":{"create":true,"update":true,"delete":true},"crudGroupOwner":{"create":true,"update":true,"delete":true},"crudUser":{"create":true,"update":true,"delete":true},"crudGroup":{"create":true,"update":true,"delete":true},"crudGroupUser":{"create":true,"update":true,"delete":true},"crudTranslation":{"create":true,"update":true,"delete":true}}',
-				routes: '[{"path": "/app/crud_service/:action", "controller": "crud/CrudServiceController"}, {"path": "/app/crud_user/:action", "controller": "crud/UserController"}]'
-			};
+            name: "admin", crudGroupOwner: 1, password: "admin", path: "crud_service/search", showSystemMenu: true,
+            roles: '{"crudService":{"create":true,"update":true,"delete":true},"crudGroupOwner":{"create":true,"update":true,"delete":true},"crudUser":{"create":true,"update":true,"delete":true},"crudGroup":{"create":true,"update":true,"delete":true},"crudGroupUser":{"create":true,"update":true,"delete":true},"crudTranslation":{"create":true,"update":true,"delete":true}}',
+            routes: '[{"path": "/app/crud_service/:action", "controller": "crud/CrudServiceController"}, {"path": "/app/crud_user/:action", "controller": "crud/UserController"}]'
+        };
 		return createTable(tablesMissing.entries()).
 		then(() => instance.crudServiceDbSync.updateCrudServices()).
 		then(() => entityManager.findOne("crudGroupOwner", {name: "ADMIN"}).catch(() => entityManager.insert("crudGroupOwner", {name: "ADMIN"}))).
 		then(() => entityManager.findOne("crudUser", {name: "admin"}).catch(() => entityManager.insert("crudUser", userAdmin))).
+        then(() => entityManager.find("crudService")).then(rows => fsPromises.writeFile("crudService.json", JSON.stringify(rows))).
+        then(() => entityManager.find("crudGroupOwner")).then(rows => fsPromises.writeFile("crudGroupOwner.json", JSON.stringify(rows))).
+        then(() => entityManager.find("crudUser")).then(rows => fsPromises.writeFile("crudUser.json", JSON.stringify(rows))).
+        then(() => entityManager.find("crudGroupUser")).then(rows => fsPromises.writeFile("crudGroupUser.json", JSON.stringify(rows))).
+        then(() => instance).
 		then(() => instance);
 	});
 }

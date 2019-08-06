@@ -8,20 +8,22 @@ class ServerConnectionService extends ServerConnectionUI {
 		super($locale, $route, $rootScope, $q, $timeout, $controllerProvider, $routeProvider);
     }
 
-    login(server, user, password, callbackPartial) {
-        return super.login(server, user, password, CrudServiceUI, callbackPartial);
+    login(server, user, password, callbackPartial, dbUri) {
+        return super.login(server, user, password, CrudServiceUI, callbackPartial, dbUri);
     }
 
 }
 
 class LoginController {
 
-    constructor(serverConnection, server) {
+    constructor(serverConnection, server, dbUri) {
 		this.serverConnection = serverConnection;
 		this.server = server;
+		this.dbUri = dbUri;
 		this.user = "";
 		this.password = "";
 		this.message = "";
+		console.log(`User query param dbUri=postgresql://dbuser:secretpassword@database.server.com:3211/mydb`);
 
 	  	if (this.serverConnection.user != undefined) {
 	    	this.serverConnection.logout();
@@ -30,7 +32,7 @@ class LoginController {
     }
 
     login() {
-    	return this.serverConnection.login(this.server, this.user.toLowerCase(), this.password, message => this.message = message);
+    	return this.serverConnection.login(this.server, this.user.toLowerCase(), this.password, message => this.message = message, this.dbUri);
     }
 
 }
@@ -63,8 +65,9 @@ class Crud {
     	$controllerProvider.register('LoginController', function(ServerConnectionService) {
     		const url = new URL(window.location.hash.substring(2), window.location.href);
     		const server = url.searchParams.get("server");
+    		const dbUri = url.searchParams.get("dbUri");
     		console.log("Crud.initialize : LoginController.server = ", server);
-    		return new LoginController(ServerConnectionService, server);
+    		return new LoginController(ServerConnectionService, server, dbUri);
     	});
 
     	$controllerProvider.register("MenuController", function(ServerConnectionService) {

@@ -46,6 +46,7 @@ export class Utils {
 
 	static clone(objRef, fields) {
 		var obj = {};
+		if (fields == undefined) fields = Object.keys(objRef);
 
 		for (var fieldName of fields) {
 			obj[fieldName] = objRef[fieldName];

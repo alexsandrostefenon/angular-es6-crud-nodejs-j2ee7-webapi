@@ -41,7 +41,7 @@ CREATE TABLE product (
 	crud_group integer references crud_group NOT NULL, -- replace to camex_ncm
 	ncm integer references camex_ncm,
 	orig integer references nfe_st_icms_origem default 0,
-	name character varying(120) UNIQUE,
+	name character varying(120) NOT NULL UNIQUE,
 	departament character varying(64),
 	model character varying(255),
 	description character varying(255),

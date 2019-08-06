@@ -1,5 +1,5 @@
 import {CaseConvert} from "./CaseConvert.js";
-import {DataStore} from "./DataStore.js";
+import {DataStoreItem} from "./DataStore.js";
 
 class HttpRestRequest {
 
@@ -43,9 +43,11 @@ class HttpRestRequest {
 				options.body = objSend;
 			} else if (typeof(objSend) === 'object') {
 				options.headers["content-type"] = "application/json";
+//				options.headers["Content-Encoding"] = "gzip";
 				options.body = JSON.stringify(objSend);
 			} else if (typeof(objSend) === 'string') {
 				options.headers["content-type"] = "application/text";
+//				options.headers["Content-Encoding"] = "gzip";
 				options.body = objSend;
 			} else {
 				throw new Error("HttpRestRequest.request : unknow data type");
@@ -113,7 +115,7 @@ class HttpRestRequest {
 
 }
 
-class CrudService extends DataStore {
+class CrudService extends DataStoreItem {
 
 	constructor(serverConnection, params, httpRest) {
 		super(params.name, params.fields);
@@ -245,12 +247,12 @@ class ServerConnection {
 		};
 	}
     // public
-    login(server, user, password, CrudServiceClass, callbackPartial) {
+    login(server, user, password, CrudServiceClass, callbackPartial, dbUri) {
 		this.url = server;
 		if (CrudServiceClass == undefined) CrudServiceClass = CrudService;
 		if (callbackPartial == undefined) callbackPartial = console.log;
     	this.httpRest = new HttpRestRequest(this.url);
-    	return this.httpRest.request("authc", "POST", null, {"userId":user, "password":password})
+    	return this.httpRest.request("authc", "POST", null, {"userId":user, "password":password, "dbUri":dbUri})
     	.then(loginResponse => {
     		this.title = loginResponse.title;
     		this.user = loginResponse.user;

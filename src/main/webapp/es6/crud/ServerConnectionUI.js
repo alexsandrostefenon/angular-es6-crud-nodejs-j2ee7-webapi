@@ -1,147 +1,10 @@
 import {CrudService, ServerConnection} from "./ServerConnection.js";
 import {CrudController} from "./CrudController.js";
 
-class DatabaseUiAdapter {
-
-	constructor(serverConnection, fields) {
-		this.serverConnection = serverConnection;
-		// type: "i", service: "serviceName", defaultValue: null, hiden: false, required: false, flags: ["a", "b"], readOnly: false
-		this.fields = fields;
-
-		for (let fieldName in this.fields) {
-			let field = this.fields[fieldName];
-			field.htmlType = "text";
-			field.htmlStep = "any";
-
-			if (field.type == "b") {
-				field.htmlType = "checkbox";
-			} else if (field.type == "i") {
-				field.htmlType = "number";
-				field.htmlStep = "1";
-			} else if (field.type == "n") {
-				field.htmlType = "number";
-				
-				if (field.precision == 1) {
-					field.htmlStep = "0.1";
-				} else if (field.precision == 2) {
-					field.htmlStep = "0.01";
-				} else {
-					field.htmlStep = "0.001";
-				}
-			} else if (field.type == "date") {
-				field.htmlType = "date";
-			} else if (field.type == "time") {
-				field.htmlType = "time";
-			} else if (field.type == "datetime-local") {
-				field.htmlType = "datetime-local";
-			}
-
-			if (field.htmlType == "number" || field.htmlType.includes("date") || field.htmlType.includes("time")) {
-				field.htmlTypeIsRangeable = true;
-			} else {
-				field.htmlTypeIsRangeable = false;
-			}
-			
-			if (field.label == undefined) {
-				var label = serverConnection.convertCaseAnyToLabel(fieldName);
-				field.label = label;
-			}
-
-			if (field.flags != undefined) {
-				field.flags = field.flags.split(",");
-				field.htmlTypeIsRangeable = false;
-			}
-
-			if (field.options != undefined) {
-				if (Array.isArray(field.options) == false) field.options = field.options.split(",");
-				field.htmlTypeIsRangeable = false;
-			}
-
-			if (field.optionsLabels != undefined) {
-				if (Array.isArray(field.optionsLabels) == false) field.optionsLabels = field.optionsLabels.split(",");
-				field.htmlTypeIsRangeable = false;
-			}
-			
-			if (field.foreignKeysImport != undefined) {
-				field.htmlTypeIsRangeable = false;
-			}
-		}
-	}
-	// private
-    buildItem(stringBuffer, service, item) {
-		for (let fieldName of service.shortDescriptionList) this.buildField(stringBuffer, service.databaseUiAdapter, fieldName, item);
-    	return stringBuffer;
-    }
-    // private
-	buildField(stringBuffer, databaseUiAdapter, fieldName, item) {
-    	let value = item[fieldName];
-
-		if (value == undefined || value == null || value === "") {
-			return stringBuffer;
-		}
-		
-		if ((value instanceof Date) == false && (value instanceof Object) == true) {
-			stringBuffer.push(JSON.stringify(value));
-			return stringBuffer;
-		}
-
-    	const field = databaseUiAdapter.fields[fieldName];
-
-		if (field == undefined) {
-			console.error("DatabaseUiAdapter : buildField : field ", fieldName, " don't found in fields, options are : ", databaseUiAdapter.fields);
-			return stringBuffer;
-		}
-
-		if (field.foreignKeysImport != undefined && this.serverConnection.services[field.foreignKeysImport.table] != undefined) {
-			// neste caso, valRef contém o id do registro de referência
-			const service = this.serverConnection.getForeignImportCrudService(field);
-			// dataForeign, fieldNameForeign, fieldName
-			const primaryKey = service.getPrimaryKeyFromForeignData(item, fieldName, field.foreignKeysImport.field);
-			// public
-			let pos = service.findPos(primaryKey);
-
-			if (pos >= 0) {
-				stringBuffer.push(service.listStr[pos]);
-			} else {
-				console.error(`DatabaseUiAdapter.buildField : don't find itemStr from service ${service.params.name} from primaryKey : `, primaryKey, field);
-				throw new Error(`DatabaseUiAdapter.buildField : don't find itemStr from service ${service.params.name}`);
-			}
-		} else if (fieldName == "id") {
-			// TODO : o "id" não deve fazer parte de StrValue, criar uma lista para armazenar os primaryKeys
-			function padLeft(str, size, ch) {
-				while (str.length < size) {
-					str = ch + str;
-				}
-
-				return str;
-			}
-
-			stringBuffer.push(padLeft(value.toString(), 4, '0'));
-		} else if (field.type.includes("date") || field.type.includes("time")) {
-			stringBuffer.push(new Date(value).toLocaleString());
-		} else {
-			stringBuffer.push(value);
-		}
-
-    	return stringBuffer;
-    }
-	// public
-	buildFieldStr(fieldName, item) {
-//		console.time("buildFieldStr" + "-" + fieldName);
-		let stringBuffer = [];
-		let str = "";
-		this.buildField(stringBuffer, this, fieldName, item);
-		if (stringBuffer.length > 0) str = stringBuffer.join(" - ");
-//		console.timeEnd("buildFieldStr" + "-" + fieldName);
-		return str;
-	}
-}
-
 class CrudServiceUI extends CrudService {
 
 	constructor(serverConnection, params, httpRest) {
 		super(serverConnection, params, httpRest);
-		this.databaseUiAdapter = new DatabaseUiAdapter(serverConnection, params.fields);
 		this.label = (params.title == undefined || params.title == null) ? serverConnection.convertCaseAnyToLabel(this.path) : params.title;
 		this.listStr = [];
 	}
@@ -149,7 +12,7 @@ class CrudServiceUI extends CrudService {
     buildItemStr(item) {
 		let stringBuffer = [];
 		let str = "";
-    	this.databaseUiAdapter.buildItem(stringBuffer, this, item);
+		for (let fieldName of this.shortDescriptionList) this.buildField(stringBuffer, fieldName, item);
 		if (stringBuffer.length > 0) str = stringBuffer.join(" - ");
 		return str;
     }
@@ -244,11 +107,31 @@ class CrudServiceUI extends CrudService {
 
 class ServerConnectionUI extends ServerConnection {
 
-	static buildLocationHash(hashPath, hashSearchObj) {
+	static buildLocationHash(hashPath, primaryKey) {
+//		TODO
+		function objectToParams(object) {
+			let isJsObject = p => typeof(p) == "object";
+
+			function subObjectToParams(key, object) {
+				if (object == undefined) return "";
+				return Object.keys(object).map((childKey) => isJsObject(object[childKey]) ?
+						subObjectToParams(`${key}.${encodeURIComponent(childKey)}`, object[childKey]) :
+						`${key}.${encodeURIComponent(childKey)}=${encodeURIComponent(object[childKey])}`
+				).join('&');
+			}
+
+			return Object.keys(object).map((key) => isJsObject(object[key]) ?
+				subObjectToParams(encodeURIComponent(key), object[key]) :
+				`${encodeURIComponent(key)}=${encodeURIComponent(object[key])}`
+			).join('&');
+		}
+
 		let hash = "#!/app/" + hashPath;
 
-		if (hashSearchObj != undefined) {
-			let searchParams = new URLSearchParams({primaryKey:JSON.stringify(hashSearchObj)});
+		if (primaryKey != undefined) {
+//			let hashSearchObj = {primaryKey:JSON.stringify(primaryKey)};
+			let hashSearchObj = objectToParams({primaryKey:primaryKey});
+			let searchParams = new URLSearchParams(hashSearchObj);
 			hash = hash + "?" + searchParams.toString();
 		}
 		
@@ -278,6 +161,7 @@ class ServerConnectionUI extends ServerConnection {
 		this.translation = {};
 		this.translation.new = "New";
 		this.translation.exit = "Exit";
+		this.translation.clear = "Limpar";
 		this.translation.saveAsNew = "Save as New";
 		this.translation.view = "View";
 		this.translation.edit = "Edit";
@@ -293,6 +177,7 @@ class ServerConnectionUI extends ServerConnection {
         this.menu = {user:[{path:"login", label:"Exit"}]};
         // user menu
 		if (this.user.menu != undefined && this.user.menu.length > 0) {
+			console.log("user.menu :", this.user.menu);
 			const menus = JSON.parse(this.user.menu);
 
 			for (var menuId in menus) {
@@ -310,9 +195,9 @@ class ServerConnectionUI extends ServerConnection {
 		if (this.user.showSystemMenu == true) {
 			for (let serviceName in this.services) {
 				let service = this.services[serviceName];
-	    		let menuName = service.params.menu;
+	    		let menuName = service.params.menu || "Services";
 
-	    		if (menuName != undefined && menuName != null && menuName.length > 0) {
+	    		if (menuName.length > 0) {
 	    			if (this.menu[menuName] == undefined) {
 	    				this.menu[menuName] = [];
 	    			}
@@ -386,7 +271,7 @@ class ServerConnectionUI extends ServerConnection {
 		});
     }
     // public
-    login(server, user, password, CrudServiceClass, callbackPartial) {
+    login(server, user, password, CrudServiceClass, callbackPartial, dbUri) {
     	if (server == null || server.length == 0) {
     		if (window.location.origin.startsWith("chrome-extension://") == true) {
 	    		server = "http://localhost:9080/ponfac-web-ocr/";
@@ -395,7 +280,7 @@ class ServerConnectionUI extends ServerConnection {
     		}
     	}
 
-        return super.login(server, user, password, CrudServiceClass, callbackPartial).then(loginResponse => this.loginDone());
+        return super.login(server, user, password, CrudServiceClass, callbackPartial, dbUri).then(loginResponse => this.loginDone());
     }
 
     logout() {
@@ -405,6 +290,11 @@ class ServerConnectionUI extends ServerConnection {
     }
 
 	convertCaseAnyToLabel(str) {
+		if (str == undefined) {
+			console.error(`ServerConnectionUI.convertCaseAnyToLabel(${str})`);
+			return "";
+		}
+
 		var ret = "";
 		var nextIsUpper = true;
 
@@ -427,7 +317,7 @@ class ServerConnectionUI extends ServerConnection {
 		if (this.services.crudTranslation != undefined) {
 	    	var item = this.services.crudTranslation.findOne({name:str,locale:this.localeId});
 
-	    	if (item != null) {
+	    	if (item != null && item.translation != null && item.translation != undefined) {
 	    		ret = item.translation;
 	    	}
 		}
@@ -437,4 +327,4 @@ class ServerConnectionUI extends ServerConnection {
 
 }
 
-export {DatabaseUiAdapter, CrudServiceUI, ServerConnectionUI}
+export {CrudServiceUI, ServerConnectionUI}

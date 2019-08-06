@@ -18,7 +18,23 @@ class CrudController extends CrudCommom {
 		const searchParams = {};
 
 		for (const [key,value] of url.searchParams) {
-			searchParams[key] = JSON.parse(value);
+			console.log(`CrudController.constructor() : param ${key} : ${value}`);
+
+			if (value.startsWith("{")) {
+				searchParams[key] = JSON.parse(value);
+			} else {
+				let list = key.split(".");
+				let lastChild = searchParams;
+				let i = 0;
+
+				while (i < list.length-1) {
+					let subKey = list[i++];
+					if (lastChild[subKey] == undefined) lastChild[subKey] = {};
+					lastChild = lastChild[subKey];
+				}
+
+				lastChild[list[i]] = value;
+			}
 		}
 
     	super(serverConnection, serverConnection.services[serviceName]);
@@ -27,7 +43,29 @@ class CrudController extends CrudCommom {
 		this.listObjCrudJson = [];
 		this.listCrudJsonArray = [];
     	this.$scope = $scope;
+    	this.convertSearchParamsTypes(searchParams);
     	this.process(action, searchParams);
+    }
+
+    convertSearchParamsTypes(searchParams) {
+    	const reservedParams = ["primaryKey", "overwrite", "filter", "filterRange", "filterRangeMin", "filterRangeMax"];
+
+		for (let name of reservedParams) {
+			let obj = searchParams[name];
+
+			if (obj != undefined) {
+				for (let [fieldName, value] of Object.entries(obj)) {
+					let field = this.fields[fieldName];
+
+					if (field != undefined) {
+						if (field.type == "i")
+							obj[fieldName] = Number.parseInt(value);
+						else if (field.type == "n")
+							obj[fieldName] = Number.parseFloat(value);
+					}
+				}
+			}
+		}
     }
     
 	onNotify(primaryKey, action) {

@@ -16,6 +16,7 @@ class DataStore {
 	}
 
 	constructor(name, fields, list) {
+		console.log(`DataStore.constructor(${name})`);
 		const entries = Object.entries(fields);
 		this.shortDescriptionList = [];
 		
@@ -30,8 +31,13 @@ class DataStore {
 		}
 
 		if (this.shortDescriptionList.length == 0) {
+			let count = 0;
+
 			for (let [fieldName, field] of entries) {
-				if (field.tableVisible == true) this.shortDescriptionList.push(fieldName);
+				if (field.tableVisible == true) {
+					this.shortDescriptionList.push(fieldName);
+					if (++count >= 5) break;
+				}
 			}
 		}
 		
@@ -143,18 +149,9 @@ class DataStore {
 		return dataOut;
 	}
 	
-	getFilteredItems(objFilter, objFilterMin, objFilterMax, matchPartial) {
-		var list = [];
-
-		if (objFilter != undefined && objFilter != null) {
-			list = Filter.process(objFilter, objFilterMin, objFilterMax, this.list, matchPartial);
-		} else {
-			list = this.list;
-		}
-
-		return list;
-	}
-	
+}
+// manager of  IndexedDb collections
+class DataStoreManager {
 }
 // differ to DataStore by instance and filter, aggregate, sort and pagination features
 class DataStoreItem extends DataStore {
@@ -183,6 +180,42 @@ class DataStoreItem extends DataStore {
 		this.setValues(); // set default values
 	}
 	
+	setValue(fieldName, obj) {
+		const field = this.fields[fieldName];
+		delete field.externalReferencesStr;
+		let value = obj[fieldName];
+
+		if (value != undefined) {
+			if (field.foreignKeysImport != undefined) {
+				field.externalReferencesStr = this.buildFieldStr(fieldName, obj);
+			} else if (field.flags != undefined && field.flags != null) {
+				// field.flags : String[], vm.instanceFlags[fieldName] : Boolean[]
+				this.instanceFlags[fieldName] = Utils.strAsciiHexToFlags(value.toString(16));
+			} else if (field.options != undefined) {
+				let pos;
+
+				if (value instanceof Object) {
+					let strValue = JSON.stringify(value);
+					pos = field.filterResultsStr.indexOf(strValue);
+					field.externalReferencesStr = field.filterResultsStr[pos];
+				} else {
+					pos = field.filterResults.indexOf(value);
+					field.externalReferencesStr = field.filterResultsStr[pos];
+				}
+
+				if (pos < 0) {
+					console.error(`DataStoreItem.setValue(${fieldName}) : don\'t found\nvalue:`, value, `\nstr:\n`, field.externalReferences, `\noptions:\n`, field.filterResultsStr);
+				}
+			} else {
+				if (field.type == "datetime-local" || field.type == "date") {
+					value = new Date(value);
+				}
+			}
+		}
+
+		this.instance[fieldName] = value;
+	}
+
 	setValues(obj) {
 		let getDefaultValue = field => {
 			let value;
@@ -211,49 +244,75 @@ class DataStoreItem extends DataStore {
 
 		for (let [fieldName, field] of Object.entries(this.fields)) if (obj[fieldName] == undefined && field.defaultValue != undefined) obj[fieldName] = getDefaultValue(field);
 
-		for (let [fieldName, field] of Object.entries(this.fields)) {
-			let value = obj[fieldName];
-			delete field.externalReferencesStr;
-
-			if (value != undefined) {
-				if (field.foreignKeysImport != undefined) {
-					field.externalReferencesStr = this.buildFieldStr(fieldName, obj);
-				} else if (field.flags != undefined && field.flags != null) {
-					// field.flags : String[], vm.instanceFlags[fieldName] : Boolean[]
-					this.instanceFlags[fieldName] = Utils.strAsciiHexToFlags(value.toString(16));
-				} else if (field.options != undefined) {
-					let pos;
-
-					if (value instanceof Object) {
-						let strValue = JSON.stringify(value);
-						pos = field.filterResultsStr.indexOf(strValue);
-						field.externalReferencesStr = field.filterResultsStr[pos];
-					} else {
-						pos = field.filterResults.indexOf(value);
-						field.externalReferencesStr = field.filterResultsStr[pos];
-					}
-
-					if (pos < 0) {
-						console.error(`DataStoreItem.setValue(${fieldName}) : don\'t found\nvalue:`, value, `\nstr:\n`, field.externalReferences, `\noptions:\n`, field.filterResultsStr);
-					}
-				} else {
-					if (field.type == "datetime-local") {
-						value = new Date(value);
-					}
-				}
-			}
-
-			this.instance[fieldName] = value;
-		}
+		for (let fieldName in this.fields) this.setValue(fieldName, obj);
 	}
 // Aggregate Section
 	clearAggregate() {
 		this.instanceAggregateRange = {};
 		this.aggregateResults = new Map();
 	}
-	// TODO implement in descent instances
+    // private
+	buildField(stringBuffer, fieldName, item) {
+    	let value = item[fieldName];
+
+		if (value == undefined || value == null || value === "") {
+			return stringBuffer;
+		}
+		
+		if ((value instanceof Date) == false && (value instanceof Object) == true) {
+			stringBuffer.push(JSON.stringify(value));
+			return stringBuffer;
+		}
+
+    	const field = this.fields[fieldName];
+
+		if (field == undefined) {
+			console.error("buildField : field ", fieldName, " don't found in fields, options are : ", this.fields);
+			return stringBuffer;
+		}
+
+		if (field.foreignKeysImport != undefined && this.serverConnection.services[field.foreignKeysImport.table] != undefined) {
+			// neste caso, valRef contém o id do registro de referência
+			const service = this.serverConnection.getForeignImportCrudService(field);
+			// dataForeign, fieldNameForeign, fieldName
+			const primaryKey = service.getPrimaryKeyFromForeignData(item, fieldName, field.foreignKeysImport.field);
+			// public
+			let pos = service.findPos(primaryKey);
+
+			if (pos >= 0) {
+				stringBuffer.push(service.listStr[pos]);
+			} else {
+				console.error(`this.buildField : don't find itemStr from service ${service.params.name} from primaryKey : `, primaryKey, field);
+//				throw new Error(`this.buildField : don't find itemStr from service ${service.params.name}`);
+			}
+		} else if (fieldName == "id") {
+			// TODO : o "id" não deve fazer parte de StrValue, criar uma lista para armazenar os primaryKeys
+			function padLeft(str, size, ch) {
+				while (str.length < size) {
+					str = ch + str;
+				}
+
+				return str;
+			}
+
+			stringBuffer.push(padLeft(value.toString(), 4, '0'));
+		} else if (field.type.includes("date") || field.type.includes("time")) {
+			stringBuffer.push(new Date(value).toLocaleString());
+		} else {
+			stringBuffer.push(value);
+		}
+
+    	return stringBuffer;
+    }
+	// public
 	buildFieldStr(fieldName, item) {
-		return "";
+//		console.time("buildFieldStr" + "-" + fieldName);
+		let stringBuffer = [];
+		let str = "";
+		this.buildField(stringBuffer, fieldName, item);
+		if (stringBuffer.length > 0) str = stringBuffer.join(" - ");
+//		console.timeEnd("buildFieldStr" + "-" + fieldName);
+		return str;
 	}
 
 	applyAggregate(aggregate) {
@@ -393,14 +452,72 @@ class DataStoreItem extends DataStore {
 		this.instanceFilterRangeMin = {};
 		this.instanceFilterRangeMax = {};
 		this.filterResults = this.list;
+		// TODO : verificar impacto
+		this.clear();
 		this.paginate();
 	}
 
 	applyFilter(filter, filterRangeMin, filterRangeMax) {
 		if (filter == undefined) filter = this.instanceFilter; else this.instanceFilter = filter; 
 		if (filterRangeMin == undefined) filterRangeMin = this.instanceFilterRangeMin; else this.instanceFilterRangeMin = filterRangeMin; 
-		if (filterRangeMax == undefined) filterRangeMax = this.instanceFilterRangeMax; else this.instanceFilterRangeMax = filterRangeMax;  
-		this.filterResults = this.getFilteredItems(filter, filterRangeMin, filterRangeMax, true);
+		if (filterRangeMax == undefined) filterRangeMax = this.instanceFilterRangeMax; else this.instanceFilterRangeMax = filterRangeMax;
+		console.log(`DataStoreItem.applyFilter() :`, filter, filterRangeMin, filterRangeMax);
+
+		const processForeign = (fieldFilter, item, fieldName, compareType) => {
+			const compareFunc = (candidate, expected, compareType) => {
+				return Filter.matchObject(expected, candidate, (a,b,fieldName) => fieldName == undefined ? (compareType == 0 ? a == b : (compareType < 0 ? a < b : a > b)) : false, false);
+			}
+			
+			const field = this.fields[fieldName];
+			const service = this.serverConnection.getForeignImportCrudService(field);
+			const primaryKey = service.getPrimaryKeyFromForeignData(item, fieldName, field.foreignKeysImport.field);
+			let candidate = service.findOne(primaryKey);
+			let flag = compareFunc(candidate, fieldFilter.filter, 0);
+
+			if (flag == true) {
+				flag = compareFunc(candidate, fieldFilter.filterRangeMin, -1);
+
+				if (flag == true) {
+					flag = compareFunc(candidate, fieldFilter.filterRangeMax, 1);
+				}
+			}
+
+			return flag;
+		}
+
+		const process = (expectedFields, expectedFieldsMin, expectedFieldsMax, list) => {
+			const compareFunc = (candidate, expected, compareType) => {
+				return Filter.matchObject(expected, candidate, (a,b,fieldName) => fieldName == undefined ? (compareType == 0 ? a == b : (compareType < 0 ? a < b : a > b)) : processForeign(a,candidate,fieldName, compareType), true);
+			}
+			
+			return list.filter(candidate => {
+				let flag = compareFunc(candidate, expectedFields, 0);
+
+				if (flag == true) {
+					flag = compareFunc(candidate, expectedFieldsMin, -1);
+
+					if (flag == true) {
+						flag = compareFunc(candidate, expectedFieldsMax, 1);
+					}
+				}
+
+				return flag;
+			});
+		}
+
+		const getFilteredItems = (objFilter, objFilterMin, objFilterMax) => {
+			var list = [];
+
+			if (objFilter != undefined && objFilter != null) {
+				list = process(objFilter, objFilterMin, objFilterMax, this.list);
+			} else {
+				list = this.list;
+			}
+
+			return list;
+		}
+	
+		this.filterResults = getFilteredItems(filter, filterRangeMin, filterRangeMax);
 		this.paginate();
 	}
 
@@ -527,8 +644,12 @@ class Filter {
                 	} else {
                 		flag = false;
                 	}
-                } else if (expectedProperty instanceof Object && recursive == true) {
-                    flag = matchObject(expectedProperty, actualProperty, matchStringPartial, recursive, testFunc);
+                } else if (expectedProperty instanceof Object) {
+                	if (recursive == true) {
+	                    flag = matchObject(expectedProperty, actualProperty, matchStringPartial, recursive, testFunc);
+                	} else {
+                    	flag = testFunc(expectedProperty, actualProperty, key);
+                	}
                 } else {
                 	throw new Error(`Invalid type of field ${key}, contents : ${expectedProperty}`);
                 }
@@ -541,22 +662,6 @@ class Filter {
 
         return flag;
     }
-    // public
-	static process(expectedFields, expectedFieldsMin, expectedFieldsMax, list, matchStringPartial, recursive) {
-		return list.filter(candidate => {
-			let flag = Filter.matchObject(expectedFields, candidate, (a,b) => a == b, matchStringPartial, recursive);
-			
-			if (flag == true) {
-				flag = Filter.matchObject(expectedFieldsMin, candidate, (a,b) => a <= b, matchStringPartial, recursive);
-				
-				if (flag == true) {
-					flag = Filter.matchObject(expectedFieldsMax, candidate, (a,b) => a >= b, matchStringPartial, recursive);
-				}
-			}
-			
-			return flag;
-		});
-	}
 	// public
 	static checkMatchExact(item, obj) {
     	var match = true;
@@ -621,21 +726,26 @@ class Filter {
 
 class Pagination {
 
-    constructor(pageSize) {
+    constructor(pageSize, page) {
     	this.list = [];
     	this.setPageSize(pageSize);
+    	this.setPage(page);
     }
     
     setPageSize(pageSize) {
     	this.paginate(this.list, pageSize);
     }
 
-    paginate(list, pageSize) {
-    	if (pageSize != undefined) this.pageSize = pageSize;
+    setPage(page) {
+    	this.paginate(this.list, this.pageSize, page);
+    }
+
+    paginate(list, pageSize, page) {
+    	if (pageSize != undefined) this.pageSize = pageSize; else this.pageSize = 100;
+    	if (page != undefined) this.currentPage = page; else this.currentPage = 1;
     	this.list = list;
         var result = Math.ceil(list.length/this.pageSize);
         this.numPages = (result == 0) ? 1 : result;
-    	this.currentPage = 1;
     	this.changePage();
     }
 

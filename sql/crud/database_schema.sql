@@ -5,7 +5,7 @@ CREATE TABLE crud_service (
     save_and_exit boolean,
     is_on_line boolean,
     title character varying(255),
-    fields character varying(10240)
+    fields character varying(30000)
 );
 
 CREATE TABLE crud_group_owner (
@@ -43,5 +43,7 @@ CREATE TABLE crud_translation (
     name character varying(255) NOT NULL,
     translation character varying(255)
 );
+
+comment on column crud_translation.name is 'Text to translate';
 
 create sequence hibernate_sequence;

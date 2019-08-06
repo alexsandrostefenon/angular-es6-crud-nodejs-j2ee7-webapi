@@ -4,13 +4,11 @@ import {ServerConnectionUI} from "./ServerConnectionUI.js";
 class CrudCommom extends CrudUiSkeleton {
 
 	constructor(serverConnection, crudService) {
-		super(serverConnection, crudService.params.name, crudService.databaseUiAdapter);
+		super(serverConnection, crudService.params.name, crudService.params.fields);
 		this.crudService = crudService;
 		this.list = this.crudService.list;
 		this.crudService.addRemoteListener(this);
-		this.isCollapsedForm = true;
-		this.isCollapsedFormAggregate = true;
-		this.isCollapsedFormSort = true;
+		this.activeTab = 0;
 	}
 	
 	process(action, params) {
@@ -33,6 +31,10 @@ class CrudCommom extends CrudUiSkeleton {
 			
 			if (params.sort != undefined) {
 				this.applySort(params.sort);
+			}
+			
+			if (params.pagination != undefined) {
+				this.paginate(params.pagination);
 			}
 		} else if (action == "new") {
 			this.templateModel = "templates/crud/crud-model_new.html";

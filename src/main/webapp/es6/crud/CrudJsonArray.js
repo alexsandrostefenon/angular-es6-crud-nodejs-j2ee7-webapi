@@ -1,12 +1,11 @@
 import {CrudUiSkeleton} from "./CrudUiSkeleton.js";
 import {Filter} from "./DataStore.js";
-import {DatabaseUiAdapter} from "./ServerConnectionUI.js";
 import {CrudService, ServerConnection} from "./ServerConnection.js";
 
 class CrudJsonArray extends CrudUiSkeleton {
 
 	constructor(parent, fields, fieldNameExternal, title, serverConnection, selectCallback) {
-		super(serverConnection, fieldNameExternal, new DatabaseUiAdapter(serverConnection, fields), selectCallback);
+		super(serverConnection, fieldNameExternal, fields, selectCallback);
 		this.parent = parent;
 		this.fieldNameExternal = fieldNameExternal;
 		this.title = title;
@@ -21,17 +20,16 @@ class CrudJsonArray extends CrudUiSkeleton {
 			this.list = JSON.parse(data);
 		}
 		
-		this.filterResults = this.list;
-		this.paginate();
-	}
-
-	clear() {
-		this.list = [];
-		super.clear();
+		this.process();
 	}
 	// private, use in addItem, updateItem and removeItem
 	updateParent() {
-		this.parent.instance[this.fieldNameExternal] = this.list;
+		if (this.parent.fields[this.fieldNameExternal].type == "s") {
+			this.parent.instance[this.fieldNameExternal] = JSON.stringify(this.list);
+		} else {
+			this.parent.instance[this.fieldNameExternal] = this.list;
+		}
+
 		return this.parent.update();
 	}
 
@@ -44,7 +42,6 @@ class CrudJsonArray extends CrudUiSkeleton {
 		}
 
 		this.updateParent();
-		this.clear();
 	}
 
 	remove(index) {
@@ -53,6 +50,7 @@ class CrudJsonArray extends CrudUiSkeleton {
 	}
 
 	edit(index) {
+		this.clear();
 		var item = this.list[index];
 		this.setValues(item);
 	}

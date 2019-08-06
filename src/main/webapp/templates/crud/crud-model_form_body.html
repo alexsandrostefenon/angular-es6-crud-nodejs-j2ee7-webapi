@@ -3,7 +3,7 @@
 	    <label for="{{fieldName}}" class="col-xs-4 col-form-label">{{vm.serverConnection.convertCaseAnyToLabel(field.label)}}</label>
 
 	    <div id="{{vm.formId}}-{{fieldName}}_controls" class="col-xs-6" ng-if="field.filterResultsStr == undefined">
-			<input                                              class="form-control" id="{{vm.formId}}-{{fieldName}}" name="{{fieldName}}" ng-required="field.required == true" ng-model="vm.instance[fieldName]"      ng-disabled="{{field.readOnly == true}}" type="{{field.htmlType}}" step="{{field.htmlStep}}" placeholder="{{field.placeholder}}" autocomplete="off">
+			<input                                              class="form-control" id="{{vm.formId}}-{{fieldName}}" name="{{fieldName}}" ng-required="field.required == true" ng-model="vm.instance[fieldName]"      ng-disabled="{{field.readOnly == true}}" type="{{field.htmlType}}" ng-change="vm.validateFieldChange(fieldName)" step="{{field.htmlStep}}" maxlength="{{field.length}}" placeholder="{{field.placeholder}}" autocomplete="off">
 	    </div>
 	    
 		<div ng-if="field.htmlType == 'number' && field.foreignKeysImport == undefined && field.readOnly == false">
@@ -35,7 +35,10 @@
 	<!-- field.flags : String[], vm.instanceFlags[fieldName] : Boolean[] -->
 	<div ng-repeat="flagLabel in field.flags">
 		<div ng-if="flagLabel.length > 0" class="form-group form-group-xs row">
-			<label class="col-xs-offset-1 control-label"><input type="checkbox" id="{{vm.formId}}-{{fieldName}}-{{$index}}" ng-model="vm.instanceFlags[fieldName][$index]" ng-change="vm.parseValue(fieldName)"/>{{flagLabel}}</label>
+			<label class="col-xs-offset-1 control-label">
+				<input type="checkbox" id="{{vm.formId}}-{{fieldName}}-{{$index}}" ng-model="vm.instanceFlags[fieldName][$index]" ng-change="vm.parseValue(fieldName)"/>
+				{{flagLabel}}
+			</label>
 		</div>
 	</div>
 </div>

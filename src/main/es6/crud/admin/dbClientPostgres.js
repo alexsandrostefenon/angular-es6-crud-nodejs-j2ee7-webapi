@@ -22,11 +22,13 @@ class DbClientPostgres {
 		if (dbConfig.database != undefined) this.dbConfig.database = dbConfig.database;
 		if (dbConfig.user != undefined) this.dbConfig.user = dbConfig.user;
 		if (dbConfig.password != undefined) this.dbConfig.password = dbConfig.password;
+		// const connectionString = 'postgresql://dbuser:secretpassword@database.server.com:3211/mydb'
+		if (dbConfig.connectionString != undefined) this.dbConfig.connectionString = dbConfig.connectionString;
 		//connect to our database
 		//env var: PGHOST,PGPORT,PGDATABASE,PGUSER,PGPASSWORD
 		this.client = new pg.Client(this.dbConfig);
-		this.sqlTypes        = ["boolean","character varying","character","integer","jsonb", "numeric",   "timestamp without time zone", "bigint", "text", "date",         , "double precision", "bytea"  ];
-		this.crudTypes       = ["b",      "s",                "s",        "i",      "json",  "n",         "datetime-local",              "i",      "s",    "datetime-local", "n",                "s"];
+		this.sqlTypes        = ["boolean","character varying","character","integer","jsonb", "numeric", "timestamp without time zone", "timestamp with time zone", "time without time zone", "bigint", "smallint", "text", "date", "double precision", "bytea"];
+		this.crudTypes       = ["b"      ,"s"                ,"s"        ,"i"      ,"json" , "n"      , "datetime-local"      ,        "datetime-local"          , "datetime-local"        , "i"     , "i"       , "s"   , "date", "n"               , "s"];
 	}
 
 	connect() {
@@ -58,22 +60,8 @@ class DbClientPostgres {
 			str = " WHERE " + str;
 		}
 
-		if (orderBy != undefined && orderBy != null) {
-			if (Array.isArray(orderBy)) {
-				if (orderBy.length > 0) {
-					str = str + " ORDER BY ";
-
-					for (let fieldName of orderBy) {
-						str = str + CaseConvert.camelToUnderscore(fieldName) + ",";
-					}
-
-					if (str.endsWith(",") > 0) {
-						str = str.substring(0, str.length - 1);
-					}
-				}
-			} else {
-				str = str + " ORDER BY " + orderBy;
-			}
+		if (orderBy != undefined && Array.isArray(orderBy) && orderBy.length > 0) {
+			str = str + " ORDER BY " + CaseConvert.camelToUnderscore(orderBy.join(","));
 		}
 
 		return str;
@@ -95,6 +83,7 @@ class DbClientPostgres {
 				var strArray = JSON.stringify(obj);
 				params.push(strArray);
 			} else {
+				if (typeof(obj) === "string" && obj.length > 30000) console.error(`dbClientPostgres.insert: too large value of field ${fieldName}:\n${obj}`);
 				params.push(obj);
 			}
 
@@ -120,7 +109,7 @@ class DbClientPostgres {
 	find(tableName, fields, orderBy) {
 		tableName = CaseConvert.camelToUnderscore(tableName);
 		const params = [];
-		const sql = "SELECT * FROM " + tableName + DbClientPostgres.buildQuery(fields, params, orderBy);
+		const sql = "SELECT * FROM " + tableName + DbClientPostgres.buildQuery(fields, params, orderBy) + " LIMIT 2500";
 //		console.log(sql);
 		return this.client.query(sql, params).then(result => result.rows);
 	}
@@ -206,18 +195,12 @@ class DbClientPostgres {
 	}
 	
 	getTablesInfo() {
-		/*
-		select table_name,column_name,data_type,character_maximum_length,is_nullable,column_default,is_updatable,numeric_precision,numeric_scale
-		from INFORMATION_SCHEMA.COLUMNS where columns."table_schema"='public' order by table_name,ordinal_position;
-
-		select table_name,column_name,constraint_name from information_schema.constraint_column_usage order by constraint_name;
-		 */
 		const foreignKeysExportUsage = () => {
 			return this.find("informationSchema.constraintColumnUsage").then(list => {
 				let mapForeignKeysExport = new Map();
 				
 				for (let rec of list) {
-					if (rec.constraintName.includes("_fkey")) {
+					if (rec.constraintName.includes("_fkey") || rec.constraintName.includes("_fk")) {
 						const table = CaseConvert.underscoreToCamel(rec.tableName, false);
 						const field = CaseConvert.underscoreToCamel(rec.columnName, false);
 						const foreignKey = {table, field};
@@ -249,16 +232,19 @@ class DbClientPostgres {
 						if (entityClass.fields.has(fieldName) == true) {
 							const field = entityClass.fields.get(fieldName);
 							// select table_name,column_name,constraint_name from information_schema.constraint_column_usage order by table_name,column_name,constraint_name;
-							if (rec.constraintName.endsWith("_pkey")) {
+							if (rec.constraintName.endsWith("_pkey") || rec.constraintName.endsWith("_pk")) {
 								field.primaryKey = true; // true,false
-							} else if (rec.constraintName.includes("_fkey")) {
+							} else if (rec.constraintName.includes("_fkey") || rec.constraintName.includes("_fk")) {
 								if (field.foreignKeysImport == undefined) field.foreignKeysImport = [];
 								let list = mapForeignKeysExport.get(rec.constraintName); 
-								list.forEach(item => field.foreignKeysImport.push(item));
+								if (list != undefined) list.forEach(item => field.foreignKeysImport.push(item));
 							} else if (rec.constraintName.endsWith("_key")) {
 								field.unique = rec.constraintName;
 							} else {
-								console.error(`DbClientPostgres.getTablesInfo().foreignKeysImportUsage() : unknow constraintName ${rec.constraintName} from fieldName ${fieldName} from table ${tableName}, full rec : ${JSON.stringify(rec)}`);
+								if (field.foreignKeysImport == undefined) field.foreignKeysImport = [];
+								let list = mapForeignKeysExport.get(rec.constraintName); 
+								if (list != undefined) list.forEach(item => field.foreignKeysImport.push(item));
+//								console.error(`DbClientPostgres.getTablesInfo().foreignKeysImportUsage() : unknow constraintName ${rec.constraintName} from fieldName ${fieldName} from table ${tableName}, full rec : ${JSON.stringify(rec)}`);
 							}
 						} else {
 							console.error(`DbClientPostgres.getTablesInfo().foreignKeysImportUsage() : unknow type from fieldName ${fieldName} from table ${tableName} : rec : ${JSON.stringify(rec)}`);
@@ -277,18 +263,22 @@ class DbClientPostgres {
 		};
 		
 		const processColumns = () => {
-			return this.find("informationSchema.columns", {"table_schema": "public"}, "table_name,ordinal_position").then(list => {
+			let sqlGetComments = 
+				"select c.*,left(pgd.description,100) as description " +
+				"from pg_catalog.pg_statio_all_tables as st " +
+				"inner join pg_catalog.pg_description pgd on (pgd.objoid=st.relid) " +
+				"right outer join information_schema.columns c on (pgd.objsubid=c.ordinal_position and  c.table_schema=st.schemaname and c.table_name=st.relname) " +
+				"where table_schema = 'public'";
+			return this.client.query(sqlGetComments).then(result => {
 				let mapTables = new Map();
-				
-				for (let rec of list) {
-					// select * from INFORMATION_SCHEMA.COLUMNS where columns."table_schema"='public' order by table_name,ordinal_position;
-					// select distinct data_type from INFORMATION_SCHEMA.COLUMNS where columns."table_schema"='public' order by data_type;
+
+				for (let rec of result.rows) {
 					let typeIndex = this.sqlTypes.indexOf(rec.dataType);
-					
+
 					if (typeIndex >= 0) {
 						const tableName = CaseConvert.underscoreToCamel(rec.tableName, false);
 						let entityClass;
-						
+
 						if (mapTables.has(tableName) == true) {
 							entityClass = mapTables.get(tableName);
 						} else {
@@ -296,7 +286,7 @@ class DbClientPostgres {
 							entityClass.fields = new Map();
 							mapTables.set(tableName, entityClass);
 						}
-						
+
 						const fieldName = CaseConvert.underscoreToCamel(rec.columnName, false);
 						let field = {}
 						field.primaryKey = undefined;
@@ -308,7 +298,10 @@ class DbClientPostgres {
 						field.length = rec.characterMaximumLength; // > 0 // 255
 						field.precision = rec.numericPrecision; // > 0
 						field.defaultValue = rec.columnDefault; // 'pt-br'::character varying
-						
+						field.comment = rec.description;
+						// adjusts
+						if (field.type == "n" && field.scale == 0) field.type = "i";
+
 						if (field.defaultValue != undefined && field.defaultValue[0] == "'" && field.defaultValue.length > 2) {
 							if (field.type == "s") {
 								field.defaultValue = field.defaultValue.substring(1, field.defaultValue.indexOf("'", 1));
@@ -316,23 +309,22 @@ class DbClientPostgres {
 								field.defaultValue = undefined;
 							}
 						}
-						
+
 						if ((field.type == "i" || field.type == "n") && isNaN(field.defaultValue) == true) field.defaultValue = undefined;
 						field.identityGeneration = rec.identityGeneration; // BY DEFAULT,ALWAYS
+						// SERIAL TYPE
+						if (rec.defaultValue != undefined && rec.defaultValue.startsWith("nextval")) field.identityGeneration = "BY DEFAULT";
 						entityClass.fields.set(fieldName, field);
 					} else {
 						console.error(`DbClientPostgres.getTablesInfo().processColumns() : Invalid Database Type : ${rec.dataType}, full rec : ${JSON.stringify(rec)}`);
 					}
 				}
-				
+
 				return mapTables;
-			}).catch(err => {
-				console.error(`DbClientPostgres.getTablesInfo().processColumns() : find(COLUMNS) : ${err.message}`);
-				throw err;
 			});
 		};
-		
-		return processColumns().then(mapTables => foreignKeysExportUsage().then(mapForeignKeysExport => foreignKeysImportUsage(mapTables, mapForeignKeysExport)));
+
+		return processColumns().then(mapTables => foreignKeysExportUsage(mapTables).then(mapForeignKeysExport => foreignKeysImportUsage(mapTables, mapForeignKeysExport)));
 	}
 
 }
