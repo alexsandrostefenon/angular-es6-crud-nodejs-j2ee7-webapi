@@ -139,3 +139,5 @@ For custom service configuration or user edition, use user 'admin' with password
 npm install selenium-side-runner &&
 ./node_modules/.bin/selenium-side-runner ./src/test/*.side
 
+python3 ./src/test/test.py "http://localhost:9080/crud"
+
